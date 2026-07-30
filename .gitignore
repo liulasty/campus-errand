@@ -18,6 +18,11 @@ src/main/resources/application-devMVC.yml
 config/.env.dev
 config/.env.prod
 
+# Frontend
+web/node_modules/
+web/dist/
+web/.env.*.local
+
 # OS files
 .DS_Store
 Thumbs.db
