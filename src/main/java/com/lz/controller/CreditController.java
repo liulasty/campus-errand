@@ -53,6 +53,8 @@ public class CreditController {
         Long userId = user.getUserId();
 
         CreditMetrics metrics = creditScoreService.loadMetrics(userId);
+        int creditScore = creditScoreService.getScore(metrics);
+        creditScoreService.saveScore(userId, creditScore);
 
         Long reviewCount = (long) reviewsMapper.selectCount(new QueryWrapper<Reviews>()
                 .eq("AcceptorID", userId));
@@ -67,7 +69,7 @@ public class CreditController {
                 .ratingAvg(metrics.getRatingAvg())
                 .goodRate(goodRate)
                 .reviewCount(reviewCount)
-                .creditScore(creditScoreService.getScore(metrics))
+                .creditScore(creditScore)
                 .reviewList(list)
                 .build();
         return Result.success(vo);

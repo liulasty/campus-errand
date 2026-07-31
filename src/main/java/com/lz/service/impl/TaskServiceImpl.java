@@ -887,6 +887,8 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         Task task = Task.builder().taskId(taskId).receiverId(acceptRecords.getAccepterId()).status(TaskStatus.ACCEPTED)
                 .build();
         updateById(task);
+        // 接收人确认 → 重算并持久化信用分
+        creditScoreService.recomputeAndSave(acceptRecords.getAccepterId());
         // todo 通知接受者
         notificationsService.addTaskConfirmTheRecipient(getCurrentAdmin().getUserId(),
                 MessageConstants.TASK_ACCEPTANCE_PROCESSED_SUCCESS,
@@ -1018,6 +1020,8 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
                 .build();
 
         reviewsMapper.insert(reviews);
+        // 任务完成 + 评价产生 → 重算并持久化接收人信用分
+        creditScoreService.recomputeAndSave(task.getReceiverId());
     }
 
     /**

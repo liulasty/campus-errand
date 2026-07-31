@@ -77,11 +77,15 @@ public class CreditScoreService {
         return creditCalculator.calculate(metrics);
     }
 
-    /** 重算并持久化用户信用分到 users.CreditScore（事件驱动 / 访问兜底刷新） */
-    public void recomputeAndSave(Long userId) {
-        int score = getScore(userId);
+    /** 持久化已算好的信用分到 users.CreditScore */
+    public void saveScore(Long userId, int score) {
         usersMapper.update(null, new UpdateWrapper<Users>()
                 .eq("UserID", userId)
                 .set("CreditScore", score));
+    }
+
+    /** 重算并持久化用户信用分到 users.CreditScore（事件驱动 / 访问兜底刷新） */
+    public void recomputeAndSave(Long userId) {
+        saveScore(userId, getScore(userId));
     }
 }

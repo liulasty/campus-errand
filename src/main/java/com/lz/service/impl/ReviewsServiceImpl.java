@@ -16,6 +16,7 @@ import com.lz.pojo.dto.ReviewsDTO;
 import com.lz.pojo.entity.Reviews;
 import com.lz.pojo.entity.Task;
 import com.lz.pojo.entity.Users;
+import com.lz.service.CreditScoreService;
 import com.lz.service.IReviewsService;
 
 /**
@@ -37,6 +38,9 @@ public class ReviewsServiceImpl extends ServiceImpl<ReviewsMapper, Reviews> impl
     @Autowired
     private UsersMapper usersMapper;
 
+    @Autowired
+    private CreditScoreService creditScoreService;
+
     @Override
     public void save(ReviewsDTO reviewsDTO) {
         Task task = taskMapper.selectById(reviewsDTO.getTaskId());
@@ -54,6 +58,8 @@ public class ReviewsServiceImpl extends ServiceImpl<ReviewsMapper, Reviews> impl
                 .isApproved(false)
                 .build();
         reviewsMapper.insert(reviews);
+        // 被评人信用分变化，重算并持久化
+        creditScoreService.recomputeAndSave(task.getReceiverId());
 
     }
 
