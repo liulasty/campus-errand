@@ -37,7 +37,8 @@
             <el-row class="table-container">
                 <el-col>
                     <el-table :data="list" border style="width: 100%">
-                        <el-table-column fixed prop="createdAt" label="创建日期" width="170">
+                        <el-table-column fixed label="创建日期" width="170">
+                            <template slot-scope="scope">{{ scope.row.createdAt | dateTime }}</template>
                         </el-table-column>
                         <el-table-column prop="title" label="主题" width="130" show-overflow-tooltip>
                         </el-table-column>
@@ -45,7 +46,8 @@
                         </el-table-column>
                         <el-table-column prop="status" label="公告状态" width="100">
                         </el-table-column>
-                        <el-table-column prop="publishTime" label="发布时间" width="170">
+                        <el-table-column label="发布时间" width="150">
+                            <template slot-scope="scope">{{ scope.row.publishTime | dateTime }}</template>
                         </el-table-column>
                         <el-table-column prop="isPinned" label="是否置顶" width="60" show-overflow-tooltip>
                             <template slot-scope="scope">
@@ -53,11 +55,14 @@
                                 <el-tag v-else type="info">否</el-tag>
                             </template>
                         </el-table-column>
-                        <el-table-column prop="startEffectiveTime" label="开始时间" width="170" show-overflow-tooltip>
+                        <el-table-column label="开始时间" width="150" show-overflow-tooltip>
+                            <template slot-scope="scope">{{ scope.row.startEffectiveTime | dateTime }}</template>
                         </el-table-column>
-                        <el-table-column prop="endEffectiveTime" label="结束时间" width="170" show-overflow-tooltip>
+                        <el-table-column label="结束时间" width="150" show-overflow-tooltip>
+                            <template slot-scope="scope">{{ scope.row.endEffectiveTime | dateTime }}</template>
                         </el-table-column>
-                        <el-table-column prop="updatedAt" label="最后更新时间" width="170" show-overflow-tooltip>
+                        <el-table-column label="最后更新时间" width="150" show-overflow-tooltip>
+                            <template slot-scope="scope">{{ scope.row.updatedAt | dateTime }}</template>
                         </el-table-column>
 
                         <el-table-column fixed="right" label="操作" width="250">

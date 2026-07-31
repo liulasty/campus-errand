@@ -36,7 +36,8 @@
         <el-row class="table-container">
             <el-col>
                 <el-table :data="List" border style="width: 100%">
-                    <el-table-column fixed prop="notificationTime" label="创建日期" width="180">
+                    <el-table-column fixed label="创建日期" width="170">
+                        <template slot-scope="scope">{{ scope.row.notificationTime | dateTime }}</template>
                     </el-table-column>
                     <el-table-column prop="type" label="类型" width="130">
                     </el-table-column>
@@ -54,7 +55,8 @@
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="readTime" label="查看时间" width="180" show-overflow-tooltip>
+                    <el-table-column label="查看时间" width="150" show-overflow-tooltip>
+                        <template slot-scope="scope">{{ scope.row.readTime | dateTime }}</template>
                     </el-table-column>
 
                     <el-table-column fixed="right" label="操作" width="250">
