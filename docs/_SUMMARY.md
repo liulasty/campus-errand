@@ -1,17 +1,5 @@
 # API 文档索引
 
-本文档按 Controller 拆分，位于 docs/controllers/
+> 原 docs/controllers/ 下各 Controller 文档均为自动生成的占位符（仅含 `<content_of_*.md>`），已清理移除，仅保留有实际内容的废弃说明。
 
-- [TaskController](controllers/TaskController.md)
-- [UsersController](controllers/UsersController.md)
-- [ImgController](controllers/ImgController.md)
-- [ReviewsController](controllers/ReviewsController.md)
-- [PublisherController](controllers/PublisherController.md)
-- [AcceptController](controllers/AcceptController.md)
-- [TaskUserController](controllers/TaskUserController.md)
-- [CommonController](controllers/CommonController.md)
-- [SystemAnnouncementsController](controllers/SystemAnnouncementsController.md)
-- [AdminsettingsController](controllers/AdminsettingsController.md)
-- [TaskAdminController](controllers/TaskAdminController.md)
-- [NotificationsController](controllers/NotificationsController.md)
-- [DelegateAuditRecordsController](controllers/DelegateAuditRecordsController.md)
+- [DelegateAuditRecordsController（已废弃）](controllers/DelegateAuditRecordsController.md)
