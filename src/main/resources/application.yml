@@ -61,3 +61,10 @@ app:
     # 完成后多少小时仍无评价则自动补一条中性好评
     delay-hours: 24
     cron: "0 13 * * * ?"
+  auto-advance:
+    enabled: true
+    # 节点超时未打卡的小时数（演示时可调小快速触发）
+    node-hours: 6
+    # 三节点完成后发布者未确认完成的小时数
+    complete-hours: 24
+    cron: "0 */5 * * * ?"
