@@ -70,6 +70,7 @@ public class AddAuthColumns {
             if (rs.getInt(1) == 0) {
                 st.executeUpdate("ALTER TABLE usersinfo ADD COLUMN identity_no VARCHAR(50) DEFAULT NULL COMMENT '学号/工号/其他校内编号（按 userRole 区分）'");
                 st.executeUpdate("ALTER TABLE usersinfo ADD COLUMN auth_level TINYINT NOT NULL DEFAULT 0 COMMENT '认证等级（0=未认证,1=L1实名,2=L2校园卡）'");
+                st.executeUpdate("ALTER TABLE usersinfo ADD COLUMN reject_reason VARCHAR(255) DEFAULT NULL COMMENT '管理员驳回原因'");
                 System.out.println("AUTH_COLUMNS_ADDED");
             } else {
                 System.out.println("AUTH_COLUMNS_EXIST");
@@ -106,6 +107,7 @@ Expected: `AUTH_COLUMNS_ADDED`（或 EXISTS）+ `BACKFILLED=<待回填数>`。�
 ```sql
   `identity_no` varchar(50) DEFAULT NULL COMMENT '学号/工号/其他校内编号（按 userRole 区分）',
   `auth_level` tinyint NOT NULL DEFAULT '0' COMMENT '认证等级（0=未认证,1=L1实名,2=L2校园卡）',
+  `reject_reason` varchar(255) DEFAULT NULL COMMENT '管理员驳回原因',
 ```
 
 - [ ] **Step 4: Commit**
@@ -137,6 +139,10 @@ git commit -m "chore: 实名认证 DDL — usersinfo 加 identity_no/auth_level�
     @ApiModelProperty(value = "认证等级（0=未认证,1=L1实名,2=L2校园卡）")
     @TableField(value = "auth_level")
     private Integer authLevel;
+
+    @ApiModelProperty(value = "管理员驳回原因")
+    @TableField(value = "reject_reason")
+    private String rejectReason;
 ```
 
 - [ ] **Step 2: 创建 `VerifyResult.java`**
@@ -540,21 +546,37 @@ git commit -m "feat: RealNameAuthenticationService.ensureL1 门禁（空记录�
 
 > 手动模式恒返回 `PENDING_MANUAL_AUDIT`，走 `AUTHENTICATING` 人工流程。
 
-**(c) `confirmToPassTheReview` 置 `auth_level=1`**：
+**(c) `confirmToPassTheReview` 置 `auth_level=1` + 清空驳回原因**：
 
 在 `usersInfo.setAuthStatus(AuthenticationStatus.AUTHENTICATED);` 之后加：
 
 ```java
             usersInfo.setAuthLevel(1);
+            usersInfo.setRejectReason(null);
 ```
 
-**(d) `refuseToPassReview` 置 `auth_level=0`**：
-
-在 `usersInfo.setAuthStatus(AuthenticationStatus.AUTHENTICATION_FAILED);` 之后加：
+**(d) `refuseToPassReview` 置 `auth_level=0` + 存驳回原因** — 方法签名加 `String reason` 参数：
 
 ```java
+    @Override
+    public Boolean refuseToPassReview(Long id, String reason) throws MyException {
+        UsersInfo usersInfo = getById(id);
+        if (usersInfo != null) {
+            if (usersInfo.getAuthStatus() != AuthenticationStatus.AUTHENTICATING){
+                throw new MyException(MessageConstants.USER_STATUS_ERROR);
+            }
+            usersInfo.setAuthStatus(AuthenticationStatus.AUTHENTICATION_FAILED);
             usersInfo.setAuthLevel(0);
+            usersInfo.setRejectReason(reason);
+            usersInfo.setCertifiedTime(new Date(System.currentTimeMillis()));
+            return updateById(usersInfo);
+        }else {
+            throw new MyException(MessageConstants.USER_NOT_EXIST);
+        }
+    }
 ```
+
+> 同步改接口 `IUsersInfoService.refuseToPassReview` 签名，及控制器 `refuseToPassReview/{id}` 增加 `@RequestParam(value="reason", required=false) String reason`。
 
 - [ ] **Step 4: 编译验证**
 
@@ -690,12 +712,42 @@ git commit -m "feat: 全部委托流程操作接入 L1 门禁，查看发布者�
 
 ---
 
-### Task 7: 前端 — MyInfo 申请表单 + 游客引导
+### Task 7: 前端 — MyInfo 实名认证表单改造 + 管理端驳回原因
 
 **Files:**
 - Modify: `web/src/views/user/MyInfo.vue`
+- Modify: `web/src/views/admin/UserList.vue`
 
-- [ ] **Step 1: 申请表单加「身份标识」输入**
+- [ ] **Step 1: 认证状态分区展示（四态）**
+
+按 `infoForm.authStatus`（未认证/认证中/认证失败/认证通过）分区：
+- 未认证：展示「去认证」按钮，申请表单可用
+- 认证中：禁用表单，展示「审核中，请等待」
+- 认证失败：红色警示展示驳回原因 `infoForm.rejectReason`，表单可重提
+- 认证通过：隐藏申请表单，展示「已认证」徽章 + L2 占位按钮
+
+顶部状态卡片：
+
+```html
+      <el-card v-if="authState !== '认证通过'" shadow="hover" style="margin-bottom: 10px;">
+        <el-alert v-if="authState === '认证失败'" :title="'认证被驳回：' + (infoForm.rejectReason || '材料不符')"
+          type="error" :closable="false" show-icon />
+        <el-alert v-else :title="authState === '认证中' ? '审核中，请等待管理员审核' : '完成 L1 实名认证后可发布委托、接单、打卡'"
+          type="warning" :closable="false" show-icon>
+          <el-button v-if="authState === '未认证'" slot="title" type="primary" size="mini" @click="dialogUserInfo = true">去认证</el-button>
+        </el-alert>
+      </el-card>
+```
+
+`computed` 加：
+
+```js
+      authState() {
+        return this.infoForm.authStatus || '未认证'
+      },
+```
+
+- [ ] **Step 2: 申请表单加「身份标识」+ 角色联动占位**
 
 在 `认证角色` radio 之后、`</el-form>` 之前加：
 
@@ -706,41 +758,52 @@ git commit -m "feat: 全部委托流程操作接入 L1 门禁，查看发布者�
         </el-form-item>
 ```
 
-- [ ] **Step 2: 提交时带 `identityNo`**
+`data` 的 `infoAddForm` 加 `identityNo: ''`、`role: 'student'`（默认角色，切换 radio 时 placeholder 联动）。
 
-在 `submitAnApplication` 中 `submitCertificationInformation` 的入参加上 `identityNo`（data 的 `infoAddForm` 加 `identityNo: ''` 字段），并校验非空（为空则 `$message.warning('请填写身份标识')` 并 return）。
+- [ ] **Step 3: 提交前基础校验（姓名/身份编号/照片必填）**
 
-- [ ] **Step 3: 游客「去认证」引导**
-
-登录后无认证（`infoForm.authStatus` 非「认证通过」）时，页面顶部展示引导卡片：
-
-```html
-      <el-card v-if="!isAuthenticated" shadow="hover" style="margin-bottom: 10px;">
-        <el-alert title="完成 L1 实名认证后可发布委托、接单、打卡等操作"
-          type="warning" :closable="false" show-icon>
-          <el-button slot="title" type="primary" size="mini" @click="dialogUserInfo = true">去认证</el-button>
-        </el-alert>
-      </el-card>
-```
-
-`computed` 加：
+`submitAnApplication` 开头加：
 
 ```js
-      isAuthenticated() {
-        return this.infoForm.authStatus === '认证通过'
-      },
+      if (!this.infoAddForm.name) { this.$message.warning('请填写姓名'); return }
+      if (!this.infoAddForm.identityNo) { this.$message.warning('请填写身份标识'); return }
+      const img = this.$refs.imageSet && this.$refs.imageSet.imageUrls
+      if (!img || !img.length) { this.$message.warning('请上传身份照片'); return }
 ```
 
-- [ ] **Step 4: 前端构建验证**
+- [ ] **Step 4: L2 校园卡入口占位（本轮不开发）**
+
+认证信息卡片内加禁用占位按钮：
+
+```html
+        <el-button type="info" size="small" disabled title="即将上线">L2 校园卡认证（即将上线）</el-button>
+```
+
+- [ ] **Step 5: 提交带 `identityNo`**
+
+`submitCertificationInformation` 的入参加上 `identityNo`；`getUserInfo` 响应已含 `rejectReason`（后端 Task 5 已加字段），前端读取展示。
+
+- [ ] **Step 6: 管理端驳回原因输入**
+
+`web/src/views/admin/UserList.vue` 的驳回认证操作改为 `$prompt` 输入原因：
+
+```js
+      this.$prompt('请输入驳回原因', '驳回认证', { inputValidator: v => !!v })
+        .then(({ value }) => this.$refs.form.refuse(value))
+```
+
+调用 `refuseToPassReview(userId, reason)`（传 `reason` 参数）。
+
+- [ ] **Step 7: 前端构建验证**
 
 Run: `cd web && npm run build`
 Expected: 构建完成无报错。
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add web/src/views/user/MyInfo.vue
-git commit -m "feat: 实名认证申请表单加身份标识，游客展示去认证引导"
+git add web/src/views/user/MyInfo.vue web/src/views/admin/UserList.vue
+git commit -m "feat: MyInfo 实名认证表单（状态区分/角色联动/驳回回显/L2占位/必填校验），管理端驳回带原因"
 ```
 
 > **旁证展示（设计 §6）延后**：任务详情展示发布者掩码身份编号 + L1 徽章涉及任务详情/大厅多页展示改造，本轮聚焦门禁与申请流程，旁证展示列为后续增强（设计稿已定义掩码规则）。
