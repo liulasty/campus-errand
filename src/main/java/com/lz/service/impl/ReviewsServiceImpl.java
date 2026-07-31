@@ -18,6 +18,7 @@ import com.lz.pojo.entity.Task;
 import com.lz.pojo.entity.Users;
 import com.lz.service.CreditScoreService;
 import com.lz.service.IReviewsService;
+import com.lz.service.RealNameAuthenticationService;
 
 /**
  * <p>
@@ -41,8 +42,12 @@ public class ReviewsServiceImpl extends ServiceImpl<ReviewsMapper, Reviews> impl
     @Autowired
     private CreditScoreService creditScoreService;
 
+    @Autowired
+    private RealNameAuthenticationService realNameAuthenticationService;
+
     @Override
     public void save(ReviewsDTO reviewsDTO) {
+        realNameAuthenticationService.ensureCurrentUserL1();
         Task task = taskMapper.selectById(reviewsDTO.getTaskId());
         if (task.getStatus() != TaskStatus.COMPLETED) {
             throw new RuntimeException("任务未完成，不能评价");

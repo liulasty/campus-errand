@@ -16,6 +16,7 @@ import com.lz.pojo.entity.TaskUpdates;
 import com.lz.mapper.TaskUpdatesMapper;
 import com.lz.pojo.entity.Users;
 import com.lz.service.ITaskUpdatesService;
+import com.lz.service.RealNameAuthenticationService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ public class TaskUpdatesServiceImpl extends ServiceImpl<TaskUpdatesMapper, TaskU
     
     @Autowired
     private TaskMapper taskMapper;
+
+    @Autowired
+    private RealNameAuthenticationService realNameAuthenticationService;
     
     @Autowired
     private TaskUpdatesMapper taskUpdatesMapper;
@@ -216,6 +220,7 @@ public class TaskUpdatesServiceImpl extends ServiceImpl<TaskUpdatesMapper, TaskU
 
     @Override
     public TaskUpdates addNodeUpdate(TaskNodeDTO taskNodeDTO) throws MyException {
+        realNameAuthenticationService.ensureCurrentUserL1();
         Users user = getCurrentAdmin();
         Task task = taskMapper.selectById(taskNodeDTO.getTaskId());
         if (task == null) {

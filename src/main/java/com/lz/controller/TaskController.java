@@ -65,6 +65,9 @@ public class TaskController {
     @Autowired
     private IDelegateAuditRecordsService delegateAuditRecordsService;
 
+    @Autowired
+    private RealNameAuthenticationService realNameAuthenticationService;
+
 
     //创建单个委托
     @PostMapping("/addTaskDraft")
@@ -160,6 +163,7 @@ public class TaskController {
     @PutMapping(value = "/auditTask/{id}")
     @ApiOperation("提交审核")
     public Result<String> auditTask(@PathVariable("id") Long id) throws MyException {
+        realNameAuthenticationService.ensureCurrentUserL1();
         taskService.auditTask(id);
         return Result.success(MessageConstants.TASK_UPDATE_SUCCESS);
     }

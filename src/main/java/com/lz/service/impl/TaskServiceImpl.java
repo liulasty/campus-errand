@@ -61,6 +61,7 @@ import com.lz.pojo.vo.TaskDetails;
 import com.lz.pojo.vo.TaskDraftVO;
 import com.lz.pojo.vo.UserDelegateDraft;
 import com.lz.service.CreditScoreService;
+import com.lz.service.RealNameAuthenticationService;
 import com.lz.service.IDelegateAuditRecordsService;
 import com.lz.service.IDelegationCategoriesService;
 import com.lz.service.INotificationReadStatusService;
@@ -99,6 +100,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
 
     @Autowired
     private CreditScoreService creditScoreService;
+
+    @Autowired
+    private RealNameAuthenticationService realNameAuthenticationService;
 
     @Autowired
     private ISystemAnnouncementsService systemAnnouncementsService;
@@ -575,9 +579,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         }
 
         UsersInfo usersInfo = usersInfoMapper.selectById(task.getOwnerId());
-        if (usersInfo == null || usersInfo.getAuthStatus() != AuthenticationStatus.AUTHENTICATED) {
-            throw new MyException(MessageConstants.USER_NOT_EXIST);
-        }
+        realNameAuthenticationService.ensureL1(task.getOwnerId());
         usersInfo.setRoleImgSrc("");
         usersInfo.setCertifieTime(null);
         usersInfo.setCertifiedTime(null);
@@ -637,9 +639,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         }
 
         UsersInfo usersInfo = usersInfoMapper.selectById(task.getOwnerId());
-        if (usersInfo == null || usersInfo.getAuthStatus() != AuthenticationStatus.AUTHENTICATED) {
-            throw new MyException(MessageConstants.USER_NOT_EXIST);
-        }
+        realNameAuthenticationService.ensureL1(task.getOwnerId());
         usersInfo.setRoleImgSrc("");
         usersInfo.setCertifieTime(null);
         usersInfo.setCertifiedTime(null);
@@ -759,6 +759,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
     @Override
     @Transactional(rollbackFor = MyException.class)
     public void confirmTheRecipient(Long taskId, TaskAcceptRecords acceptRecords) throws MyException {
+        realNameAuthenticationService.ensureCurrentUserL1();
         if (acceptRecords == null) {
             throw new MyException(MessageConstants.TASK_NOT_EXIST);
         }
@@ -904,6 +905,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
 
     @Override
     public void updateToCompleted(UpdateTaskToCompletedDTO dto) throws MyException {
+        realNameAuthenticationService.ensureCurrentUserL1();
         Users users = getCurrentAdmin();
 
         Task task = getById(dto.getTaskId());

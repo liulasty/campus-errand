@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.lz.Exception.MyException;
 import com.lz.pojo.Enum.AcceptStatus;
 import com.lz.pojo.Enum.AuthenticationStatus;
+import com.lz.service.RealNameAuthenticationService;
 import com.lz.pojo.Enum.TaskStatus;
 import com.lz.pojo.constants.MessageConstants;
 import com.lz.pojo.dto.PublishDTO;
@@ -60,16 +61,16 @@ public class PublisherController {
     @Autowired
     private ITaskAcceptRecordsService taskAcceptRecordsService;
 
+    @Autowired
+    private RealNameAuthenticationService realNameAuthenticationService;
+
     @GetMapping("/{id}")
     public Result<?> getPublisher(@PathVariable("id") Long id) throws MyException {
         UsersInfo usersInfo = usersInfoService.getById(id);
         if (usersInfo == null) {
             throw new MyException(MessageConstants.USER_AUTHENTICATION_INFO_NOT_EXIST);
         }
-        if (usersInfo.getAuthStatus() != AuthenticationStatus.AUTHENTICATED) {
-            // 正在认证中，请耐心等待
-            throw new MyException(MessageConstants.USER_AUTHENTICATION_INFO_EXISTING);
-        }
+        realNameAuthenticationService.ensureL1(id);
 
         return Result.success(usersInfo);
     }
@@ -87,6 +88,7 @@ public class PublisherController {
     @ApiOperation("发布委托")
     public Result<String> confirmTask(@PathVariable("id") Long id,
             @RequestBody PublishDTO data) throws MyException {
+        realNameAuthenticationService.ensureCurrentUserL1();
         try {
             Task byId = taskService.getById(id);
             if (byId == null) {

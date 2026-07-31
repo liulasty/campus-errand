@@ -30,6 +30,7 @@ import com.lz.pojo.result.Result;
 import com.lz.pojo.vo.TaskAcceptRecord;
 import com.lz.service.ITaskAcceptRecordsService;
 import com.lz.service.ITaskService;
+import com.lz.service.RealNameAuthenticationService;
 
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,9 @@ public class AcceptController {
 
     @Autowired
     private ITaskService taskService;
+
+    @Autowired
+    private RealNameAuthenticationService realNameAuthenticationService;
 
     /**
      * 获取委托任务接收信息
@@ -74,6 +78,7 @@ public class AcceptController {
     @PostMapping
     public Result<?> accept(@RequestBody AcceptDTO acceptDTO) {
         log.info("接收委托留言 {}", acceptDTO);
+        realNameAuthenticationService.ensureCurrentUserL1();
         taskAcceptRecordsService.create(acceptDTO);
         return Result.success(MessageConstants.DATA_ACCEPT_SUCCESS);
     }
