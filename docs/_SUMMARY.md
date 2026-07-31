@@ -8,6 +8,7 @@
 - [M1 信用引擎 · 详细设计](M1_credit-engine-design.md)
 - [M2 智能曝光 · 详细设计](M2_smart-exposure-design.md)
 - [M3 防断流 · 详细设计](M3_anti-break-design.md)
+- [分阶梯实名认证 · 详细设计](auth-tiered-identity-design.md)
 
 ## 业务与流程
 - [校园委托全流程说明](委托全流程说明.md)
