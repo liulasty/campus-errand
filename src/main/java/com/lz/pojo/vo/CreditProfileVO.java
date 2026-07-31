@@ -29,4 +29,7 @@ public class CreditProfileVO {
     private Long reviewCount;
     /** 历史评价列表 */
     private List<CreditReviewVO> reviewList;
+
+    /** 信用分（0–100，可空，前端兜底 60） */
+    private Integer creditScore;
 }

@@ -1,19 +1,15 @@
 package com.lz.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.lz.credit.dto.CreditMetrics;
 import com.lz.mapper.ReviewsMapper;
-import com.lz.mapper.TaskAcceptRecordsMapper;
-import com.lz.mapper.TaskMapper;
 import com.lz.mapper.UsersMapper;
-import com.lz.pojo.Enum.AcceptStatus;
-import com.lz.pojo.Enum.TaskStatus;
 import com.lz.pojo.entity.Reviews;
-import com.lz.pojo.entity.Task;
-import com.lz.pojo.entity.TaskAcceptRecords;
 import com.lz.pojo.entity.Users;
 import com.lz.pojo.result.Result;
 import com.lz.pojo.vo.CreditProfileVO;
 import com.lz.pojo.vo.CreditReviewVO;
+import com.lz.service.CreditScoreService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -47,10 +43,7 @@ public class CreditController {
     private ReviewsMapper reviewsMapper;
 
     @Autowired
-    private TaskMapper taskMapper;
-
-    @Autowired
-    private TaskAcceptRecordsMapper taskAcceptRecordsMapper;
+    private CreditScoreService creditScoreService;
 
     @GetMapping
     @ApiOperation("当前用户信用档案")
@@ -59,24 +52,22 @@ public class CreditController {
                 SecurityContextHolder.getContext().getAuthentication().getName());
         Long userId = user.getUserId();
 
-        Long acceptTotal = (long) taskAcceptRecordsMapper.selectCount(new QueryWrapper<TaskAcceptRecords>()
-                .eq("AccepterId", userId).eq("status", AcceptStatus.CHECKED.getDbValue()));
-        Long completedTotal = (long) taskMapper.selectCount(new QueryWrapper<Task>()
-                .eq("ReceiverID", userId).eq("STATUS", TaskStatus.COMPLETED.getDbValue()));
+        CreditMetrics metrics = creditScoreService.loadMetrics(userId);
+
         Long reviewCount = (long) reviewsMapper.selectCount(new QueryWrapper<Reviews>()
                 .eq("AcceptorID", userId));
         Long goodCount = (long) reviewsMapper.selectCount(new QueryWrapper<Reviews>()
                 .eq("AcceptorID", userId).ge("Rating", 4));
-        Double ratingAvg = reviewsMapper.avgRatingByAcceptor(userId);
         List<CreditReviewVO> list = reviewsMapper.selectReviewsByAcceptor(userId);
         double goodRate = reviewCount > 0 ? Math.round(goodCount * 10000.0 / reviewCount) / 100.0 : 100.0;
 
         CreditProfileVO vo = CreditProfileVO.builder()
-                .acceptTotal(acceptTotal)
-                .completedTotal(completedTotal)
-                .ratingAvg(ratingAvg)
+                .acceptTotal(metrics.getAcceptedCount())
+                .completedTotal(metrics.getCompletedCount())
+                .ratingAvg(metrics.getRatingAvg())
                 .goodRate(goodRate)
                 .reviewCount(reviewCount)
+                .creditScore(creditScoreService.getScore(metrics))
                 .reviewList(list)
                 .build();
         return Result.success(vo);
