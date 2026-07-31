@@ -48,6 +48,13 @@
             </div>
             <el-table v-loading="loading" :data="viewOnGoingList" :row-style="{ height: '50px' }" stripe border>
                 <el-table-column label="发布者ID" align="center" prop="ownerId" width="100" />
+                <el-table-column label="信用分" align="center" width="110">
+                    <template slot-scope="scope">
+                        <el-tooltip :content="'信用等级：' + creditLevel(scope.row.ownerCredit)" placement="top">
+                            <el-tag :type="creditColor(scope.row.ownerCredit)" size="small">{{ creditScore(scope.row.ownerCredit) }}</el-tag>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
                 <el-table-column label="委托类型" align="center" prop="type" width="120">
                     <template slot-scope="scope">
                         <el-tag size="small">{{ scope.row.type }}</el-tag>
@@ -213,6 +220,7 @@
     import { getTaskCategories } from '@/api/'
     import { listViewOnGoingList, getTaskAndPublishUserInfoByTaskId, acceptCommission } from '@/api/user.js'
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction.js'
+    import { creditScore, creditLevel, creditColor } from '@/utils/creditLevel'
     export default {
         data() {
             return {
