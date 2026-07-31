@@ -68,3 +68,6 @@ app:
     # 三节点完成后发布者未确认完成的小时数
     complete-hours: 24
     cron: "0 */5 * * * ?"
+  identity-verifier:
+    # 身份核验模式：manual=管理员人工审核（当前）；edu-system=教务系统自动核验（未来预留）
+    mode: manual
