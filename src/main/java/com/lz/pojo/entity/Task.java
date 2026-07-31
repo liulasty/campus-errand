@@ -81,6 +81,9 @@ public class Task implements Serializable {
     @TableField(value = "STATUS",typeHandler = TaskStatusTypeHandler.class)
     private TaskStatus status;
 
+    @ApiModelProperty(value = "乐观锁版本号（防多实例/并发重复推进）")
+    private Integer version;
+
     @ApiModelProperty(value = "发布者信用分（瞬态，不落库，大厅展示用）")
     @TableField(exist = false)
     private Integer ownerCredit;

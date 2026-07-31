@@ -67,5 +67,8 @@ public class TaskUpdates implements Serializable {
     @TableField(value = "Location")
     private String location;
 
+    @ApiModelProperty(value = "履约节点进度（0=无,1=已联系,2=已取件,3=已送达）")
+    @TableField("NodeIndex")
+    private Integer nodeIndex;
 
 }

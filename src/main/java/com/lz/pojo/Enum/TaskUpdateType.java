@@ -59,7 +59,12 @@ public enum TaskUpdateType {
     /**
      * 履约节点：已送达
      */
-    DELIVERED("DELIVERED", 8, "已送达");
+    DELIVERED("DELIVERED", 8, "已送达"),
+
+    /**
+     * 系统自动推进（超时未操作）
+     */
+    AUTO_ADVANCE("AUTO_ADVANCE", 9, "自动推进");
 
 
 
