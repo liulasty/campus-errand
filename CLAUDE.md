@@ -47,12 +47,13 @@ npm run build                        # 构建验证
 
 ## 环境约束（本机）
 
-- Maven 本地仓库在 `D:\CODE\mvn_repository`（非 `~/.m2`，`$HOME` 为空）。
+- **开发工具/配置统一在 `D:\soft-tools`**（Maven 3.6.3/3.9.16、Node/nvm、Redis、Git、IDEA、MySQL 客户端 SQLyog 等）。**不要随意更改该目录下的配置**；如需调整，先与用户确认。
+- Maven 本地依赖仓库在 `D:\CODE\mvn_repository`（非 `~/.m2`，`$HOME` 为空）。
 - 后端端口 80、上下文 `/campus_entrustment`（在 gitignored 的 `application-dev.yml`）；前端 8080。
 - MySQL：`localhost:3306` 库 `campus_entrustment`，root/1234。SQL 脚本 `src/main/resources/sql/校园委托0.99.sql`。
-- **Redis / RabbitMQ 未装**：缓存与消息通知功能失败（后端惰性连接可启动）；定时任务 `TaskAutoAdvance`（`app.auto-advance.*`，node-hours=6/complete-hours=24）依赖 MySQL 可跑。
+- **Redis 安装目录在 `D:\soft-tools\redis`，RabbitMQ 未装**：缓存与消息通知功能是否可用取决于对应服务是否启动（后端惰性连接可启动）；定时任务 `TaskAutoAdvance`（`app.auto-advance.*`，node-hours=6/complete-hours=24）依赖 MySQL 可跑。
 - 测试账号（MVP 基线）：管理员 `majiaqi/admin123456`；用户 `zhangsan`（student）、`lisiyuan`（teacher）、`testapply` 均 `test123456`。
-- 远程：`origin`=github（本机当前 443 连不上）、`gitee`=Gitee（可用）。代码改动常需同时推两个。
+- 远程：`origin`=github（网络偶发 443 连不上，可重试）、`gitee`=Gitee（较稳定）。代码改动常需同时推两个。
 
 ## 技术债（改动前先读）
 
