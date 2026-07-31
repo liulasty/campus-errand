@@ -6,6 +6,7 @@
 ## 实施路线图
 - [校园委托平台 1.0 实施路线图](ROADMAP_1.0.md)
 - [M1 信用引擎 · 详细设计](M1_credit-engine-design.md)
+- [M2 智能曝光 · 详细设计](M2_smart-exposure-design.md)
 
 ## 业务与流程
 - [校园委托全流程说明](委托全流程说明.md)
