@@ -53,6 +53,24 @@
                     </template>
 
                 </el-table-column>
+                <el-table-column label="认证等级" width="90" :filters="authLevelFilters" :filter-method="filterAuthLevel">
+                    <template slot-scope="scope">
+                        <el-tag v-if="scope.row.authLevel >= 2" type="warning" size="small">L2</el-tag>
+                        <el-tag v-else-if="scope.row.authLevel >= 1" type="primary" size="small">L1</el-tag>
+                        <el-tag v-else type="info" size="small">未认证</el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="身份标识" width="120">
+                    <template slot-scope="scope">
+                        <span>{{ maskIdentity(scope.row.identityNo) }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="信用分" width="90" :filters="creditScoreFilters" :filter-method="filterCreditScore">
+                    <template slot-scope="scope">
+                        <el-tag :type="scope.row.creditScore >= 80 ? 'success' : scope.row.creditScore >= 60 ? 'primary' : 'info'"
+                            size="small">{{ scope.row.creditScore != null ? scope.row.creditScore : 60 }}</el-tag>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="email" label="邮箱" width="170">
                 </el-table-column>
 
@@ -213,6 +231,16 @@
                 userList: [],
                 rejectReason: '照片不清晰',
                 rejectReasonOther: '',
+                authLevelFilters: [
+                    { text: 'L2 校园卡', value: 2 },
+                    { text: 'L1 实名', value: 1 },
+                    { text: '未认证', value: 0 }
+                ],
+                creditScoreFilters: [
+                    { text: '≥80 优秀', value: 'high' },
+                    { text: '60-79 良好', value: 'mid' },
+                    { text: '<60 待提升', value: 'low' }
+                ],
                 tableData: [{
                     date: '2016-05-03',
                     name: '王小虎',
@@ -362,6 +390,21 @@
                     // console.log("获取用户信息,", this.form);
 
                 })
+            },
+            // 身份标识掩码（前4后2），隐私保护
+            maskIdentity(no) {
+                if (!no) return '—'
+                if (no.length <= 6) return no.slice(0, 2) + '****'
+                return no.slice(0, 4) + '*****' + no.slice(-2)
+            },
+            filterAuthLevel(value, row) {
+                return row.authLevel === value
+            },
+            filterCreditScore(value, row) {
+                const s = row.creditScore != null ? row.creditScore : 60
+                if (value === 'high') return s >= 80
+                if (value === 'mid') return s >= 60 && s < 80
+                return s < 60
             },
             //拒绝通过审核
             async cancelForm() {

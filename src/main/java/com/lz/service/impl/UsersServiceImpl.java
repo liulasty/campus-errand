@@ -133,13 +133,17 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             BeanUtils.copyProperties(users, userPageVO);
             UsersInfo byId = usersInfoMapper.selectById(users.getUserId());
 
-            // 设置认证状态
+            // 设置认证状态、认证等级、身份标识、信用分
             if (byId == null) {
                 userPageVO.setAuthStatus(AuthenticationStatus.UNAUTHORIZED);
+                userPageVO.setAuthLevel(0);
             } else {
                 log.info("用户信息 {}", byId);
                 userPageVO.setAuthStatus(byId.getAuthStatus());
+                userPageVO.setAuthLevel(byId.getAuthLevel());
+                userPageVO.setIdentityNo(byId.getIdentityNo());
             }
+            userPageVO.setCreditScore(users.getCreditScore());
             userPageVOS.add(userPageVO);
         }
 

@@ -62,4 +62,8 @@ public class Users implements Serializable {
     @TableField("IsEnabled")
     private Boolean isEnabled;
 
+    @ApiModelProperty(value = "信用分（0-100）")
+    @TableField("CreditScore")
+    private Integer creditScore;
+
 }

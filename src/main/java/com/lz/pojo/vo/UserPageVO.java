@@ -29,5 +29,11 @@ public class UserPageVO {
     private Date activeTime;
     private AuthenticationStatus authStatus;
     private Boolean IsEnabled;
-    
+    /** 认证等级（0=未认证,1=L1实名,2=L2校园卡） */
+    private Integer authLevel;
+    /** 学号/工号/其他校内编号 */
+    private String identityNo;
+    /** 信用分（0-100） */
+    private Integer creditScore;
+
 }
