@@ -65,7 +65,7 @@
                     </el-row>
                     
                     <el-form-item label="认证时间" prop="certifiedTime">
-                        <el-input v-model="infoForm.certifiedTime" disabled prefix-icon="el-icon-date"></el-input>
+                        <el-input :value="formatDate(infoForm.certifiedTime)" disabled prefix-icon="el-icon-date"></el-input>
                     </el-form-item>
 
                     <el-form-item class="form-actions">
@@ -225,6 +225,12 @@ export default {
     },
     applyForModification() {
       this.dialogUserInfo = true;
+    },
+    formatDate(date) {
+      if (!date) return ''
+      const d = new Date(Number(date))
+      const pad = n => (n < 10 ? '0' + n : n)
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
     },
     async submitAnApplication() {
       if (!this.infoAddForm.name) { this.$message.warning('请填写姓名'); return }

@@ -168,6 +168,7 @@
                                 icon: 's-order',
                                 index: 'w-3',
                                 children: [
+                                    { path: '/createDelegation', name: 'createDelegation', label: '发布委托', icon: 'edit-outline', index: 'w-3-0' },
                                     { path: '/myDelegationPublishList', name: 'myDelegationPublishList', label: '我发布的订单', icon: 'document-add', index: 'w-3-1' },
                                     { path: '/myDelegationAcceptList', name: 'myDelegationAcceptList', label: '我承接的订单', icon: 'document-checked', index: 'w-3-2' }
                                 ]

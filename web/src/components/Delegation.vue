@@ -298,6 +298,7 @@
     } from "@/api/index"
 
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
+    import { SUCCESS_CODE } from '@/constants/http'
 
     export default {
         props: {
@@ -507,27 +508,31 @@
                 //去审核
                 submitTaskDraft(data.taskId).then((data) => {
                     console.log("去审核", data);
-                    if (data.data.code === 1) {
+                    if (data.data.code === SUCCESS_CODE) {
                         this.$message({
                             type: 'success',
                             message: data.data.msg
                         });
                     } else {
-                        this.$message({
-                            type: 'error',
-                            message: data.data.msg
-                        });
+                        if (!this.handleAuthGateError(data.data.msg)) {
+                            this.$message({
+                                type: 'error',
+                                message: data.data.msg
+                            });
+                        }
                     }
                     this.$emit('childEvent');
-                }
-                )
+                }).catch(err => {
+                    console.error('提交审核失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
+                })
 
             },
             //打开确认发布窗口
             handleAudit(data) {
                 this.dialogVisiblePublish = true;
                 confirmTask(data.taskId).then(data => {
-                    if (data.data.code == 1) {
+                    if (data.data.code === SUCCESS_CODE) {
                         this.$message({
                             type: 'success',
                             message: data.data.msg
@@ -537,13 +542,31 @@
                         this.publishFrom.type = this.taskTypeOption[this.publishFrom.type - 1].label;
                     } else {
                         this.dialogVisiblePublish = false;
-                        this.$message({
-                            type: 'error',
-                            message: data.data.msg
-                        });
-
+                        if (!this.handleAuthGateError(data.data.msg)) {
+                            this.$message({
+                                type: 'error',
+                                message: data.data.msg
+                            });
+                        }
                     }
+                }).catch(err => {
+                    console.error('获取发布信息失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
+            },
+            // L1 实名认证门禁：命中提示则引导去认证
+            handleAuthGateError(msg) {
+                if (msg && msg.indexOf('L1实名认证') !== -1) {
+                    this.$confirm('发布委托需完成 L1 实名认证，是否前往认证？', '提示', {
+                        confirmButtonText: '去认证',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.$router.push('/myInfo')
+                    }).catch(() => {})
+                    return true
+                }
+                return false
             },
             //发布委托
             publishDelegation() {
