@@ -21,18 +21,14 @@ public class MessageConstants {
     public static final String DELETE_USER_FAIL =  "删除用户失败";
     //用户名或密码错误
     public static final String USER_PASSWORD_ERROR = "用户名或密码错误";
-    public static final String USER_REGISTER_SUCCESS = "注册成功,请在你的邮箱点击激活链接";
+    public static final String USER_REGISTER_SUCCESS = "注册成功，请登录";
     public static final String USER_REGISTER_FAIL = "注册失败,用户名已存在";
     public static final String USER_LOGIN_SUCCESS = "登录成功";
     public static final String USER_LOGIN_FAIL = "登录失败";
     public static final String USER_LOGOUT_SUCCESS = "登出成功";
-    
-    public static final String USER_NOT_ACTIVE = "用户未激活,请前往邮箱激活";
-    public static final String USER_ACTIVE_SUCCESS = "您的账户已成功激活！现在您可以登录并开始使用我们的服务了。";
 
     public static final String ADMIN_ACTIVE_USER_SUCCESS = "管理员激活用户成功";
     public static final String USER_ACTIVE_FAIL = "激活失败";
-    public static final String USER_ACTIVE_CODE_ERROR = "激活码错误";
     public static final String USER_UPDATE_SUCCESS = "更新用户信息成功";
     public static final String DATA_VALIDATION_SUCCESS = "委托任务已提交请等待审核";
 
@@ -69,7 +65,6 @@ public class MessageConstants {
     public static final String USER_DELETE_SUCCESS = "删除用户信息成功";
     public static final String USER_ABLE_SUCCESS = "取消禁用用户成功";
     public static final String USER_LOGOUT_FAILURE = "退出登录失败";
-    public static final String SEND_EMAIL_FAIL = "发送邮件失败";
     public static final String TASK_UPDATE_SUCCESS =  "更新委托成功";
     public static final String TASK_PUBLISH_SUCCESS = "发布委托成功";
     public static final String TASK_PUBLISH_FAIL = "发布委托失败";

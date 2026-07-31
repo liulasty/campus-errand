@@ -23,6 +23,8 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.source>8</maven.compiler.source>
     <maven.compiler.target>8</maven.compiler.target>
+    <!-- 覆盖 Spring Boot 2.7.3 自带的 Lombok 1.18.24（不兼容 JDK 21），升级到支持 JDK 21 的版本 -->
+    <lombok.version>1.18.30</lombok.version>
   </properties>
   
 
@@ -54,11 +56,11 @@
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
   
-    <!-- Aliyun OSS -->
+    <!-- 七牛云对象存储 -->
     <dependency>
-      <groupId>com.aliyun.oss</groupId>
-      <artifactId>aliyun-sdk-oss</artifactId>
-      <version>3.11.0</version>
+      <groupId>com.qiniu</groupId>
+      <artifactId>qiniu-java-sdk</artifactId>
+      <version>7.14.0</version>
     </dependency>
   
     <dependency>
@@ -94,19 +96,8 @@
       <artifactId>java-jwt</artifactId>
       <version>4.4.0</version>
     </dependency>
-  
-    <!--javaMail-->
-    <dependency>
-      <groupId>javax.mail</groupId>
-      <artifactId>javax.mail-api</artifactId>
-      <version>1.5.6</version>
-    </dependency>
-    <dependency>
-      <groupId>com.sun.mail</groupId>
-      <artifactId>javax.mail</artifactId>
-      <version>1.5.3</version>
-    </dependency>
-  
+
+
     <!--解析JSON数据，并用于开发Android应用程序-->
     <dependency>
       <groupId>com.vaadin.external.google</groupId>

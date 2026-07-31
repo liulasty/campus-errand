@@ -48,7 +48,6 @@ public class WebSecurityConfig {
             PATH_SEPARATOR + "/user/login",
             "/user/login",
             "/user/register",
-            "/user/active/**",
             "/swagger-ui.html",
             "/swagger-resources/**",
             "/webjars/**",
@@ -57,6 +56,7 @@ public class WebSecurityConfig {
             "/druid/**",
             "/doc.html",
             "/img/upload",
+            "/img/uploadAvatar",
             "/user/logout",
             "/common/**",
             "/favicon.ico"

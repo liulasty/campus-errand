@@ -30,7 +30,6 @@ import com.lz.pojo.entity.UsersInfo;
 import com.lz.pojo.result.PageResult;
 import com.lz.pojo.vo.UserPageVO;
 import com.lz.service.IUsersService;
-import com.lz.utils.MailUtils;
 import com.lz.utils.PasswordUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -47,8 +46,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Transactional(rollbackFor = MyException.class)
 public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements IUsersService {
-
-    public static final String BASEURL = "http://localhost:80";
 
     @Autowired
     private UsersMapper usersMapper;
@@ -81,15 +78,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
 
         }
 
-        if (PasswordUtils.check(inputPassword, users.getPassword())) {
-            return true;
-        } else if (!users.getIsActive()) {
-            sendActivationEmail(users.getUserId(), users.getEmail(), BASEURL,
-                    "需激活后才能登录");
-            throw new MyException(MessageConstants.USER_NOT_ACTIVE);
-        }
-
-        return false;
+        return PasswordUtils.check(inputPassword, users.getPassword());
 
     }
 
@@ -105,52 +94,19 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
                 Users user = Users.builder().username(userDTO.getUsername())
                         .password(PasswordUtils.hashPassword(userDTO.getPassword()))
                         .role("user")
-                        .isActive(false)
+                        .isActive(true)
+                        .isEnabled(true)
+                        .activeTime(new Date(System.currentTimeMillis()))
                         .createTime(new Date(System.currentTimeMillis()))
                         .email(userDTO.getEmail())
                         .build();
 
                 usersMapper.insert(user);
 
-                sendActivationEmail(user.getUserId(), user.getEmail(),
-                        BASEURL, null);
-
                 return true;
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-        return false;
-    }
-
-    public void sendActivationEmail(Long id, String email, String baseUrl,
-            String msg) throws MyException {
-        try {
-            // 构建激活链接
-            String activeUrl = baseUrl + "/campus_entrustment/user/active/" + id;
-
-            MailUtils.sendMail(email,
-                    "你好，这是一封激活邮件，无需回复，点击此链接激活" + activeUrl
-                            + "\n" + msg,
-                    "测试邮件");
-            log.info("发送激活邮件成功");
-        } catch (Exception e) {
-            throw new MyException(MessageConstants.SEND_EMAIL_FAIL);
-        }
-    }
-
-    @Override
-    public boolean active(Long id) throws MyException {
-
-        if (usersMapper.selectById(id) != null) {
-            Users users = usersMapper.selectById(id);
-            if (users.getIsActive()) {
-                throw new MyException(MessageConstants.USER_ACTIVE_SUCCESS);
-            }
-            users.setIsActive(true);
-            users.setActiveTime(new Date(System.currentTimeMillis()));
-            usersMapper.updateById(users);
-            return true;
         }
         return false;
     }

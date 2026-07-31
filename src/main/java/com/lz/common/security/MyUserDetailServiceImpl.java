@@ -44,12 +44,6 @@ public class MyUserDetailServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("用户不存在");
         }
 
-        if (user.getIsActive() == null || !user.getIsActive()) {
-            log.error("用户未激活");
-
-            throw new UsernameNotFoundException("用户未激活");
-        }
-
         if (!user.getIsEnabled()) {
             log.error("用户信息：{}", user);
             throw new UsernameNotFoundException("用户未启用");

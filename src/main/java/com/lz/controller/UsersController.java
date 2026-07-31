@@ -13,11 +13,13 @@ import com.lz.pojo.entity.Users;
 import com.lz.pojo.entity.UsersInfo;
 import com.lz.pojo.result.PageResult;
 import com.lz.pojo.result.Result;
+import com.lz.pojo.vo.UserExportVO;
 import com.lz.pojo.vo.UserLoginVO;
 import com.lz.service.IUsersInfoService;
 import com.lz.service.IUsersService;
 import com.lz.utils.JwtUtil;
 import com.lz.utils.ValidateUtil;
+import com.lz.utils.excelutil.EasyExcelUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +35,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 存储系统用户信息 前端控制器
@@ -152,27 +156,6 @@ public class UsersController {
 
     }
 
-    /**
-     * 激活
-     *
-     * @param id 同上
-     *
-     * @return {@code Result<String>}
-     *
-     * @throws MyException 我的异常
-     */
-    @GetMapping(value = "/active/{id}")
-    @ApiOperation("激活")
-    public Result<String> active(@PathVariable Long id) throws MyException {
-        log.info("激活用户id:{}", id);
-        boolean active = usersService.active(id);
-        if (!active) {
-            return Result.error(MessageConstants.DATABASE_ERROR);
-        }
-
-        return Result.success(MessageConstants.USER_ACTIVE_SUCCESS);
-    }
-
     @DeleteMapping(value = "/logout")
     @ApiOperation("登出")
     public Result<String> logout(HttpServletRequest request) {
@@ -226,6 +209,23 @@ public class UsersController {
         Users users = usersService.getById(id);
 
         return Result.success(users);
+    }
+
+    @GetMapping(value = "/exportExcel")
+    @ApiOperation("导出用户列表 Excel")
+    @com.lz.Annotation.NoReturnHandle
+    public void exportExcel(HttpServletResponse response) throws MyException {
+        List<Users> users = usersService.list();
+        List<UserExportVO> rows = users.stream().map(u -> UserExportVO.builder()
+                .userId(u.getUserId())
+                .username(u.getUsername())
+                .email(u.getEmail())
+                .role(u.getRole())
+                .isActive(u.getIsActive())
+                .isEnabled(u.getIsEnabled())
+                .createTime(u.getCreateTime())
+                .build()).collect(Collectors.toList());
+        EasyExcelUtil.exportExcel(response, "用户列表", "用户列表", "用户列表", rows, UserExportVO.class);
     }
 
     /**

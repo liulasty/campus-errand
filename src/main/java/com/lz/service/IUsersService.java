@@ -36,15 +36,6 @@ public interface IUsersService extends IService<Users> {
     boolean register(UserDTO userDTO);
 
     /**
-     * 激活
-     *
-     * @param id 同上
-     *
-     * @return boolean
-     */
-    boolean active(Long id) throws MyException;
-
-    /**
      * 按页面获取用户
      *
      * @param config 查询数据
