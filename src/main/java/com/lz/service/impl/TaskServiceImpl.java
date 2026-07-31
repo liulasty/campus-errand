@@ -8,6 +8,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
@@ -24,6 +26,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lz.Exception.MyException;
+import com.lz.credit.constant.CreditConstant;
 import com.lz.mapper.DelegationCategoriesMapper;
 import com.lz.mapper.ReviewsMapper;
 import com.lz.mapper.TaskAcceptRecordsMapper;
@@ -60,6 +63,7 @@ import com.lz.pojo.vo.TaskAndUserInfoVO;
 import com.lz.pojo.vo.TaskDetails;
 import com.lz.pojo.vo.TaskDraftVO;
 import com.lz.pojo.vo.UserDelegateDraft;
+import com.lz.service.CreditScoreService;
 import com.lz.service.IDelegateAuditRecordsService;
 import com.lz.service.IDelegationCategoriesService;
 import com.lz.service.INotificationReadStatusService;
@@ -95,6 +99,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
 
     @Autowired
     private TaskMapper taskMapper;
+
+    @Autowired
+    private CreditScoreService creditScoreService;
 
     @Autowired
     private ISystemAnnouncementsService systemAnnouncementsService;
@@ -547,7 +554,16 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
             String location, String description,
             Long taskTypeId, Integer queryRules,
             TaskStatus status) {
-        Page<Task> page = new Page<>(pageNum, pageSize);
+        long total = taskMapper.selectCount(
+                buildSearchWrapper(location, description, taskTypeId, status));
+        List<Task> tasks = taskMapper.selectList(
+                buildSearchWrapper(location, description, taskTypeId, status).last("LIMIT 1000"));
+        return applyCreditSortAndPage(tasks, total, queryRules, pageNum, pageSize,
+                creditScoreService::getScore);
+    }
+
+    private QueryWrapper<Task> buildSearchWrapper(String location, String description,
+            Long taskTypeId, TaskStatus status) {
         QueryWrapper<Task> wrapper = new QueryWrapper<>();
         if (status != null) {
             wrapper.eq("Status", status);
@@ -564,14 +580,64 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         if (description != null && !"".equals(description)) {
             wrapper.like("Description", description);
         }
-        if (queryRules == 0) {
-            wrapper.orderByDesc("StartTime");
+        return wrapper;
+    }
 
-        } else {
-            wrapper.orderByAsc("StartTime");
+    /** 内存排序 + 分页（纯逻辑，便于单测）。scoreProvider 对去重后的 owner 各调用一次；返回 null 视为默认 60。 */
+    PageResult<Task> applyCreditSortAndPage(List<Task> tasks, long total, Integer queryRules,
+            int pageNum, int pageSize, Function<Long, Integer> scoreProvider) {
+        Set<Long> ownerIds = tasks.stream()
+                .map(Task::getOwnerId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, Integer> scoreByOwner = new HashMap<>();
+        for (Long ownerId : ownerIds) {
+            Integer score = scoreProvider.apply(ownerId);
+            scoreByOwner.put(ownerId,
+                    score == null ? CreditConstant.DEFAULT_USER_SCORE : score);
         }
-        page = taskMapper.selectPage(page, wrapper);
-        return new PageResult<>(page.getTotal(), page.getRecords());
+        for (Task task : tasks) {
+            if (task.getOwnerId() != null) {
+                task.setOwnerCredit(scoreByOwner.get(task.getOwnerId()));
+            }
+        }
+
+        boolean timeAsc = queryRules != null && queryRules != 0;
+        tasks.sort((a, b) -> {
+            int c = Integer.compare(creditOf(b), creditOf(a));
+            if (c != 0) {
+                return c;
+            }
+            int t = compareStartTime(a.getStartTime(), b.getStartTime(), timeAsc);
+            if (t != 0) {
+                return t;
+            }
+            return Long.compare(b.getTaskId(), a.getTaskId());
+        });
+
+        int from = Math.min((pageNum - 1) * pageSize, tasks.size());
+        int to = Math.min(from + pageSize, tasks.size());
+        List<Task> records = new ArrayList<>(tasks.subList(from, to));
+        return new PageResult<>(total, records);
+    }
+
+    private int creditOf(Task task) {
+        return task.getOwnerCredit() == null
+                ? CreditConstant.DEFAULT_USER_SCORE : task.getOwnerCredit();
+    }
+
+    private int compareStartTime(Date a, Date b, boolean asc) {
+        if (a == null && b == null) {
+            return 0;
+        }
+        if (a == null) {
+            return 1;
+        }
+        if (b == null) {
+            return -1;
+        }
+        int c = a.compareTo(b);
+        return asc ? c : -c;
     }
 
     /**
