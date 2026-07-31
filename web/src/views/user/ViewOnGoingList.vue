@@ -333,6 +333,10 @@
             this.handleQuery();
         },
         methods: {
+            // Vue2 模板仅能访问组件属性（methods/computed/data），import 函数需挂到 methods 才能在模板中使用
+            creditScore: creditScore,
+            creditLevel: creditLevel,
+            creditColor: creditColor,
             /*判断当前用户是否是发布者 */
             isPublisher(task) {
                 if (task.publisherId === this.$store.state.userInfo.userId) {
