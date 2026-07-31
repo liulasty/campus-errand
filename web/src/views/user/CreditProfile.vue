@@ -5,6 +5,15 @@
                 <span><i class="el-icon-medal"></i> 我的信用档案</span>
             </div>
             <div v-loading="loading">
+                <el-row :gutter="20" v-if="profile" class="credit-hero-row">
+                    <el-col :span="24">
+                        <el-card shadow="never" class="credit-hero">
+                            <div class="hero-score">{{ displayScore }}</div>
+                            <div class="hero-label">信用分 · {{ displayLevel }}</div>
+                        </el-card>
+                    </el-col>
+                </el-row>
+
                 <el-row :gutter="20" v-if="profile">
                     <el-col :span="6">
                         <el-card shadow="never" class="stat-card">
@@ -57,6 +66,17 @@
                 loading: false
             }
         },
+        computed: {
+            displayScore() {
+                return this.profile && this.profile.creditScore != null ? this.profile.creditScore : 60
+            },
+            displayLevel() {
+                const s = this.displayScore
+                if (s < 60) return '待提升'
+                if (s < 80) return '良好'
+                return '优秀'
+            }
+        },
         created() {
             this.getData()
         },
@@ -95,6 +115,28 @@
         color: #909399;
         font-size: 13px;
         margin-top: 6px;
+    }
+
+    .credit-hero-row {
+        margin-bottom: 10px;
+    }
+
+    .credit-hero {
+        text-align: center;
+        background: linear-gradient(135deg, #409EFF, #66b1ff);
+        color: #fff;
+        border: none;
+    }
+
+    .hero-score {
+        font-size: 44px;
+        font-weight: 700;
+    }
+
+    .hero-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        margin-top: 4px;
     }
 
     .review-item {
