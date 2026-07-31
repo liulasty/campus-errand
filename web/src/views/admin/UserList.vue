@@ -159,6 +159,18 @@
                         </el-form-item>
                         <el-form-item :label-width="formLabelWidth">
                             <div v-show="form.authStatus == '认证中'">
+                                <div style="margin-bottom: 10px;">
+                                    <span class="el-form-item__label" style="width: 80px;">驳回原因</span>
+                                    <el-radio-group v-model="rejectReason">
+                                        <el-radio label="照片不清晰">照片不清晰</el-radio>
+                                        <el-radio label="学号/工号不匹配">学号/工号不匹配</el-radio>
+                                        <el-radio label="身份信息不符">身份信息不符</el-radio>
+                                        <el-radio label="重复提交">重复提交</el-radio>
+                                        <el-radio label="其他">其他</el-radio>
+                                    </el-radio-group>
+                                    <el-input v-if="rejectReason === '其他'" v-model="rejectReasonOther"
+                                        placeholder="请输入具体原因" style="margin-top: 6px;"></el-input>
+                                </div>
                                 <el-button @click="cancelForm" size="medium">认 证 不 通 过</el-button>
                                 <el-button type="primary" @click="approvedCard()" size="medium">通 过 认
                                     证</el-button>
@@ -199,6 +211,8 @@
                 },
                 total: 0,
                 userList: [],
+                rejectReason: '照片不清晰',
+                rejectReasonOther: '',
                 tableData: [{
                     date: '2016-05-03',
                     name: '王小虎',
@@ -351,7 +365,17 @@
             },
             //拒绝通过审核
             async cancelForm() {
-                await executeConfirmedRequest(refuseToPassReview, this.form.userId, '是否确认拒绝通过审核吗？', '提示', '警告', '操作警告', '操作失败，请稍后重试', '操作已取消');
+                const reason = this.rejectReason === '其他' ? (this.rejectReasonOther || '其他') : this.rejectReason
+                const ok = await this.$confirm('是否确认拒绝通过审核？', '提示', {
+                    confirmButtonText: '确认驳回',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => true).catch(() => false)
+                if (!ok) return
+                const res = await refuseToPassReview(this.form.userId, reason)
+                if (res.data && res.data.code === 1) {
+                    this.$message.success('操作成功')
+                }
                 this.handleClose();
                 this.getUserPage()
 

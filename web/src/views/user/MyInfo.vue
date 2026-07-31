@@ -1,5 +1,12 @@
 <template>
   <div class="user-info-container">
+    <el-card v-if="code !== 4 && code !== 0" shadow="hover" style="margin-bottom: 10px;">
+      <el-alert v-if="code === 3" :title="'认证被驳回：' + (rejectReason || '材料不符')"
+        type="error" :closable="false" show-icon />
+      <el-alert v-else :title="authState === '认证中' ? '审核中，请等待管理员审核' : '完成 L1 实名认证后可发布委托、接单、打卡'"
+        type="warning" :closable="false" show-icon />
+    </el-card>
+
     <el-card shadow="hover" class="box-card" v-if="code != 4">
       <div slot="header" class="clearfix">
         <span><i class="el-icon-user"></i> 个人认证信息</span>
@@ -17,7 +24,10 @@
         <span><i class="el-icon-user-solid"></i> 我的资料</span>
         <el-tag type="success" size="small" style="float: right;">已认证</el-tag>
       </div>
-      
+      <div style="margin-bottom: 10px;">
+        <el-button type="info" size="small" disabled title="即将上线">L2 校园卡认证（即将上线）</el-button>
+      </div>
+
       <div class="user-profile">
         <el-row :gutter="40">
             <el-col :span="8" class="profile-left">
@@ -92,6 +102,10 @@
           </el-radio-group>
 
         </el-form-item>
+        <el-form-item label="身份标识" prop="identityNo">
+          <el-input v-model="infoAddForm.identityNo"
+            :placeholder="infoAddForm.role === 'student' ? '请输入学号' : infoAddForm.role === 'teacher' ? '请输入工号' : '请输入校内编号'"></el-input>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogUserInfo = false">取 消</el-button>
@@ -157,9 +171,17 @@ export default {
         imgUrl: '',
         qq: '',
         role: 'student',
+        identityNo: '',
       },
+      rejectReason: '',
       playerInfo: {},
 
+    }
+  },
+  computed: {
+    authState() {
+      const map = {1: '未认证', 2: '认证中', 3: '认证失败', 4: '认证通过'}
+      return map[this.code] || '未认证'
     }
   },
   mounted() {
@@ -175,6 +197,7 @@ export default {
         console.log("用户信息", data.data.data);
         if (data.data.code === 1) {
           var info = data.data.data;
+          this.rejectReason = info.rejectReason || '';
           if (info.authStatus && info.authStatus === '认证中') {
 
             this.updateButton(2)
@@ -202,6 +225,10 @@ export default {
       this.dialogUserInfo = true;
     },
     async submitAnApplication() {
+      if (!this.infoAddForm.name) { this.$message.warning('请填写姓名'); return }
+      if (!this.infoAddForm.identityNo) { this.$message.warning('请填写身份标识'); return }
+      const imgs = this.$refs.imageSet && this.$refs.imageSet.imageUrls
+      if (!imgs || !imgs.length) { this.$message.warning('请上传身份照片'); return }
 
       await this.$refs.imageSet.uploadImages();
       this.infoAddForm.imgUrl = this.$refs.imageSet.imageUrls[0].ossUrl;

@@ -110,9 +110,9 @@ export const confirmToPassTheReview = (id) => {
 }
 
 
-export const refuseToPassReview = (id) => {
+export const refuseToPassReview = (id, reason) => {
     console.log("拒绝通过审核");
-    return http.put('/userInfo/refuseToPassReview/' + id)
+    return http.put('/userInfo/refuseToPassReview/' + id, null, { params: { reason } })
 }
 
 export const getUserList = (listSelectCondition) => {
