@@ -169,8 +169,7 @@
                                 index: 'w-3',
                                 children: [
                                     { path: '/myDelegationPublishList', name: 'myDelegationPublishList', label: '我发布的订单', icon: 'document-add', index: 'w-3-1' },
-                                    { path: '/myDelegationAcceptList', name: 'myDelegationAcceptList', label: '我承接的订单', icon: 'document-checked', index: 'w-3-2' },
-                                    { path: '/myDelegationProgress', name: 'myDelegationProgress', label: '履约进度', icon: 's-flag', index: 'w-3-3' }
+                                    { path: '/myDelegationAcceptList', name: 'myDelegationAcceptList', label: '我承接的订单', icon: 'document-checked', index: 'w-3-2' }
                                 ]
                             },
                             { path: '/messageCenter', name: 'messageCenter', label: '消息中心', icon: 'bell', index: 'w-4' },

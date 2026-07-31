@@ -72,7 +72,8 @@ import { getTaskAndPublishUserInfoByTaskId } from '@/api/user.js'
         },
         created() {
             if (!this.taskId) {
-                this.$message.error('缺少任务ID')
+                this.$message.warning('请从「我承接的订单」进入履约进度')
+                this.$router.replace('/myDelegationAcceptList')
                 return
             }
             this.loadData()
