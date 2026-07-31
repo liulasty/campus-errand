@@ -80,5 +80,9 @@ public class Task implements Serializable {
     @ApiModelProperty(value = "任务状态")
     @TableField(value = "STATUS",typeHandler = TaskStatusTypeHandler.class)
     private TaskStatus status;
-    
+
+    @ApiModelProperty(value = "发布者信用分（瞬态，不落库，大厅展示用）")
+    @TableField(exist = false)
+    private Integer ownerCredit;
+
 }
