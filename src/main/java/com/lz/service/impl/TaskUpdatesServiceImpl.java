@@ -1,5 +1,6 @@
 package com.lz.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lz.Exception.MyException;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * <p>
@@ -240,6 +242,20 @@ public class TaskUpdatesServiceImpl extends ServiceImpl<TaskUpdatesMapper, TaskU
         String description = taskNodeDTO.getRemark() != null && !taskNodeDTO.getRemark().trim().isEmpty()
                 ? taskNodeDTO.getRemark().trim() : nodeType.getWebValue();
 
+        int level = levelOf(nodeType);
+        Integer currentMax = list(new QueryWrapper<TaskUpdates>()
+                .eq("TaskID", task.getTaskId())
+                .in("UpdateType", TaskUpdateType.CONTACTED.getDbValue(),
+                        TaskUpdateType.PICKED_UP.getDbValue(),
+                        TaskUpdateType.DELIVERED.getDbValue(),
+                        TaskUpdateType.AUTO_ADVANCE.getDbValue()))
+                .stream()
+                .map(TaskUpdates::getNodeIndex)
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo)
+                .orElse(0);
+        int nodeIndex = Math.max(currentMax, level);
+
         TaskUpdates updates = TaskUpdates.builder()
                 .taskId(task.getTaskId())
                 .userId(user.getUserId())
@@ -247,9 +263,23 @@ public class TaskUpdatesServiceImpl extends ServiceImpl<TaskUpdatesMapper, TaskU
                 .updateDescription(description)
                 .imgUrl(taskNodeDTO.getImgUrl())
                 .location(taskNodeDTO.getLocation())
+                .nodeIndex(nodeIndex)
                 .updateTime(new Date())
                 .build();
         save(updates);
         return updates;
+    }
+
+    private int levelOf(TaskUpdateType nodeType) {
+        if (nodeType == TaskUpdateType.CONTACTED) {
+            return 1;
+        }
+        if (nodeType == TaskUpdateType.PICKED_UP) {
+            return 2;
+        }
+        if (nodeType == TaskUpdateType.DELIVERED) {
+            return 3;
+        }
+        return 0;
     }
 }
