@@ -35,5 +35,13 @@ public class UserPageVO {
     private String identityNo;
     /** 信用分（0-100） */
     private Integer creditScore;
+    /** 姓名 */
+    private String name;
+    /** 用户角色（student/teacher/other） */
+    private String userRole;
+    /** 认证照片 */
+    private String roleImgSrc;
+    /** 认证申请时间 */
+    private Date certifieTime;
 
 }

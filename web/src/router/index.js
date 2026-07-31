@@ -10,6 +10,7 @@ import Landing from '../views/public/Landing.vue'
 import MyInfo from '../views/user/MyInfo.vue'
 import CreateDelegation from '@/views/user/CreateDelegation.vue'
 import UserList from '@/views/admin/UserList.vue'
+import RealNameAudit from '@/views/admin/RealNameAudit.vue'
 import DraftList from '@/views/admin/DraftList.vue'
 import AuditList from '@/views/admin/AuditList.vue'
 import PublishedList from '@/views/admin/PublishedList.vue'
@@ -54,6 +55,7 @@ const routes = [
             { path: '/page2', name: 'page2', component: pageTwo },
             { path: '/page3', name: 'page3', component: pageThree },
             { path: '/userList', name: 'userList', component: UserList },
+            { path: '/admin/realNameAudit', name: 'realNameAudit', component: RealNameAudit },
             { path: '/draftList', name: 'draftList', component: DraftList },
             { path: '/auditList', name: 'auditList', component: AuditList },
             { path: '/publishedList', name: 'publishedList', component: PublishedList },

@@ -133,7 +133,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             BeanUtils.copyProperties(users, userPageVO);
             UsersInfo byId = usersInfoMapper.selectById(users.getUserId());
 
-            // 设置认证状态、认证等级、身份标识、信用分
+            // 设置认证状态、认证等级、身份标识、信用分、实名材料
             if (byId == null) {
                 userPageVO.setAuthStatus(AuthenticationStatus.UNAUTHORIZED);
                 userPageVO.setAuthLevel(0);
@@ -142,6 +142,10 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
                 userPageVO.setAuthStatus(byId.getAuthStatus());
                 userPageVO.setAuthLevel(byId.getAuthLevel());
                 userPageVO.setIdentityNo(byId.getIdentityNo());
+                userPageVO.setName(byId.getName());
+                userPageVO.setUserRole(byId.getUserRole());
+                userPageVO.setRoleImgSrc(byId.getRoleImgSrc());
+                userPageVO.setCertifieTime(byId.getCertifieTime());
             }
             userPageVO.setCreditScore(users.getCreditScore());
             userPageVOS.add(userPageVO);
