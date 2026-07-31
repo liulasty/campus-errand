@@ -123,7 +123,7 @@ export default {
               message: result.data.msg,
               type: 'success'
             });
-            this.imageSrc = "https://" + result.data.data;
+            this.imageSrc = "http://" + result.data.data;
             // 在组件中调用 mutations 中的方法
             this.$store.commit('updatedAvatarSrc', this.imageSrc);
             console.log("上传头像后", this.$store.state.userInfo);

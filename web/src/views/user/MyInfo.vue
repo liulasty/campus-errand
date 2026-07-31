@@ -107,11 +107,8 @@ import {
   getUserInfo,
   submitCertificationInformation,
   deleteAuthenticationInformation,
-  getAthleteRegistrationTotal,
   exportExcel
 } from '@/api'
-import { downloadFile } from '@/utils/downloadFile';
-import {updateAthlete} from '@/api'
 import ImageUploader from '@/components/ImageUploader.vue'
 import {executeConfirmedRequest} from '@/utils/globalConfirmAction'
 
@@ -200,45 +197,6 @@ export default {
       this.code = id;
       this.msg = this.userOption[id].msg
       this.button = this.userOption[id].button
-    },
-    submitForm() {
-
-      getAthleteRegistrationTotal(this.infoForm.athleteId).then((data) => {
-
-        if (data.data.data == 0) {
-          console.log("运动员参加项目总数", data.data.data > 0);
-          this.dialogUpdateForm = true
-          this.infoUpdateForm = this.infoForm
-        } else {
-          this.$notify.error({
-            title: '失败',
-            message: '有比赛记录在无法修改'
-          });
-        }
-      })
-
-    },
-
-    UpdateInfo() {
-      console.log("提交修改运动员信息", this.infoUpdateForm);
-      updateAthlete(this.infoUpdateForm).then((data) => {
-        if (data.data.code == 1) {
-          console.log("修改运动员信息成功", data.data.data > 0);
-          this.dialogUpdateForm = true
-          this.infoUpdateForm = this.infoForm
-          this.$message({
-            showClose: true,
-            message: '修改成功，请重新登录',
-            type: 'success'
-          })
-          this.$router.push('/login')
-        } else {
-          this.$notify.error({
-            title: '修改运动员信息失败',
-            message: data.data.msg
-          });
-        }
-      })
     },
     applyForModification() {
       this.dialogUserInfo = true;

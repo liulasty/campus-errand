@@ -87,7 +87,7 @@
 </template>
 
 <script>
-    import { listDelegateRecords, delDelegate, getDelegateByTaskID, addDelegateauditrecords, updateDelegateauditrecords, getTaskCategories, FallbackDraft, allowPublish, notAllowed } from "@/api/";
+    import { listDelegateRecords, delDelegate, getDelegateByTaskID, getTaskCategories, FallbackDraft, allowPublish, notAllowed } from "@/api/";
 
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
 
@@ -272,26 +272,6 @@
                 this.multiple = !selection.length
             },
 
-            /** 提交按钮 */
-            submitForm() {
-                this.$refs["form"].validate(valid => {
-                    if (valid) {
-                        if (this.form.RecordID != null) {
-                            updateDelegateauditrecords(this.form).then(response => {
-                                this.$modal.msgSuccess("修改成功");
-                                this.open = false;
-                                this.getList();
-                            });
-                        } else {
-                            addDelegateauditrecords(this.form).then(response => {
-                                this.$modal.msgSuccess("新增成功");
-                                this.open = false;
-                                this.getList();
-                            });
-                        }
-                    }
-                });
-            },
             /** 查看按钮操作 */
             handleView(id) {
 
