@@ -77,5 +77,17 @@ public class UsersInfo implements Serializable {
     @TableField(value = "auth_status",typeHandler =
             AuthenticationStatusTypeHandler.class)
     private AuthenticationStatus authStatus;
-    
+
+    @ApiModelProperty(value = "学号/工号/其他校内编号（按 userRole 区分）")
+    @TableField(value = "identity_no")
+    private String identityNo;
+
+    @ApiModelProperty(value = "认证等级（0=未认证,1=L1实名,2=L2校园卡）")
+    @TableField(value = "auth_level")
+    private Integer authLevel;
+
+    @ApiModelProperty(value = "管理员驳回原因")
+    @TableField(value = "reject_reason")
+    private String rejectReason;
+
 }
