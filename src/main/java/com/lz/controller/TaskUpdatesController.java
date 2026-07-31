@@ -21,6 +21,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lz.Exception.MyException;
 import com.lz.pojo.Enum.TaskUpdateType;
 import com.lz.pojo.constants.MessageConstants;
+import com.lz.pojo.dto.TaskNodeDTO;
 import com.lz.pojo.dto.TaskUpdateDTO;
 import com.lz.pojo.entity.TaskUpdates;
 import com.lz.pojo.result.PageResult;
@@ -62,14 +63,15 @@ public class TaskUpdatesController {
             @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize,
             @RequestParam(value = "DelegateComment", required = false) String DelegateComment,
             @RequestParam(value = "ReviewStatus", required = false) String ReviewStatus,
-            @RequestParam(value = "ReviewTime", required = false) @DateTimeFormat(fallbackPatterns = "yyyy-MM-dd") Date ReviewTime
+            @RequestParam(value = "ReviewTime", required = false) @DateTimeFormat(fallbackPatterns = "yyyy-MM-dd") Date ReviewTime,
+            @RequestParam(value = "taskId", required = false) Long taskId
 
     ) {
         Page<TaskUpdates> page = new Page<>(pageNum, pageSize);
-        log.info("delegateComment: {}, reviewStatus: {}, reviewTime: {}", DelegateComment,
-                ReviewStatus, ReviewTime);
+        log.info("delegateComment: {}, reviewStatus: {}, reviewTime: {}, taskId: {}", DelegateComment,
+                ReviewStatus, ReviewTime, taskId);
 
-        IPage<TaskUpdates> taskUpdatesPage = taskUpdateService.page(page, DelegateComment, ReviewStatus, ReviewTime);
+        IPage<TaskUpdates> taskUpdatesPage = taskUpdateService.page(page, DelegateComment, ReviewStatus, ReviewTime, taskId);
 
         return Result.success(
                 new PageResult<>(taskUpdatesPage.getTotal(), taskUpdatesPage.getRecords()));
@@ -94,6 +96,14 @@ public class TaskUpdatesController {
     public Result<TaskUpdates> addUpdate(@RequestBody TaskUpdateDTO taskUpdateDTO)
             throws MyException {
         TaskUpdates taskUpdates = taskUpdateService.addUpdate(taskUpdateDTO);
+        return Result.success(taskUpdates, MessageConstants.TASK_UPDATE_SUCCESS);
+    }
+
+    @PostMapping("/node")
+    @ApiOperation("添加任务履约节点打卡")
+    public Result<TaskUpdates> addNodeUpdate(@RequestBody TaskNodeDTO taskNodeDTO)
+            throws MyException {
+        TaskUpdates taskUpdates = taskUpdateService.addNodeUpdate(taskNodeDTO);
         return Result.success(taskUpdates, MessageConstants.TASK_UPDATE_SUCCESS);
     }
 }

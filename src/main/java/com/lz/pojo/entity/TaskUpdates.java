@@ -59,5 +59,13 @@ public class TaskUpdates implements Serializable {
     @TableField(value = "UpdateDescription")
     private String updateDescription;
 
+    @ApiModelProperty(value = "打卡图片")
+    @TableField(value = "ImgUrl")
+    private String imgUrl;
+
+    @ApiModelProperty(value = "打卡定位坐标")
+    @TableField(value = "Location")
+    private String location;
+
 
 }

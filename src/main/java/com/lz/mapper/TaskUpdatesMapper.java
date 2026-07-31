@@ -26,5 +26,5 @@ public interface TaskUpdatesMapper extends BaseMapper<TaskUpdates> {
                              String taskAcceptSuccess) ;
     
     IPage<TaskUpdates> page(Page<TaskUpdates> page, String updateDescription,
-                            String updateType, Date updateTime);
+                            String updateType, Date updateTime, Long taskId);
 }

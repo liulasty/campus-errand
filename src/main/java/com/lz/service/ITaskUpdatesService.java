@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lz.Exception.MyException;
 import com.lz.pojo.Enum.TaskUpdateType;
+import com.lz.pojo.dto.TaskNodeDTO;
 import com.lz.pojo.dto.TaskUpdateDTO;
 import com.lz.pojo.entity.TaskUpdates;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -67,7 +68,7 @@ public interface ITaskUpdatesService extends IService<TaskUpdates> {
                       String dataAuditFail);
 
 
-    IPage<TaskUpdates> page(Page<TaskUpdates> page, String delegateComment, String reviewStatus, Date reviewTime);
+    IPage<TaskUpdates> page(Page<TaskUpdates> page, String delegateComment, String reviewStatus, Date reviewTime, Long taskId);
 
     /**
      * 委托任务取消发布
@@ -83,4 +84,12 @@ public interface ITaskUpdatesService extends IService<TaskUpdates> {
      * @return TaskUpdates
      */
     TaskUpdates addUpdate(TaskUpdateDTO taskUpdateDTO) throws MyException;
+
+    /**
+     * 添加履约节点打卡
+     *
+     * @param taskNodeDTO 节点打卡数据
+     * @return TaskUpdates
+     */
+    TaskUpdates addNodeUpdate(TaskNodeDTO taskNodeDTO) throws MyException;
 }

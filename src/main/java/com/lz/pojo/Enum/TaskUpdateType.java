@@ -44,8 +44,23 @@ public enum TaskUpdateType {
     /**
      * 进度更新
      */
-    PROGRESS_UPDATE("PROGRESS_UPDATE", 5, "进度更新");
-    
+    PROGRESS_UPDATE("PROGRESS_UPDATE", 5, "进度更新"),
+
+    /**
+     * 履约节点：已联系
+     */
+    CONTACTED("CONTACTED", 6, "已联系"),
+
+    /**
+     * 履约节点：已取件
+     */
+    PICKED_UP("PICKED_UP", 7, "已取件"),
+
+    /**
+     * 履约节点：已送达
+     */
+    DELIVERED("DELIVERED", 8, "已送达");
+
 
 
     

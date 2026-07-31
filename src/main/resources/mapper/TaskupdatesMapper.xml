@@ -9,6 +9,9 @@
 	<select id="page" resultType="com.lz.pojo.entity.TaskUpdates">
 		select * from taskupdates
 		where 1=1
+			<if test="taskId != null">
+				and taskId = #{taskId}
+			</if>
 			<if test="updateType != null and updateType != ''">
 				and updateType = #{updateType}
 			</if>

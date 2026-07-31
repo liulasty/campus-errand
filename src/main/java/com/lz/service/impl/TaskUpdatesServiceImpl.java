@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lz.Exception.MyException;
 import com.lz.mapper.TaskMapper;
 import com.lz.mapper.UsersMapper;
+import com.lz.pojo.dto.TaskNodeDTO;
 import com.lz.pojo.dto.TaskUpdateDTO;
 import com.lz.pojo.Enum.TaskUpdateType;
 import com.lz.pojo.entity.Task;
@@ -163,10 +164,10 @@ public class TaskUpdatesServiceImpl extends ServiceImpl<TaskUpdatesMapper, TaskU
     }
 
     @Override
-    public IPage<TaskUpdates> page(Page<TaskUpdates> page, String delegateComment, String reviewStatus, Date reviewTime) {
-        log.info("delegateComment: {}, reviewStatus: {}, reviewTime: {}", delegateComment, reviewStatus, reviewTime);
+    public IPage<TaskUpdates> page(Page<TaskUpdates> page, String delegateComment, String reviewStatus, Date reviewTime, Long taskId) {
+        log.info("delegateComment: {}, reviewStatus: {}, reviewTime: {}, taskId: {}", delegateComment, reviewStatus, reviewTime, taskId);
         IPage<TaskUpdates> list = taskUpdatesMapper.page(page, delegateComment,
-                                                     reviewStatus, reviewTime);
+                                                     reviewStatus, reviewTime, taskId);
         return list;
     }
 
@@ -205,6 +206,47 @@ public class TaskUpdatesServiceImpl extends ServiceImpl<TaskUpdatesMapper, TaskU
                 .userId(user.getUserId())
                 .updateType(TaskUpdateType.PROGRESS_UPDATE)
                 .updateDescription(taskUpdateDTO.getDescription())
+                .updateTime(new Date())
+                .build();
+        save(updates);
+        return updates;
+    }
+
+    @Override
+    public TaskUpdates addNodeUpdate(TaskNodeDTO taskNodeDTO) throws MyException {
+        Users user = getCurrentAdmin();
+        Task task = taskMapper.selectById(taskNodeDTO.getTaskId());
+        if (task == null) {
+            throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
+
+        if (task.getReceiverId() == null || !task.getReceiverId().equals(user.getUserId())) {
+            throw new MyException(MessageConstants.PERMISSION_DENIED);
+        }
+
+        if (task.getStatus() != TaskStatus.ACCEPTED) {
+            throw new MyException("任务未在执行中");
+        }
+
+        TaskUpdateType nodeType = TaskUpdateType.fromDbValue(taskNodeDTO.getNodeType());
+        if (nodeType == null) {
+            nodeType = TaskUpdateType.fromWebValue(taskNodeDTO.getNodeType());
+        }
+        if (nodeType != TaskUpdateType.CONTACTED && nodeType != TaskUpdateType.PICKED_UP
+                && nodeType != TaskUpdateType.DELIVERED) {
+            throw new MyException("无效的打卡节点类型");
+        }
+
+        String description = taskNodeDTO.getRemark() != null && !taskNodeDTO.getRemark().trim().isEmpty()
+                ? taskNodeDTO.getRemark().trim() : nodeType.getWebValue();
+
+        TaskUpdates updates = TaskUpdates.builder()
+                .taskId(task.getTaskId())
+                .userId(user.getUserId())
+                .updateType(nodeType)
+                .updateDescription(description)
+                .imgUrl(taskNodeDTO.getImgUrl())
+                .location(taskNodeDTO.getLocation())
                 .updateTime(new Date())
                 .build();
         save(updates);
