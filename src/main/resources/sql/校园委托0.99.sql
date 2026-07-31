@@ -279,6 +279,9 @@ CREATE TABLE `usersinfo` (
   `CertifiedTime` datetime DEFAULT NULL COMMENT '用户认证通过时间',
   `userRole` enum('student','teacher','other') NOT NULL COMMENT '用户角色',
   `auth_status` varchar(25) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '认证状态',
+  `identity_no` varchar(50) DEFAULT NULL COMMENT '学号/工号/其他校内编号（按 userRole 区分）',
+  `auth_level` tinyint NOT NULL DEFAULT '0' COMMENT '认证等级（0=未认证,1=L1实名,2=L2校园卡）',
+  `reject_reason` varchar(255) DEFAULT NULL COMMENT '管理员驳回原因',
   PRIMARY KEY (`UserID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='存储系统用户详细信息';
 
