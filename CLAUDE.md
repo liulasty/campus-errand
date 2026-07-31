@@ -48,7 +48,7 @@ npm run build                        # 构建验证
 ## 环境约束（本机）
 
 - **开发工具/配置统一在 `D:\soft-tools`**（Maven 3.6.3/3.9.16、Node/nvm、Redis、Git、IDEA、MySQL 客户端 SQLyog 等）。**不要随意更改该目录下的配置**；如需调整，先与用户确认。
-- Maven 本地依赖仓库在 `D:\CODE\mvn_repository`（非 `~/.m2`，`$HOME` 为空）。
+- Maven 本地依赖仓库在 **`D:\soft-tools\.m2\repository`**（用户确认的规范位置；注意 `D:\soft-tools\apache-maven-*/conf/settings.xml` 的 `localRepository` 目前仍指向 `D:\CODE\mvn_repository`，两者并存 — 不要改 soft-tools 下的配置）。
 - 后端端口 80、上下文 `/campus_entrustment`（在 gitignored 的 `application-dev.yml`）；前端 8080。
 - MySQL：`localhost:3306` 库 `campus_entrustment`，root/1234。SQL 脚本 `src/main/resources/sql/校园委托0.99.sql`。
 - **Redis 安装目录在 `D:\soft-tools\redis`，RabbitMQ 未装**：缓存与消息通知功能是否可用取决于对应服务是否启动（后端惰性连接可启动）；定时任务 `TaskAutoAdvance`（`app.auto-advance.*`，node-hours=6/complete-hours=24）依赖 MySQL 可跑。
