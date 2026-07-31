@@ -67,6 +67,7 @@ import com.lz.service.INotificationsService;
 import com.lz.service.ISystemAnnouncementsService;
 import com.lz.service.ITaskService;
 import com.lz.service.ITaskUpdatesService;
+import com.lz.service.impl.SensitiveWordService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -121,6 +122,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
 
     @Autowired
     private INotificationsService notificationsService;
+
+    @Autowired
+    private SensitiveWordService sensitiveWordService;
 
     /**
      * 获取最新信息
@@ -355,6 +359,8 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
             throw new MyException("类别不存在");
         }
 
+        checkSensitive(taskDTO.getContent(), taskDTO.getLocation());
+
         Task task = Task.builder()
                 .createdAt(new Date(System.currentTimeMillis()))
                 .description(taskDTO.getContent())
@@ -374,6 +380,20 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
                 .updateTime(new Date(System.currentTimeMillis()))
                 .userId(taskDTO.getOwnerId()).build();
         taskUpdatesMapper.insert(taskUpdates);
+    }
+
+    /**
+     * 校验文本是否含敏感词，命中则抛出异常（发布委托拦截）
+     */
+    private void checkSensitive(String... texts) throws MyException {
+        List<String> hits = new java.util.ArrayList<>();
+        for (String text : texts) {
+            hits.addAll(sensitiveWordService.check(text));
+        }
+        if (!hits.isEmpty()) {
+            List<String> distinct = hits.stream().distinct().collect(java.util.stream.Collectors.toList());
+            throw new MyException("发布内容包含敏感词：" + String.join("、", distinct));
+        }
     }
 
     /**

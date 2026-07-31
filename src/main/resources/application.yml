@@ -53,3 +53,11 @@ logging:
 #    rollingpolicy:
 #      max-file-size: 4KB
 #      file-name-pattern: server.%d{yyyy-MM-dd}.%i.log
+
+# 已完成委托自动评价（演示时调小 delay-hours 可快速触发）
+app:
+  auto-review:
+    enabled: true
+    # 完成后多少小时仍无评价则自动补一条中性好评
+    delay-hours: 24
+    cron: "0 13 * * * ?"

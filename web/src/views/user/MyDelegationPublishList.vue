@@ -162,9 +162,24 @@
                             v-for="(activity, index) in taskUpdates"
                             :key="index"
                             :timestamp="activity.updateTime"
-                            :color="['进度更新', 5, 'PROGRESS_UPDATE'].includes(activity.updateType) ? '#0bbd87' : ''">
-                            {{activity.updateDescription}}
-                            <el-tag size="mini" v-if="['进度更新', 5, 'PROGRESS_UPDATE'].includes(activity.updateType)" type="success">进度</el-tag>
+                            :color="nodeMeta(activity.updateType) ? nodeMeta(activity.updateType).color : '#c0c4cc'">
+                            <template v-if="nodeMeta(activity.updateType)">
+                                <div class="node-activity">
+                                    <div class="node-activity-header">
+                                        <i :class="nodeMeta(activity.updateType).icon"></i>
+                                        <el-tag :color="nodeMeta(activity.updateType).color" size="small" effect="dark">{{ nodeMeta(activity.updateType).label }}</el-tag>
+                                        <span v-if="activity.updateDescription && activity.updateDescription !== nodeMeta(activity.updateType).label" class="node-remark">{{ activity.updateDescription }}</span>
+                                    </div>
+                                    <div v-if="activity.location" class="node-location">
+                                        <i class="el-icon-location-outline"></i> {{ activity.location }}
+                                    </div>
+                                    <el-image v-if="activity.imgUrl" :src="activity.imgUrl" class="node-img" fit="cover" :preview-src-list="[activity.imgUrl]"></el-image>
+                                </div>
+                            </template>
+                            <template v-else>
+                                {{ activity.updateDescription }}
+                                <el-tag size="mini" type="success">进度</el-tag>
+                            </template>
                         </el-timeline-item>
                     </el-timeline>
                     <div v-if="taskUpdates.length === 0" style="text-align: center; color: #909399;">暂无动态</div>
@@ -213,6 +228,7 @@
 </template>
 <script>
     import { getTaskCategories, listDelegateUpdateRecords } from '@/api/'
+    import { getNodeMeta } from '@/utils/taskNode.js'
     import {
         publishDelegationList, queryTheEntrustmentDetailsByEntrustmentNumber, confirmTheRecipient,
         cancelPublishUser, updateDelegationCompleted
@@ -460,12 +476,15 @@
                 listDelegateUpdateRecords({
                     taskId: taskId,
                     pageNum: 1,
-                    pageSize: 100 
+                    pageSize: 100
                 }).then(response => {
                     if (response.data.code === 1) {
                         this.taskUpdates = response.data.data.records;
                     }
                 });
+            },
+            nodeMeta(updateType) {
+                return getNodeMeta(updateType);
             },
             getDelegationAcceptListLength() {
 
@@ -563,6 +582,40 @@
 
     .my-content {
         background: #FDE2E2;
+    }
+
+    .node-activity {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .node-activity-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .node-activity-header i {
+        font-size: 16px;
+        color: #606266;
+    }
+
+    .node-remark {
+        color: #303133;
+        font-size: 13px;
+    }
+
+    .node-location {
+        font-size: 12px;
+        color: #909399;
+    }
+
+    .node-img {
+        width: 90px;
+        height: 90px;
+        border-radius: 6px;
+        border: 1px solid #ebeef5;
     }
 
     /* .el-dialog__body {

@@ -2,7 +2,7 @@
 SQLyog Professional v12.09 (64 bit)
 MySQL - 8.0.40 : Database - campus_entrustment
 *********************************************************************
-*/
+*/
 
 /*!40101 SET NAMES utf8 */;
 
@@ -230,8 +230,10 @@ CREATE TABLE `taskupdates` (
   `TaskID` int DEFAULT NULL COMMENT '对应的任务ID',
   `UserID` int DEFAULT NULL COMMENT '进行更新的用户ID',
   `UpdateTime` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '更新时间',
-  `UpdateType` enum('CREATED','AUDITING','PUBLISHED','RESULT','FALLBACK_DRAFT') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'CREATED' COMMENT '委托更新记录类型',
+  `UpdateType` enum('CREATED','AUDITING','PUBLISHED','RESULT','FALLBACK_DRAFT','PROGRESS_UPDATE','CONTACTED','PICKED_UP','DELIVERED') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'CREATED' COMMENT '委托更新记录类型',
   `UpdateDescription` text NOT NULL COMMENT '更新描述',
+  `ImgUrl` varchar(255) DEFAULT NULL COMMENT '打卡图片',
+  `Location` varchar(255) DEFAULT NULL COMMENT '打卡定位坐标',
   PRIMARY KEY (`UpdateID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=96 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='记录委托更新情况';
 
@@ -258,7 +260,7 @@ CREATE TABLE `users` (
 
 /*Data for the table `users` */
 
-insert  into `users`(`UserID`,`Username`,`PASSWORD`,`Email`,`IsActive`,`Role`,`CreateTime`,`ActiveTime`,`IsEnabled`) values (1,'majiaqi','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'ADMIN','2024-04-14 11:17:48','2024-04-14 11:24:21',1),(2,'zhangsan','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-04-10 11:27:28','2024-04-15 01:38:52',1),(3,'lisiyuan','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-04-11 11:27:55','2024-04-15 01:38:46',1),(4,'wangang','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-04-12 11:28:31','2024-04-15 01:39:10',1),(5,'zhaoliu','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-04-13 11:28:49','2024-04-15 01:39:05',1),(6,'liuyong','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-04-10 11:29:10','2024-04-20 08:16:14',1),(7,'liuyuyuan','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-05-09 14:39:27','2024-05-09 14:39:46',1),(9,'wuchenhao','$2a$10$GIVxUOwTAtpyr17NzOh.3.FLOxaZLhZRY0xRnVy/i60YYw6nlY0Da','2310492941@qq.com',0,'USER','2024-05-16 07:53:37',NULL,0),(10,'liuchen','$2a$10$8IoHXliFKLIvnako9y8Up..aeYXAHN4/g7c44u/EY2JY.6MRFbFnS','2312034544@qq.com',1,'USER','2024-05-22 06:55:58','2024-05-23 13:40:30',0);
+insert  into `users`(`UserID`,`Username`,`PASSWORD`,`Email`,`IsActive`,`Role`,`CreateTime`,`ActiveTime`,`IsEnabled`) values (1,'majiaqi','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'ADMIN','2024-04-14 11:17:48','2024-04-14 11:24:21',1),(2,'zhangsan','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-04-10 11:27:28','2024-04-15 01:38:52',1),(3,'lisiyuan','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-04-11 11:27:55','2024-04-15 01:38:46',1),(4,'wangang','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-04-12 11:28:31','2024-04-15 01:39:10',1),(5,'zhaoliu','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-04-13 11:28:49','2024-04-15 01:39:05',1),(6,'liuyong','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-04-10 11:29:10','2024-04-20 08:16:14',1),(7,'liuyuyuan','$2a$10$0LJOz/jc7oTTJPSuSlF/nexQG.xQ69AaaoifvbC.Sdzyf8QLrBrBu','2312034544@qq.com',1,'USER','2024-05-09 14:39:27','2024-05-09 14:39:46',1),(9,'wuchenhao','$2a$10$GIVxUOwTAtpyr17NzOh.3.FLOxaZLhZRY0xRnVy/i60YYw6nlY0Da','2310492941@qq.com',1,'USER','2024-05-16 07:53:37',NULL,0),(10,'liuchen','$2a$10$8IoHXliFKLIvnako9y8Up..aeYXAHN4/g7c44u/EY2JY.6MRFbFnS','2312034544@qq.com',1,'USER','2024-05-22 06:55:58','2024-05-23 13:40:30',0);
 
 /*Table structure for table `usersinfo` */
 
@@ -280,6 +282,22 @@ CREATE TABLE `usersinfo` (
 /*Data for the table `usersinfo` */
 
 insert  into `usersinfo`(`UserID`,`name`,`PhoneNumber`,`qqNumber`,`roleImgSrc`,`CertifieTime`,`CertifiedTime`,`userRole`,`auth_status`) values (2,'李易峰','15619763223','2312034544','photos/3b6434b5-c0a5-4344-9abe-9ae841d081c1.png','2024-04-15 19:21:24','2024-04-24 16:43:39','student','3'),(3,'李思远','15619763223','2312034544','photos/6caa0f8c-bca1-4823-87b0-77ef3b94db14.png','2024-05-08 16:23:56','2024-05-08 16:25:08','student','3'),(4,'刘震','15619763223','2312034544','photos/2f33d896-78c2-495e-b5bc-5a5363c51c21.png','2024-05-03 22:08:41','2024-05-03 22:10:17','student','3'),(5,'赵六','15619763223','2312034544','photos/0e88c1c5-41e1-4685-9596-38b4cc6bd067.png','2024-04-20 07:25:45','2024-04-24 16:34:37','student','2'),(6,'岑立超','15619763223','2312034544','photos/15b856c7-3867-4dbd-a887-f49d8b200150.png','2024-05-08 22:01:35','2024-05-08 22:01:54','other','3'),(7,'刘宇源','15619763223','2312034544','photos/62553ca2-af9a-4e44-a78b-efdfdcdc1d4e.png','2024-05-16 02:51:00','2024-05-23 13:25:37','teacher','3');
+
+/*Table structure for table `sensitive_words` */
+
+DROP TABLE IF EXISTS `sensitive_words`;
+
+CREATE TABLE `sensitive_words` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT '敏感词ID',
+  `word` varchar(100) NOT NULL COMMENT '敏感词',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_word` (`word`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='敏感词配置表';
+
+/*Data for the table `sensitive_words` */
+
+insert  into `sensitive_words`(`word`) values ('代考'),('作弊'),('诈骗');
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

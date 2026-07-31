@@ -23,6 +23,7 @@ public class NoticeItemVO {
     private Long id;
     private String title;
     private Boolean isRead;
-    private Date date; 
+    private Date date;
     private String description;
+    private String notificationType;
 }

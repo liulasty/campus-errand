@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Options;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -72,8 +73,18 @@ public interface TaskMapper extends BaseMapper<Task> {
     Long getOverdueTotal(Long id);
 
     Long getCanceledTotal(Long id);
-    
+
     List<Task> queryOngoingTasks(Date now);
 
     TaskStatus getTaskStatus(Long id);
+
+    /**
+     * 按状态分组统计委托数量，返回 [{name: 状态dbValue, value: 数量}]
+     */
+    List<Map<String, Object>> countGroupByStatus();
+
+    /**
+     * 按委托类型分组统计，返回 [{typeId, value}]
+     */
+    List<Map<String, Object>> countGroupByType();
 }

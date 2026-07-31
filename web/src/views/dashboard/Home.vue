@@ -75,12 +75,23 @@
                 <el-col :span="12">
                      <el-card shadow="hover">
                          <div slot="header" class="clearfix">
-                            <span>数据占比</span>
+                            <span>委托状态占比</span>
                         </div>
                         <div ref="echarts3" style="height: 250px; width: 100%;"></div>
                      </el-card>
                 </el-col>
             </el-row>
+
+            <el-card shadow="hover" style="margin-top: 20px;">
+                <div slot="header" class="clearfix">
+                    <span><i class="el-icon-trophy"></i> 接单达人排行（Top 5）</span>
+                </div>
+                <el-table :data="ranking" size="small" v-loading="loadingStats">
+                    <el-table-column type="index" label="#" width="60" align="center" />
+                    <el-table-column prop="name" label="用户" />
+                    <el-table-column prop="value" label="接单数" align="center" />
+                </el-table>
+            </el-card>
         </el-col>
     </el-row>
 </template>
@@ -88,8 +99,7 @@
 
     import * as echarts from 'echarts';
     import { mapState } from 'vuex';
-    import { getData } from '@/api';
-    import { data } from 'jquery';
+    import { getData, getDashboardStats } from '@/api';
 
 
     export default {
@@ -167,6 +177,9 @@
                         color: "#5ab1ef",
                     },
                 ],
+                stats: null,
+                ranking: [],
+                loadingStats: false,
                 tableLabel: {
                     name: '活动名称',
                     type: '参赛资格',
@@ -214,13 +227,18 @@
                     }
                 });
 
-                // var newMap = Object.keys(this.NewestInfo.hotTaskCategory).map(key => ({
-                //     name: key,
-                //     taskTypeId: this.NewestInfo.hotTaskCategory[key].typeCount
-                // }))
                 this.generateEchart1(this.NewestInfo.hotTaskCategory);
 
+            })
 
+            this.loadingStats = true
+            getDashboardStats().then(res => {
+                if (res.data.code === 1) {
+                    this.stats = res.data.data
+                    this.ranking = this.stats.acceptRanking || []
+                    this.generateEchart3(this.stats.statusCounts || [])
+                }
+                this.loadingStats = false
             })
 
 
@@ -522,7 +540,29 @@
                 option.series[0].data = typeCounts;
                 echarts1.setOption(option);
 
+            },
 
+            // 生成委托状态占比饼图
+            generateEchart3(statusCounts) {
+                const echarts3 = echarts.init(this.$refs.echarts3);
+                const pieData = statusCounts
+                    .filter(item => Number(item.value) > 0)
+                    .map(item => ({ name: item.name, value: Number(item.value) }));
+                const option = {
+                    tooltip: { trigger: 'item' },
+                    legend: { bottom: 0 },
+                    series: [
+                        {
+                            name: '委托状态',
+                            type: 'pie',
+                            radius: ['40%', '70%'],
+                            center: ['50%', '45%'],
+                            data: pieData,
+                            label: { show: false }
+                        }
+                    ]
+                };
+                echarts3.setOption(option);
             },
 
             //时间格式转换

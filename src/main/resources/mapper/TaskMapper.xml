@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace = "com.lz.mapper.TaskMapper">
-	
+
+	<select id="countGroupByStatus" resultType="java.util.Map">
+		SELECT STATUS AS name, COUNT(*) AS value FROM task GROUP BY STATUS
+	</select>
+
+	<select id="countGroupByType" resultType="java.util.Map">
+		SELECT TaskType AS typeId, COUNT(*) AS value FROM task GROUP BY TaskType
+	</select>
+
 	<select id = "selectTaskTypeCountTop5" resultType="com.lz.pojo.dto.TaskCountDTO">
 		SELECT TaskType as taskTypeId, COUNT(*) AS typeCount
 		FROM delegation_categories d

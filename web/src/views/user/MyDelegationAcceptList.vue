@@ -96,6 +96,24 @@
                     {{ form.acceptMessage}}
                 </el-form-item>
             </el-form>
+            <el-card v-show="form.task.status === '已接收'" class="box-card node-card" style="margin-top: 10px;">
+                <div slot="header" class="clearfix">
+                    <span>履约打卡</span>
+                    <el-button style="float: right; padding: 3px 0" type="text" icon="el-icon-view"
+                        @click="viewProgress">进度详情</el-button>
+                </div>
+                <div class="node-buttons">
+                    <el-button
+                        v-for="node in TASK_NODE_TYPES"
+                        :key="node.dbValue"
+                        :type="isNodeSubmitted(node.dbValue) ? 'info' : 'primary'"
+                        :icon="node.icon"
+                        :disabled="isNodeSubmitted(node.dbValue)"
+                        @click="openNodeDialog(node)">
+                        {{ node.label }}
+                    </el-button>
+                </div>
+            </el-card>
             <div slot="footer" class="dialog-footer">
                 <div v-if="Array.isArray(operation.title)">
                     <!-- 多个按钮的情况 -->
@@ -112,31 +130,55 @@
             </div>
         </el-dialog>
 
-        <!-- 任务进度更新对话框 -->
-        <el-dialog title="更新任务进度" :visible.sync="progressDialogVisible" width="500px" append-to-body>
-            <el-form :model="progressForm" label-width="80px">
-                <el-form-item label="进度描述">
-                    <el-input type="textarea" v-model="progressForm.description" placeholder="请输入任务进度描述，如：已到达目的地..."></el-input>
+        <!-- 履约节点打卡对话框 -->
+        <el-dialog :title="nodeForm.nodeLabel + '打卡'" :visible.sync="nodeDialogVisible" width="520px" append-to-body>
+            <el-form :model="nodeForm" label-width="90px">
+                <el-form-item label="打卡图片">
+                    <el-upload action="#" :show-file-list="false" :http-request="handleUpload" accept="image/*">
+                        <el-button size="small" type="primary" icon="el-icon-upload2">上传打卡图片</el-button>
+                    </el-upload>
+                    <div v-if="nodeForm.imgUrl" class="node-img-preview">
+                        <img :src="nodeForm.imgUrl" alt="打卡图片" />
+                        <el-button size="mini" type="text" @click="nodeForm.imgUrl = ''">移除图片</el-button>
+                    </div>
+                </el-form-item>
+                <el-form-item label="打卡定位">
+                    <el-input v-model="nodeForm.location" placeholder="请输入定位坐标或地点">
+                        <el-button slot="append" @click="fillMockLocation">模拟定位</el-button>
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="备注">
+                    <el-input type="textarea" v-model="nodeForm.remark" placeholder="请输入简短备注（可选）" :rows="3"></el-input>
                 </el-form-item>
             </el-form>
             <div slot="footer" class="dialog-footer">
-                <el-button @click="progressDialogVisible = false">取消</el-button>
-                <el-button type="primary" @click="submitUpdateProgress">提交</el-button>
+                <el-button @click="nodeDialogVisible = false">取消</el-button>
+                <el-button type="primary" :loading="nodeSubmitting" @click="submitNode">提交打卡</el-button>
             </div>
         </el-dialog>
     </div>
 </template>
 <script>
-    import { getTaskCategories, addTaskUpdate } from '@/api/'
+    import { getTaskCategories, addTaskNodeUpdate, uploadImg, listDelegateUpdateRecords } from '@/api/'
+    import { TASK_NODE_TYPES, MOCK_LOCATION, getNodeMeta } from '@/utils/taskNode.js'
     import { acceptDelegationList, queryTheEntrustmentDetailsByEntrustmentNumber, acceptCommission, cancelAcceptorByAcceptor, getTaskAcceptById } from '@/api/user.js'
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction.js'
     export default {
         data() {
             return {
-                progressDialogVisible: false,
-                progressForm: {
-                    description: ''
+                nodeDialogVisible: false,
+                nodeSubmitting: false,
+                nodeForm: {
+                    nodeType: '',
+                    nodeLabel: '',
+                    imgUrl: '',
+                    location: '',
+                    remark: ''
                 },
+                // 当前任务的履约节点记录与已提交节点集合
+                taskUpdates: [],
+                submittedNodes: new Set(),
+                TASK_NODE_TYPES: TASK_NODE_TYPES,
                 // 遮罩层
                 loading: true,
                 //委托留言
@@ -219,9 +261,9 @@
                     },
                     "已接收": {
                         index: 4,
-                        title: ["更新进度", "觉得很赞", "觉得很差"],
-                        type: ["primary", "success", "warning"],
-                        click: ["openUpdateProgress", "increaseGood", "increaseBad"]
+                        title: ["觉得很赞", "觉得很差"],
+                        type: ["success", "warning"],
+                        click: ["increaseGood", "increaseBad"]
                     },
 
                 },
@@ -329,6 +371,9 @@
                                 this.operation = this.operations[`${row.status}`];
                                 this.form.id = row.id;
                                 console.log("委托接收记录详情", this.form);
+                                if (this.form.task.status === '已接收') {
+                                    this.loadTaskUpdates(this.form.task.taskId);
+                                }
                                 this.open = true;
                             } else {
                                 this.$message(
@@ -405,33 +450,90 @@
                 this.getList();
                 this.open = false;
             },
-            openUpdateProgress() {
-                this.progressForm.description = '';
-                this.progressDialogVisible = true;
+            loadTaskUpdates(taskId) {
+                this.taskUpdates = [];
+                listDelegateUpdateRecords({
+                    taskId: taskId,
+                    pageNum: 1,
+                    pageSize: 100
+                }).then(response => {
+                    if (response.data.code === 1) {
+                        this.taskUpdates = response.data.data.records;
+                        const nodes = new Set();
+                        this.taskUpdates.forEach(record => {
+                            const meta = getNodeMeta(record.updateType);
+                            if (meta) {
+                                nodes.add(meta.dbValue);
+                            }
+                        });
+                        this.submittedNodes = nodes;
+                    }
+                });
             },
-            async submitUpdateProgress() {
-                if (!this.progressForm.description) {
-                    this.$message.error('请输入进度描述');
+            isNodeSubmitted(dbValue) {
+                return this.submittedNodes.has(dbValue);
+            },
+            viewProgress() {
+                this.$router.push('/myDelegationProgress?taskId=' + this.form.task.taskId)
+            },
+            openNodeDialog(node) {
+                this.nodeForm = {
+                    nodeType: node.dbValue,
+                    nodeLabel: node.label,
+                    imgUrl: '',
+                    location: '',
+                    remark: ''
+                };
+                this.nodeDialogVisible = true;
+            },
+            handleUpload(option) {
+                const file = option.file;
+                if (file.size > 5 * 1024 * 1024) {
+                    this.$message.error('图片大小不能超过 5MB');
                     return;
                 }
-                
+                if (!/\.(jpg|jpeg|png|gif)$/i.test(file.name)) {
+                    this.$message.error('仅支持 JPG、PNG、GIF 格式图片');
+                    return;
+                }
+                uploadImg(file).then(result => {
+                    if (result.data.code === 1) {
+                        this.nodeForm.imgUrl = 'http://' + result.data.data;
+                        this.$message.success('图片上传成功');
+                    } else {
+                        this.$message.error(result.data.msg || '图片上传失败');
+                    }
+                });
+            },
+            fillMockLocation() {
+                this.nodeForm.location = MOCK_LOCATION;
+            },
+            async submitNode() {
+                if (!this.nodeForm.nodeType) {
+                    return;
+                }
                 const data = {
                     taskId: this.form.task.taskId,
-                    description: this.progressForm.description
+                    nodeType: this.nodeForm.nodeType,
+                    imgUrl: this.nodeForm.imgUrl,
+                    location: this.nodeForm.location,
+                    remark: this.nodeForm.remark
                 };
-
-                await executeConfirmedRequest(
-                    addTaskUpdate,
-                    data,
-                    "确认提交任务进度？",
-                    "提示",
-                    "提交",
-                    "提交成功",
-                    "提交失败",
-                    "已取消"
-                );
-                
-                this.progressDialogVisible = false;
+                this.nodeSubmitting = true;
+                try {
+                    const response = await addTaskNodeUpdate(data);
+                    if (response.data.code === 1) {
+                        this.$message.success('打卡成功');
+                        this.nodeDialogVisible = false;
+                        this.loadTaskUpdates(this.form.task.taskId);
+                    } else {
+                        this.$message.error(response.data.msg || '打卡失败');
+                    }
+                } catch (e) {
+                    this.$message.error('打卡失败');
+                } finally {
+                    this.nodeSubmitting = false;
+                }
             }
         }
 
@@ -445,5 +547,23 @@
 
     .el-select {
         width: 130px;
+    }
+
+    .node-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .node-img-preview {
+        margin-top: 10px;
+    }
+
+    .node-img-preview img {
+        max-width: 180px;
+        max-height: 180px;
+        border-radius: 6px;
+        border: 1px solid #ebeef5;
+        display: block;
+        margin-bottom: 4px;
     }
 </style>

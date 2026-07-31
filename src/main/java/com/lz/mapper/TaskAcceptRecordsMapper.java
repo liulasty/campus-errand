@@ -7,9 +7,11 @@ import com.lz.pojo.Enum.TaskStatus;
 import com.lz.pojo.entity.TaskAcceptRecords;
 import com.lz.pojo.vo.TaskAcceptRecord;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author lz
@@ -54,6 +56,16 @@ public interface TaskAcceptRecordsMapper extends BaseMapper<TaskAcceptRecords> {
     List<TaskAcceptRecords> getTaskAcceptRecordsByTaskId(Long taskId);
 
     List<TaskAcceptRecords> getTaskAcceptRecordsWithUser(Long id);
+
+    /**
+     * 接单排行（被采纳次数 top N），返回 [{userId, value}]
+     */
+    List<Map<String, Object>> acceptRanking(@Param("limit") int limit);
+
+    /**
+     * 今日接单数（被采纳）
+     */
+    Long countCheckedToday();
 
 
     // IPage<User> selectUsersWithRoleAndPage( @Param("userId") Long userId, @Param("orderByColumn") String orderByColumn, @Param("isAsc") );

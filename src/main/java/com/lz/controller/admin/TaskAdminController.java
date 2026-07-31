@@ -33,16 +33,22 @@ import com.lz.pojo.entity.TaskUpdates;
 import com.lz.pojo.entity.Users;
 import com.lz.pojo.result.PageResult;
 import com.lz.pojo.result.Result;
+import com.lz.pojo.vo.TaskExportVO;
 import com.lz.service.IDelegateAuditRecordsService;
 import com.lz.service.INotificationReadStatusService;
 import com.lz.service.INotificationsService;
 import com.lz.service.ITaskService;
 import com.lz.service.ITaskUpdatesService;
 import com.lz.service.IUsersService;
+import com.lz.utils.excelutil.EasyExcelUtil;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author lz
@@ -123,6 +129,25 @@ public class TaskAdminController {
                 TaskPhase.fromValue(typePhase));
         PageResult<Task> taskPageResult = taskService.searchPageByAdmin(draftConfig);
         return Result.success(taskPageResult);
+    }
+
+    @GetMapping("/exportExcel")
+    @ApiOperation("导出委托列表 Excel")
+    @com.lz.Annotation.NoReturnHandle
+    public void exportExcel(HttpServletResponse response) throws MyException {
+        List<Task> tasks = taskService.list();
+        List<TaskExportVO> rows = tasks.stream().map(t -> TaskExportVO.builder()
+                .taskId(t.getTaskId())
+                .ownerId(t.getOwnerId())
+                .description(t.getDescription())
+                .location(t.getLocation())
+                .money(t.getMoney())
+                .status(t.getStatus() != null ? t.getStatus().getWebValue() : null)
+                .startTime(t.getStartTime())
+                .endTime(t.getEndTime())
+                .createdAt(t.getCreatedAt())
+                .build()).collect(Collectors.toList());
+        EasyExcelUtil.exportExcel(response, "委托列表", "委托列表", "委托列表", rows, TaskExportVO.class);
     }
 
     @GetMapping("/{TaskID}")

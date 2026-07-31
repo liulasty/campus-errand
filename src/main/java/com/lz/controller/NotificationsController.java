@@ -18,19 +18,23 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lz.Exception.MyException;
+import com.lz.mapper.UsersMapper;
 import com.lz.pojo.Enum.NotificationsType;
 import com.lz.pojo.constants.MessageConstants;
 import com.lz.pojo.dto.NotificationDTO;
 import com.lz.pojo.dto.SendDataDTO;
 import com.lz.pojo.entity.Notifications;
+import com.lz.pojo.entity.Users;
 import com.lz.pojo.result.PageResult;
 import com.lz.pojo.result.Result;
 import com.lz.pojo.vo.NoticeItemVO;
 import com.lz.pojo.vo.NoticeVO;
 import com.lz.service.INotificationsService;
 import com.lz.utils.EnumUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +57,9 @@ public class NotificationsController {
 
     @Autowired
     private INotificationsService notificationsService;
+
+    @Autowired
+    private UsersMapper usersMapper;
 
     @GetMapping("/list")
     public Result<?> list(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
@@ -161,6 +168,30 @@ public class NotificationsController {
         log.info("根据id查询通知信息：{}", id);
         NoticeVO noticeVO = notificationsService.getInfoById(id);
         return Result.success(noticeVO);
+    }
+
+    /**
+     * 当前登录用户的消息中心（分页）
+     */
+    @GetMapping("/my")
+    public Result<?> my(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
+        Users user = usersMapper.getByUsername(
+                SecurityContextHolder.getContext().getAuthentication().getName());
+        Page<NoticeItemVO> page = new Page<>(pageNum, pageSize);
+        IPage<NoticeItemVO> result = notificationsService.myPage(page, user.getUserId());
+        return Result.success(new PageResult<>(result.getTotal(), result.getRecords()));
+    }
+
+    /**
+     * 标记某条通知为已读
+     */
+    @PutMapping("/read/{id}")
+    public Result<?> markRead(@PathVariable("id") Long id) {
+        Users user = usersMapper.getByUsername(
+                SecurityContextHolder.getContext().getAuthentication().getName());
+        boolean ok = notificationsService.markRead(id, user.getUserId());
+        return ok ? Result.success("已标记为已读") : Result.error("标记失败，通知不存在");
     }
 
 }

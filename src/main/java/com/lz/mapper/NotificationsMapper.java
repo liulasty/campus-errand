@@ -1,11 +1,13 @@
 package com.lz.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lz.pojo.entity.Notifications;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lz.pojo.vo.NoticeItemVO;
 import com.lz.pojo.vo.NoticeVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
 import java.util.List;
@@ -24,6 +26,8 @@ public interface NotificationsMapper extends BaseMapper<Notifications> {
     Page<Notifications> selectPageAdmin(Page<Notifications> page, Date createAt, String messageType, String description);
 
     List<NoticeItemVO> selectListByType(Long userId, String type);
+
+    IPage<NoticeItemVO> selectMyPage(Page<NoticeItemVO> page, @Param("userId") Long userId);
 
     NoticeVO getInfoById(Long id);
 }

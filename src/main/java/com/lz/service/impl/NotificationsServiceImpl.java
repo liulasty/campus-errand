@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lz.Exception.MyException;
@@ -265,6 +266,20 @@ public class NotificationsServiceImpl extends ServiceImpl<NotificationsMapper, N
         notificationReadStatusService.addTaskNotification(notifications.getNotificationId(), taskId,
                 ownerId);
 
+    }
+
+    @Override
+    public IPage<NoticeItemVO> myPage(Page<NoticeItemVO> page, Long userId) {
+        return notificationsMapper.selectMyPage(page, userId);
+    }
+
+    @Override
+    public boolean markRead(Long id, Long userId) {
+        return notificationReadStatusService.update(null,
+                new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<NotificationReadStatus>()
+                        .eq("id", id).eq("UserId", userId)
+                        .set("IsRead", true)
+                        .set("ReadTime", new Date(System.currentTimeMillis())));
     }
 
     public Users getCurrentAdmin() {

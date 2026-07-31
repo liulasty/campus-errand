@@ -7,10 +7,6 @@ import pageTwo from '../views/test/PageTwo.vue'
 import pageThree from '../views/test/PageThree.vue'
 import Login from '../views/auth/Login.vue'
 import Landing from '../views/public/Landing.vue'
-import Athlete from '../views/athlete/Athlete.vue'
-import EventItem from '../views/event/EventItem.vue'
-import AthleteApplication from '../views/athlete/AthleteApplication.vue'
-import UserManagement from '@/views/user/UserManagement.vue'
 import MyInfo from '../views/user/MyInfo.vue'
 import CreateDelegation from '@/views/user/CreateDelegation.vue'
 import UserList from '@/views/admin/UserList.vue'
@@ -27,6 +23,10 @@ import MyDelegationPublishList from '@/views/user/MyDelegationPublishList.vue'
 import ExpireDelegationList from '@/views/admin/ExpireDelegationList.vue'
 import Notifications from '@/views/admin/Notifications.vue'
 import NotificationReadStatus from '@/views/admin/NotificationReadStatus.vue'
+import MessageCenter from '@/views/user/MessageCenter.vue'
+import MyDelegationProgress from '@/views/user/MyDelegationProgress.vue'
+import CreditProfile from '@/views/user/CreditProfile.vue'
+import SensitiveWordConfig from '@/views/admin/SensitiveWordConfig.vue'
 
 Vue.use(VueRouter)
 const routes = [
@@ -49,10 +49,6 @@ const routes = [
             },
             { path: '/home', name: 'home', component: Home },
             { path: '/createDelegation', name: 'createDelegation', component: CreateDelegation },
-            { path: '/user', name: 'user', component: UserManagement },
-            { path: '/athlete', name: 'athlete', component: Athlete },
-            { path: '/eventItem', name: 'eventItem', component: EventItem },
-            { path: '/athleteApplication', name: 'athleteApplication', component: AthleteApplication },
             { path: '/myInfo', name: 'myInfo', component: MyInfo },
             { path: '/page1', name: 'page1', component: pageOne },
             { path: '/page2', name: 'page2', component: pageTwo },
@@ -71,6 +67,10 @@ const routes = [
             { path: '/expireDelegationList', name: 'expireDelegationList', component: ExpireDelegationList },
             { path: '/notifications', name: 'notifications', component: Notifications },
             { path: '/notificationReadStatus', name: 'notificationReadStatus', component: NotificationReadStatus },
+            { path: '/messageCenter', name: 'messageCenter', component: MessageCenter },
+            { path: '/myDelegationProgress', name: 'myDelegationProgress', component: MyDelegationProgress },
+            { path: '/creditProfile', name: 'creditProfile', component: CreditProfile },
+            { path: '/sensitiveWord', name: 'sensitiveWord', component: SensitiveWordConfig },
 
         ]
     },

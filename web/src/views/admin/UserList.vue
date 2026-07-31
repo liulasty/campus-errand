@@ -36,6 +36,7 @@
             <div style="margin-bottom: 20px">
                 <el-button @click="deleteAndSelectAllAccounts()">删除选中所有账号</el-button>
                 <el-button @click="toggleSelection()">取消选择</el-button>
+                <el-button type="success" icon="el-icon-download" @click="handleExportUser">导出 Excel</el-button>
             </div>
             <el-table ref="multipleTable" :data="tableData" tooltip-effect="dark" style="width: 100%"
                 @selection-change="handleSelectionChange">
@@ -182,7 +183,7 @@
 </template>
 
 <script>
-    import { getUserInfo, getUserList, confirmToPassTheReview, refuseToPassReview, deleteCertificationRecords, cancelUserInfoAuthentication, adminActivation, deleteAccounts, handleEnableAdmin, handleDisableAdmin } from '@/api';
+    import { getUserInfo, getUserList, confirmToPassTheReview, refuseToPassReview, deleteCertificationRecords, cancelUserInfoAuthentication, adminActivation, deleteAccounts, handleEnableAdmin, handleDisableAdmin, exportUserList } from '@/api';
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
 
     export default {
@@ -223,6 +224,17 @@
             }
         },
         methods: {
+            handleExportUser() {
+                exportUserList().then(res => {
+                    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = '用户列表.xlsx'
+                    a.click()
+                    URL.revokeObjectURL(url)
+                })
+            },
             getUserPage() {
                 // console.log("查询参数：", this.userInfoConfig);
                 getUserList(this.userInfoConfig).then((res) => {
@@ -293,7 +305,7 @@
                     if (res.data.code == 1) {
                         console.log(res.data.data);
                         const info = res.data.data
-                        info.roleImgSrc = "http://campus-entrustment.oss-cn-beijing.aliyuncs.com/" + info.roleImgSrc
+                        info.roleImgSrc = "http://" + info.roleImgSrc
                         this.srcList = [info.roleImgSrc]
                         this.form = info
                     } else {
@@ -323,7 +335,7 @@
                     if (res.data.code == 1) {
                         console.log(res.data.data);
                         const info = res.data.data
-                        info.roleImgSrc = "http://campus-entrustment.oss-cn-beijing.aliyuncs.com/" + info.roleImgSrc
+                        info.roleImgSrc = "http://" + info.roleImgSrc
                         this.srcList = [info.roleImgSrc]
                         this.form = info
                     } else {

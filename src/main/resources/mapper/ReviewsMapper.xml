@@ -1,4 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace = "com.lz.mapper.ReviewsMapper">
+
+	<select id="avgRatingByAcceptor" resultType="java.lang.Double">
+		SELECT AVG(Rating) FROM reviews WHERE AcceptorID = #{userId}
+	</select>
+
+	<select id="selectReviewsByAcceptor" resultType="com.lz.pojo.vo.CreditReviewVO">
+		SELECT r.ReviewID AS reviewId,
+		       r.TaskID AS taskId,
+		       t.Description AS taskDescription,
+		       r.ReviewerID AS reviewerId,
+		       u.Username AS reviewerName,
+		       r.Rating AS rating,
+		       r.COMMENT AS comment
+		FROM reviews r
+		LEFT JOIN users u ON r.ReviewerID = u.UserID
+		LEFT JOIN task t ON r.TaskID = t.TaskID
+		WHERE r.AcceptorID = #{userId}
+		ORDER BY r.ReviewID DESC
+		LIMIT 50
+	</select>
 </mapper>

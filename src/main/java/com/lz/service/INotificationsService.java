@@ -1,5 +1,6 @@
 package com.lz.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lz.Exception.MyException;
 import com.lz.pojo.Enum.NotificationsType;
@@ -58,6 +59,26 @@ public interface INotificationsService extends IService<Notifications> {
     void getNoticeByIdANDType(NoticeDTO noticeDTO);
 
     List<NoticeItemVO> getNoticeType(String str) throws MyException;
+
+    /**
+     * 当前登录用户的全部通知（分页）
+     *
+     * @param page   页
+     * @param userId 用户 ID
+     *
+     * @return 通知列表
+     */
+    IPage<NoticeItemVO> myPage(Page<NoticeItemVO> page, Long userId);
+
+    /**
+     * 标记某条通知记录为已读
+     *
+     * @param id     通知记录 ID
+     * @param userId 用户 ID
+     *
+     * @return boolean
+     */
+    boolean markRead(Long id, Long userId);
 
     /**
      * 按id获取信息

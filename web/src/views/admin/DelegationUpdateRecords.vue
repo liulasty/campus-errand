@@ -28,8 +28,22 @@
             <el-table-column label="更新记录编号" align="center" prop="updateId" />
             <el-table-column label="委托任务ID" align="center" prop="taskId" />
             <el-table-column label="操作人员ID" align="center" prop="userId" />
-            <el-table-column label="更新类型”" align="center" prop="updateType" />
+            <el-table-column label="更新类型" align="center" prop="updateType" width="120">
+                <template slot-scope="scope">
+                    <el-tag v-if="nodeMeta(scope.row.updateType)" :color="nodeMeta(scope.row.updateType).color" size="small" effect="dark">
+                        {{ nodeMeta(scope.row.updateType).label }}
+                    </el-tag>
+                    <el-tag v-else size="small" type="info">{{ scope.row.updateType }}</el-tag>
+                </template>
+            </el-table-column>
             <el-table-column label="更新内容" align="center" prop="updateDescription" show-overflow-tooltip />
+            <el-table-column label="打卡图片" align="center" width="100">
+                <template slot-scope="scope">
+                    <el-image v-if="scope.row.imgUrl" :src="scope.row.imgUrl" fit="cover" :preview-src-list="[scope.row.imgUrl]" style="width: 50px; height: 50px; border-radius: 4px;"></el-image>
+                    <span v-else>-</span>
+                </template>
+            </el-table-column>
+            <el-table-column label="打卡定位" align="center" prop="location" show-overflow-tooltip />
             <el-table-column label="更新时间时间" align="center" prop="updateTime" width="180">
                 <template slot-scope="scope">
                     <span>{{ scope.row.updateTime }}</span>
@@ -70,7 +84,8 @@
 </template>
 
 <script>
-    import { listDelegateUpdateRecords, getDelegateauditrecords, delDelegateUpdateRecords, addDelegateauditrecords, updateDelegateauditrecords, getDelegateUpdateType, getViewDelegateRecord } from "@/api/";
+    import { listDelegateUpdateRecords, delDelegateUpdateRecords, getDelegateUpdateType, getViewDelegateRecord } from "@/api/";
+    import { getNodeMeta } from '@/utils/taskNode.js';
 
     import initLayui from "@/layui/layuiInit";
 
@@ -140,6 +155,9 @@
                         this.type = request.data.data
                     }
                 })
+            },
+            nodeMeta(updateType) {
+                return getNodeMeta(updateType);
             },
             /** 查询存储委托信息审核记录列表 */
             getList() {
