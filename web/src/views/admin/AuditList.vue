@@ -30,9 +30,15 @@
 
 
 
+        <el-tabs v-model="activeTab" @tab-click="getList" style="margin-bottom: 10px;">
+            <el-tab-pane label="草稿待提交" name="DRAFT"></el-tab-pane>
+            <el-tab-pane label="用户提交待审核" name="AUDIT"></el-tab-pane>
+        </el-tabs>
+
         <el-table v-loading="loading" :data="delegateRecordsList" @selection-change="handleSelectionChange"
             :row-style="{ height: '50px' }">
             <el-table-column label="委托任务ID" align="center" prop="taskId" />
+            <el-table-column label="委托内容" align="center" prop="description" show-overflow-tooltip />
             <el-table-column label="发布者" align="center" width="120">
                 <template slot-scope="scope">{{ scope.row.ownerName || scope.row.ownerId }}</template>
             </el-table-column>
@@ -122,6 +128,8 @@
                 title: "",
                 // 是否显示弹出层
                 open: false,
+                // 委托审核 Tab：DRAFT=草稿待提交，AUDIT=用户提交待审核
+                activeTab: 'AUDIT',
                 // 查询参数
                 queryParams: {
                     pageNum: 1,
@@ -190,12 +198,12 @@
             /** 查询存储委托信息记录列表 */
             getList() {
                 this.loading = true;
-                this.queryParams.TypePhase = "PUBLISHING_AND_EXECUTION";
+                this.queryParams.TypePhase = this.activeTab === 'DRAFT' ? "EDITING_AND_AUDITING" : "PUBLISHING_AND_EXECUTION";
                 listDelegateRecords(this.queryParams).then((response) => {
                     console.log("查询委托信息记录列表", response);
                     this.delegateRecordsList = response.data.data.records.map((record) => {
 
-                        record.type = this.taskType[`${record.type}`]; // 确保类型安全
+                        record.type = this.taskType[`${record.taskType}`]; // 后端字段为 taskType
 
                         return record;
                     });

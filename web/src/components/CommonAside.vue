@@ -191,15 +191,14 @@
                         index: 'admin',
                         children: [
                             {
-                                label: '订单管理',
+                                label: '委托管理',
                                 icon: 's-order',
                                 index: 'a-1',
                                 children: [
-                                    { path: '/publishedList', name: 'publishedList', label: '全部委托列表', icon: 'tickets', index: 'a-1-1' },
-                                    { path: '/draftList', name: 'draftList', label: '草稿与审核', icon: 'document', index: 'a-1-2' },
-                                    { path: '/auditList', name: 'auditList', label: '发布与接收', icon: 's-check', index: 'a-1-3' },
-                                    { path: '/expireDelegationList', name: 'expireDelegationList', label: '未完成委托', icon: 'warning-outline', index: 'a-1-4' },
-                                    { path: '/delegationUpdateRecords', name: 'delegationUpdateRecords', label: '履约记录查询', icon: 's-flag', index: 'a-1-5' }
+                                    { path: '/publishedList', name: 'publishedList', label: '全部委托', icon: 'tickets', index: 'a-1-1' },
+                                    { path: '/auditList', name: 'auditList', label: '委托审核', icon: 's-check', index: 'a-1-2' },
+                                    { path: '/expireDelegationList', name: 'expireDelegationList', label: '未完成委托', icon: 'warning-outline', index: 'a-1-3' },
+                                    { path: '/delegationUpdateRecords', name: 'delegationUpdateRecords', label: '履约记录查询', icon: 's-flag', index: 'a-1-4' }
                                 ]
                             },
                             {
@@ -207,34 +206,33 @@
                                 icon: 'user',
                                 index: 'a-2',
                                 children: [
-                                    { path: '/userList', name: 'userList', label: '用户列表', icon: 'user', index: 'a-2-1' }
+                                    { path: '/userList', name: 'userList', label: '用户列表', icon: 'user', index: 'a-2-1' },
+                                    { path: '/admin/realNameAudit', name: 'realNameAudit', label: '实名审核', icon: 'postcard', index: 'a-2-2' }
                                 ]
                             },
                             {
-                                label: '内容管控',
-                                icon: 'lock',
+                                label: '平台公告',
+                                icon: 'chat-dot-round',
                                 index: 'a-3',
                                 children: [
-                                    { path: '/systemBulletinList', name: 'systemBulletinList', label: '公告管理', icon: 'chat-dot-round', index: 'a-3-1' },
-                                    { path: '/systemNoticeList', name: 'systemNoticeList', label: '系统通知', icon: 'chat-line-round', index: 'a-3-2' },
-                                    { path: '/sensitiveWord', name: 'sensitiveWord', label: '敏感词配置', icon: 'lock', index: 'a-3-3' }
-                                ]
-                            },
-                            {
-                                label: '委托设置',
-                                icon: 'menu',
-                                index: 'a-4',
-                                children: [
-                                    { path: '/delegationType', name: 'delegationType', label: '委托类别', icon: 'menu', index: 'a-4-1' }
+                                    { path: '/systemBulletinList', name: 'systemBulletinList', label: '公告管理', icon: 'chat-dot-round', index: 'a-3-1' }
                                 ]
                             },
                             {
                                 label: '消息管理',
                                 icon: 'bell',
+                                index: 'a-4',
+                                children: [
+                                    { path: '/notificationReadStatus', name: 'notificationReadStatus', label: '消息管理', icon: 's-comment', index: 'a-4-1' }
+                                ]
+                            },
+                            {
+                                label: '系统配置',
+                                icon: 'setting',
                                 index: 'a-5',
                                 children: [
-                                    { path: '/notificationReadStatus', name: 'notificationReadStatus', label: '消息通知', icon: 's-comment', index: 'a-5-1' },
-                                    { path: '/notifications', name: 'notifications', label: '消息列表', icon: 'chat-dot-square', index: 'a-5-2' }
+                                    { path: '/delegationType', name: 'delegationType', label: '委托分类配置', icon: 'menu', index: 'a-5-1' },
+                                    { path: '/sensitiveWord', name: 'sensitiveWord', label: '敏感词管控', icon: 'lock', index: 'a-5-2' }
                                 ]
                             }
                         ]
