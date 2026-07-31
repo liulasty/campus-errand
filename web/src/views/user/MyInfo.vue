@@ -125,6 +125,7 @@ import {
 } from '@/api'
 import ImageUploader from '@/components/ImageUploader.vue'
 import {executeConfirmedRequest} from '@/utils/globalConfirmAction'
+import {SUCCESS_CODE} from '@/constants/http'
 
 export default {
   components: {ImageUploader},
@@ -192,11 +193,10 @@ export default {
       this.userId = this.$store.state.userInfo.userId
 
 
-      getUserInfo(this.userId).then((data) => {
-        console.log("用户信息", data);
-        console.log("用户信息", data.data.data);
-        if (data.data.code === 1) {
-          var info = data.data.data;
+      getUserInfo(this.userId).then((res) => {
+        const {code, data} = res.data
+        if (code === SUCCESS_CODE) {
+          var info = data;
           this.rejectReason = info.rejectReason || '';
           if (info.authStatus && info.authStatus === '认证中') {
 
@@ -213,7 +213,9 @@ export default {
         } else {
           this.updateButton(1)
         }
-        console.log("展示页面", this.msg, this.code);
+      }).catch(err => {
+        console.error('获取认证信息失败：', err)
+        this.$message.error('请求异常，请稍后重试')
       })
     },
     updateButton(id) {
@@ -238,7 +240,7 @@ export default {
       this.infoAddForm.id = this.$store.state.userInfo.userId;
       console.log(this.infoAddForm);
       submitCertificationInformation(this.infoAddForm).then((response) => {
-        if (response.data.code == 1) {
+        if (response.data.code === SUCCESS_CODE) {
           this.dialogUserInfo = false;
           this.$message({
             message: response.data.msg,
@@ -252,6 +254,9 @@ export default {
           });
         }
 
+      }).catch(err => {
+        console.error('提交认证失败：', err)
+        this.$message.error('请求异常，请稍后重试')
       })
     },
     async cancelAuthentication() {

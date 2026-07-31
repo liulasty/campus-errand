@@ -100,6 +100,7 @@
     import * as echarts from 'echarts';
     import { mapState } from 'vuex';
     import { getData, getDashboardStats } from '@/api';
+    import { SUCCESS_CODE } from '@/constants/http';
 
 
     export default {
@@ -214,14 +215,14 @@
             this.userInfo = parsedUser
             console.log("userInfo", this.userInfo)
 
-            getData(2).then((data) => {
-                this.NewestInfo = data.data.data
-                // console.log("快速信息展示", this.NewestInfo);
-                // 失效 token 时后端返回 HTTP 200 + data null，防御性守卫避免崩溃
-                if (!this.NewestInfo) {
-                    console.warn('快速信息数据为空或未授权，请重新登录', data.data)
+            getData(2).then((res) => {
+                const { code, data } = res.data
+                // 标准两层解析：后端返回 {code, msg, data}，避免 data.data.data 三重嵌套
+                if (code !== SUCCESS_CODE || !data) {
+                    console.warn('快速信息数据为空或未授权', res.data)
                     return
                 }
+                this.NewestInfo = data
                 this.tableData = this.NewestInfo.newestTask;
                 this.countData.forEach(item => {
                     const key = item.name;
@@ -234,11 +235,13 @@
 
                 this.generateEchart1(this.NewestInfo.hotTaskCategory);
 
+            }).catch(err => {
+                console.error('快速信息请求失败：', err)
             })
 
             this.loadingStats = true
             getDashboardStats().then(res => {
-                if (res.data.code === 1) {
+                if (res.data.code === SUCCESS_CODE) {
                     this.stats = res.data.data
                     this.ranking = this.stats.acceptRanking || []
                     this.generateEchart3(this.stats.statusCounts || [])

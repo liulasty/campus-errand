@@ -221,6 +221,7 @@
     import { listViewOnGoingList, getTaskAndPublishUserInfoByTaskId, acceptCommission } from '@/api/user.js'
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction.js'
     import { creditScore, creditLevel, creditColor } from '@/utils/creditLevel'
+    import { SUCCESS_CODE } from '@/constants/http'
     export default {
         data() {
             return {
@@ -378,26 +379,21 @@
             getList() {
                 this.loading = true;
                 listViewOnGoingList(this.queryParams).then(response => {
-                    if (response.data.code == 1) {
+                    if (response.data.code === SUCCESS_CODE) {
                         this.viewOnGoingList = response.data.data.records.map((record) => {
-
-                            record.type = this.taskType[`${record.type}`]; // 确保类型安全
-
+                            // 后端字段为 taskType，映射为前端展示用 type
+                            record.type = this.taskType[`${record.taskType}`];
                             return record;
                         });
-
-
                         this.total = response.data.data.total;
-                        this.loading = false;
-
                     } else {
-                        this.$message({
-                            message: response.data.msg,
-                            type: 'error'
-                        });
-                        this.loading = false;
+                        this.$message.error(response.data.msg || '查询委托失败')
                     }
-
+                    this.loading = false;
+                }).catch(err => {
+                    console.error('大厅列表请求失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
+                    this.loading = false;
                 });
             },
             handleView(row) {

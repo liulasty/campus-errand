@@ -49,6 +49,7 @@
     import { listDelegateUpdateRecords } from '@/api/'
 import { getTaskAndPublishUserInfoByTaskId } from '@/api/user.js'
     import { TASK_NODE_TYPES, getNodeMeta } from '@/utils/taskNode.js'
+    import { SUCCESS_CODE } from '@/constants/http'
     export default {
         name: 'MyDelegationProgress',
         data() {
@@ -82,15 +83,23 @@ import { getTaskAndPublishUserInfoByTaskId } from '@/api/user.js'
             loadData() {
                 this.loading = true
                 getTaskAndPublishUserInfoByTaskId(this.taskId).then(res => {
-                    if (res.data.code === 1) {
+                    if (res.data.code === SUCCESS_CODE) {
                         this.task = res.data.data.task || {}
                     }
+                }).catch(err => {
+                    console.error('获取任务详情失败：', err)
                 })
                 listDelegateUpdateRecords({ taskId: this.taskId, pageNum: 1, pageSize: 100 }).then(res => {
-                    if (res.data.code === 1) {
+                    if (res.data.code === SUCCESS_CODE) {
                         const records = res.data.data.records || []
                         this.nodeRecords = records.filter(r => getNodeMeta(r.updateType))
+                    } else {
+                        this.$message.error(res.data.msg || '获取打卡记录失败')
                     }
+                    this.loading = false
+                }).catch(err => {
+                    console.error('获取打卡记录失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                     this.loading = false
                 })
             },
