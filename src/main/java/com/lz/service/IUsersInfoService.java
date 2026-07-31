@@ -35,11 +35,12 @@ public interface IUsersInfoService extends IService<UsersInfo> {
     /**
      * 拒绝通过审核
      *
-     * @param id 同上
+     * @param id     同上
+     * @param reason 驳回原因
      *
      * @return {@code Boolean}
      */
-    Boolean refuseToPassReview(Long id) throws MyException;
+    Boolean refuseToPassReview(Long id, String reason) throws MyException;
 
     /**
      * 取消用户信息身份

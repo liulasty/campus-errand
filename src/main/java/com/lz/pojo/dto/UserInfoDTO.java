@@ -23,4 +23,5 @@ public class UserInfoDTO {
     private String qq;
     private String phone;
     private String role;
+    private String identityNo;
 }

@@ -127,9 +127,10 @@ public class UsersinfoController {
      * @throws MyException 我的异常
      */
     @PutMapping("/refuseToPassReview/{id}")
-    public Result<String> refuseToPassReview(@PathVariable Long id) throws MyException {
+    public Result<String> refuseToPassReview(@PathVariable Long id,
+            @RequestParam(value = "reason", required = false) String reason) throws MyException {
         log.info("用户认证信息审核不通过");
-        usersInfoService.refuseToPassReview(id);
+        usersInfoService.refuseToPassReview(id, reason);
         log.info("用户认证信息审核不通过成功");
         //todo 通知用户,用户认证信息审核不通过
         return Result.success(MessageConstants.USER_UPDATE_SUCCESS);

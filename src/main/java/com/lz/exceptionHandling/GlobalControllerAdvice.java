@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.lz.Exception.InvalidTokenException;
 import com.lz.Exception.MyException;
 import com.lz.Exception.NoAthleteException;
+import com.lz.Exception.UnauthorizedRealNameException;
 import com.lz.Exception.UsernameNotFoundException;
 import com.lz.pojo.constants.MessageConstants;
 import com.lz.pojo.result.ErrorCode;
@@ -103,6 +104,12 @@ public class GlobalControllerAdvice {
     public Result<?> myException(MyException e) {
         log.error("发生业务异常: {}", e.getMessage());
         return Result.error(ErrorCode.BUSINESS_ERROR, e.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedRealNameException.class)
+    public Result<?> unauthorizedRealNameException(UnauthorizedRealNameException e) {
+        log.error("实名认证门禁拦截: {}", e.getMessage());
+        return Result.error(ErrorCode.UNAUTHORIZED, e.getMessage());
     }
 
     @ExceptionHandler(NoAthleteException.class)
