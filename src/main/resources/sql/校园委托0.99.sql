@@ -255,6 +255,7 @@ CREATE TABLE `users` (
   `CreateTime` datetime NOT NULL COMMENT '注册日期',
   `ActiveTime` datetime DEFAULT NULL COMMENT '激活日期',
   `IsEnabled` tinyint DEFAULT '0' COMMENT '是否启用',
+  `CreditScore` int NOT NULL DEFAULT '60' COMMENT '信用分（0-100）',
   PRIMARY KEY (`UserID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='存储系统用户信息';
 
