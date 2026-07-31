@@ -1,11 +1,13 @@
 package com.lz.credit;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.lz.credit.dto.CreditMetrics;
 import com.lz.credit.strategy.SimpleCreditCalculator;
 import com.lz.mapper.ReviewsMapper;
 import com.lz.mapper.TaskAcceptRecordsMapper;
 import com.lz.mapper.TaskMapper;
+import com.lz.mapper.UsersMapper;
 import com.lz.service.CreditScoreService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -30,10 +34,12 @@ class CreditScoreServiceTest {
     private TaskMapper taskMapper;
     @Mock
     private TaskAcceptRecordsMapper taskAcceptRecordsMapper;
+    @Mock
+    private UsersMapper usersMapper;
 
     private CreditScoreService newService() {
         return new CreditScoreService(
-                reviewsMapper, taskMapper, taskAcceptRecordsMapper, new SimpleCreditCalculator());
+                reviewsMapper, taskMapper, taskAcceptRecordsMapper, usersMapper, new SimpleCreditCalculator());
     }
 
     @Test
@@ -55,5 +61,16 @@ class CreditScoreServiceTest {
         assertEquals(0L, metrics.getAcceptedCount());
         assertEquals(0L, metrics.getCompletedCount());
         assertEquals(60, newService().getScore(9L));
+    }
+
+    @Test
+    void recomputeAndSave_computesAndWritesScore() {
+        when(taskAcceptRecordsMapper.selectCount(any(QueryWrapper.class))).thenReturn(2);
+        when(taskMapper.selectCount(any(QueryWrapper.class))).thenReturn(1);
+        when(reviewsMapper.avgRatingByAcceptor(9L)).thenReturn(4.8);
+
+        newService().recomputeAndSave(9L);
+
+        verify(usersMapper).update(isNull(), any(UpdateWrapper.class));
     }
 }
