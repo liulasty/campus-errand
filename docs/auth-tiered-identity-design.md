@@ -48,6 +48,7 @@
 - **L1 申请流程**：MyInfo 填 姓名 + `identity_no`（学号/工号/其他）+ `roleImgSrc`（身份照片）→ 调 `IIdentityVerifier.verify(...)` → 手动模式下返回「待人工审核」→ `auth_status=AUTHENTICATING`。
 - **管理员审核**：通过 → `auth_status=AUTHENTICATED` + `auth_level=1`；拒绝 → `auth_status=AUTHENTICATION_FAILED`。
 - **L2（预留）**：L1 基础上申请 L2（上传校园卡照片 `campus_card_img`）→ 审核 → `auth_level=2`。本轮仅定义流程，不实现。
+- **驳回边界**：`auth_status=AUTHENTICATION_FAILED`（审核驳回）时 `auth_level` 固定为 0，须重新提交 L1 材料方可再次审核。
 
 ---
 
@@ -69,6 +70,8 @@ public void ensureL1(Long userId) {
 
 `UnauthorizedRealNameException`（新增业务异常）由**全局异常处理器**统一收口，返回提示：**「请先完成 L1 实名认证后再执行该操作」**。各门禁接口无需重复写提示。
 
+> **边界兜底**：用户 `usersinfo` 记录不存在统一判定 `level=0` 抛异常，避免空指针。
+
 ### 5.2 门禁范围（`ensureL1` 逐处调用）
 
 | 操作 | 接口 |
@@ -80,11 +83,15 @@ public void ensureL1(Long userId) {
 | 确认完成/确认接收人 | `PUT /user/publisher/completed/{id}`、`PUT /user/publisher/confirm/{id}` |
 | 评价 | `POST /reviews/addReviews` |
 
-> 现有查看类接口原校验 `auth_status == AUTHENTICATED`，统一改为 `ensureL1`（`auth_level ≥ 1`），消除「能发布不能看」的不一致。
+> 现有查看类接口原校验 `auth_status == AUTHENTICATED` **全部移除**，统一改为 `ensureL1`（`auth_level ≥ 1`），底层判定收敛至 `auth_level`，消除两套校验逻辑与「能发布不能看」的不一致。
+
+**管理端豁免**：后台管理员审核、用户管理、数据导出等管理端接口**不调用** `ensureL1`，管理员不受实名门槛限制，避免后台操作被拦截。
 
 ### 5.3 游客只读
 
 无认证用户（游客）：可浏览大厅、任务列表、任务基本信息；上述委托操作被 `ensureL1` 拦截。前端登录后无认证时展示「去认证」引导。
+
+**前端交互**：被拦截操作触发异常后，前端弹窗引导跳转实名认证页面；游客浏览页面固定展示「去完成实名」悬浮按钮。
 
 ---
 
@@ -108,8 +115,11 @@ public interface IIdentityVerifier {
 }
 ```
 
-- `ManualIdentityVerifier`（当前实现，`@Component`）：返回「待人工审核」→ 走 `auth_status=AUTHENTICATING` 人工流程。
-- `EduSystemIdentityVerifier`（未来实现）：调教务系统接口自动核验，通过则直接 `auth_level=1`。
+- **`VerifyResult` 返回枚举**：`PENDING_MANUAL_AUDIT`（待人工审核）/ `PASS`（核验通过）/ `REJECT`（核验驳回），附 `message` 存驳回原因，供管理员审核页展示。
+- **入参非空校验**：`identityNo`、`name`、`role` 不能为空，非法表单提前拦截。
+- **执行时序**：用户提交实名表单时同步调用 `verify`；**manual 模式**仅落库 + 流转 `AUTHENTICATING`（不自动通过）；**edu 模式**按返回结果自动审核，PASS 直接 `auth_level=1`、REJECT 回 `AUTHENTICATION_FAILED`，跳过人工步骤。
+- `ManualIdentityVerifier`（当前实现，`@Component`）：恒返回 `PENDING_MANUAL_AUDIT` → 人工流程。
+- `EduSystemIdentityVerifier`（未来实现）：调教务系统自动核验（预留）。
 - 配置切换：`app.identity-verifier.mode: manual | edu-system`，Spring 条件装配选择实现，业务代码无侵入。
 
 ---
@@ -118,7 +128,9 @@ public interface IIdentityVerifier {
 
 - 现有 `auth_status=AUTHENTICATED`（照片认证通过）用户 → 回填 `auth_level=1`（`identity_no` 为空，申请 L2 时补填）。
 - 其余状态（AUTHENTICATING/AUTHENTICATION_FAILED/UNAUTHORIZED）保持 `auth_level=0`。
-- 迁移走一次 JDBC `UPDATE usersinfo SET auth_level=1 WHERE auth_status=3` + master SQL 默认值。
+- **迁移安全**：`UPDATE ... SET auth_level=1 WHERE auth_status=3` 事务包裹、**分批执行**（每批 1000），避免大批量锁表；上线前跑统计 SQL 记录待回填存量用户数，上线后核对回填行数一致。
+- **`identity_no` 柔性**：存量回填 `level=1` 但无身份编号的用户，L1 功能不受限；申请 L2 时**强制补全 `identity_no`** 才可提交。
+- **DDL 默认值**：`auth_level TINYINT NOT NULL DEFAULT 0`，新注册用户默认未认证。
 
 ---
 
@@ -132,6 +144,7 @@ public interface IIdentityVerifier {
 | 4 | `ManualIdentityVerifier.verify` | 返回「待人工审核」结果 |
 | 5 | 全局异常处理器捕获 `UnauthorizedRealNameException` | 返回统一提示文案 |
 | 6 | 门禁接入：发布/接单等操作未认证被拦截 | 前端提示 + 后端异常 |
+| 7 | 存量已认证用户迁移后 | `auth_level=1`，可正常执行全部委托操作 |
 
 ---
 
@@ -141,3 +154,4 @@ public interface IIdentityVerifier {
 - **L2 校园卡本轮不实现**：字段/接口/页面占位预留。
 - **学号/工号掩码展示**：保护隐私，前端按掩码规则渲染。
 - **游客只读范围**：任务详情是否全量可见由展示侧控制，本轮按「基本信息可见」实现。
+- **`identity_no` 提交后锁定**：不可自行修改；如需更换学号/工号，须管理员驳回当前实名申请后重新提交。
