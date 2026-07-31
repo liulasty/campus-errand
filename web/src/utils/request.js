@@ -32,11 +32,16 @@ http.interceptors.response.use(function (response) {
   // 2xx 范围内的状态码都会触发该函数。
   // 对响应数据做点什么
 
-  if (response.data.message === '令牌校验失败') {
-    console.log("删除JWT令牌", response)
-    // 删除JWT令牌
+  // 鉴权失败：后端对失效/过期 token 返回 HTTP 200 + errorCode 401 + data null
+  if (response.data && response.data.errorCode === 401) {
+    console.log("鉴权失败，清理JWT令牌", response)
     localStorage.removeItem('jwtToken');
+    localStorage.removeItem('TaskUser');
     localStorage.removeItem('sportsUser');
+    // 跳转登录页（history 模式），避免停留在已失效的会话页
+    if (!window.location.pathname.endsWith('/login')) {
+      window.location.href = '/campus_entrustment/login';
+    }
   }
   return response;
 }, function (error) {

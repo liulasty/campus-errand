@@ -217,6 +217,11 @@
             getData(2).then((data) => {
                 this.NewestInfo = data.data.data
                 // console.log("快速信息展示", this.NewestInfo);
+                // 失效 token 时后端返回 HTTP 200 + data null，防御性守卫避免崩溃
+                if (!this.NewestInfo) {
+                    console.warn('快速信息数据为空或未授权，请重新登录', data.data)
+                    return
+                }
                 this.tableData = this.NewestInfo.newestTask;
                 this.countData.forEach(item => {
                     const key = item.name;
