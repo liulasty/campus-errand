@@ -58,6 +58,7 @@
 </template>
 <script>
     import { getCreditProfile } from '@/api/'
+    import { creditScore, creditLevel } from '@/utils/creditLevel'
     export default {
         name: 'CreditProfile',
         data() {
@@ -68,13 +69,10 @@
         },
         computed: {
             displayScore() {
-                return this.profile && this.profile.creditScore != null ? this.profile.creditScore : 60
+                return creditScore(this.profile && this.profile.creditScore)
             },
             displayLevel() {
-                const s = this.displayScore
-                if (s < 60) return '待提升'
-                if (s < 80) return '良好'
-                return '优秀'
+                return creditLevel(this.profile && this.profile.creditScore)
             }
         },
         created() {
