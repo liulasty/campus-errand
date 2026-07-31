@@ -33,9 +33,19 @@
         <el-table v-loading="loading" :data="delegateRecordsList" @selection-change="handleSelectionChange"
             :row-style="{ height: '50px' }">
             <el-table-column label="委托任务ID" align="center" prop="taskId" />
-            <el-table-column label="委托发布者ID" align="center" prop="ownerId" />
+            <el-table-column label="发布者" align="center" width="120">
+                <template slot-scope="scope">{{ scope.row.ownerName || scope.row.ownerId }}</template>
+            </el-table-column>
+            <el-table-column label="信用分" align="center" width="90">
+                <template slot-scope="scope">
+                    <el-tag :type="(scope.row.ownerCredit != null ? scope.row.ownerCredit : 60) >= 80 ? 'success' : (scope.row.ownerCredit != null ? scope.row.ownerCredit : 60) >= 60 ? 'primary' : 'info'"
+                        size="small">{{ scope.row.ownerCredit != null ? scope.row.ownerCredit : 60 }}</el-tag>
+                </template>
+            </el-table-column>
             <el-table-column label="委托内容" align="center" prop="description" show-overflow-tooltip />
-            <el-table-column label="委托创建时间" align="center" prop="createdAt" />
+            <el-table-column label="委托创建时间" align="center" width="150">
+                <template slot-scope="scope">{{ scope.row.createdAt | dateTime }}</template>
+            </el-table-column>
             <el-table-column label="委托类型" align="center" prop="type" />
             <el-table-column label="委托状态" align="center" prop="status" width="180">
             </el-table-column>

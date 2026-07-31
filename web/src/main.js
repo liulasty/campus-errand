@@ -51,6 +51,14 @@ Vue.use(ElementUI);
 //   }
 // })
 
+// 全局日期格式化过滤器：yyyy-MM-dd HH:mm
+Vue.filter('dateTime', (val) => {
+  if (!val) return ''
+  const d = new Date(Number(val))
+  const pad = n => (n < 10 ? '0' + n : n)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+})
+
 new Vue({
   el: '#app',
   router,

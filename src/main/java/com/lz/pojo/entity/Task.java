@@ -88,4 +88,8 @@ public class Task implements Serializable {
     @TableField(exist = false)
     private Integer ownerCredit;
 
+    @ApiModelProperty(value = "发布者用户名（瞬态，管理端展示用）")
+    @TableField(exist = false)
+    private String ownerName;
+
 }

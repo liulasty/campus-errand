@@ -435,6 +435,17 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
 
         page = taskMapper.selectPage(page, wrapper);
 
+        // 富化发布者姓名与信用分（信用账本对齐：管理员决策依据）
+        for (Task task : page.getRecords()) {
+            if (task.getOwnerId() != null) {
+                Users owner = usersMapper.selectById(task.getOwnerId());
+                if (owner != null) {
+                    task.setOwnerName(owner.getUsername());
+                    task.setOwnerCredit(owner.getCreditScore());
+                }
+            }
+        }
+
         log.info("page:{}", page.getRecords());
         return new PageResult<>(page.getTotal(), page.getRecords());
     }
