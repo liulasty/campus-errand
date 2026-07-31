@@ -5,6 +5,8 @@
 > **更新日期**：2026-08-01
 > **前置**：[ROADMAP_1.0.md](ROADMAP_1.0.md) M2 章节、[M1_credit-engine-design.md](M1_credit-engine-design.md)
 > **决策基线**：排序键 `(信用分 DESC, 创建时间 DESC)`；大厅任务卡片展示发布者信用分；实现采用内存排序（方案 A，2026-08-01 确认）
+>
+> **2026-08-01 修订（方案 A → 方案 B）**：内存排序需将全部匹配任务载入 JVM 排序，产生内存压力，已移除。改为 **预计算列 `users.CreditScore` + SQL JOIN 排序**：事件驱动刷新（评价新增 / 接单确认 / 任务完成 → `recomputeAndSave`）+ `/credit` 访问兜底持久化；大厅查询 `searchHallPage` JOIN users `ORDER BY CreditScore DESC, StartTime, TaskID`，DB 侧分页，零内存压力。原 §3/§4.2 内存排序描述已被实现取代，以代码为准。
 
 ---
 
