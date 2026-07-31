@@ -35,19 +35,23 @@
         </el-row>
         <el-row class="table-container">
             <el-col>
+                <el-tabs v-model="activeTab" @tab-click="getList" style="margin-bottom: 10px;">
+                    <el-tab-pane label="消息阅读记录" name="READ"></el-tab-pane>
+                    <el-tab-pane label="用户消息" name="USER"></el-tab-pane>
+                </el-tabs>
                 <el-table :data="List" border style="width: 100%">
                     <el-table-column fixed label="创建日期" width="170">
                         <template slot-scope="scope">{{ scope.row.notificationTime | dateTime }}</template>
                     </el-table-column>
                     <el-table-column prop="type" label="类型" width="130">
                     </el-table-column>
-                    <el-table-column prop="username" label="接受者账号" width="130">
+                    <el-table-column v-if="activeTab === 'READ'" prop="username" label="接受者账号" width="130">
                     </el-table-column>
                     <el-table-column prop="title" label="主题" width="130" show-overflow-tooltip>
                     </el-table-column>
-                    <el-table-column prop="message" label="内容" width="130" show-overflow-tooltip>
+                    <el-table-column prop="message" label="内容" width="200" show-overflow-tooltip>
                     </el-table-column>
-                    <el-table-column prop="isRead" label="是否已读" width="100" :filters="readTypes"
+                    <el-table-column v-if="activeTab === 'READ'" prop="isRead" label="是否已读" width="100" :filters="readTypes"
                         :filter-method="filterTag" filter-placement="bottom-end">
                         <template slot-scope="scope">
                             <el-tag :type="scope.row.isRead === true ? 'success' : 'primary'" disable-transitions>
@@ -55,7 +59,7 @@
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column label="查看时间" width="150" show-overflow-tooltip>
+                    <el-table-column v-if="activeTab === 'READ'" label="查看时间" width="150" show-overflow-tooltip>
                         <template slot-scope="scope">{{ scope.row.readTime | dateTime }}</template>
                     </el-table-column>
 
@@ -117,7 +121,7 @@
 
 
 <script>
-    import { listNotificationReadRecords, getNotificationsType, addNotification, sendNotification } from "@/api/";
+    import { listNotificationReadRecords, listNotifications, getNotificationsType, addNotification, sendNotification } from "@/api/";
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
     export default {
         name: "ExpireDelegationList",
@@ -145,6 +149,8 @@
                 title: "",
                 // 是否显示弹出层
                 open: false,
+                // 消息 Tab：READ=阅读记录，USER=用户消息
+                activeTab: 'READ',
                 // 查询参数
                 queryParams: {
                     Description: undefined,
@@ -206,14 +212,19 @@
                     console.log(this.messageType);
                 });
             },
-            // 获取消息列表
+            // 获取消息列表（按 Tab 切换数据源）
             getList() {
                 this.loading = true;
-                listNotificationReadRecords(this.queryParams).then(response => {
+                const api = this.activeTab === 'USER' ? listNotifications : listNotificationReadRecords
+                api(this.queryParams).then(response => {
                     this.List = response.data.data.records;
                     console.log(this.List);
                     this.total = response.data.data.total;
                     this.loading = false;
+                }).catch(err => {
+                    console.error('获取消息失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
+                    this.loading = false
                 });
             },
             // 搜索按钮操作
