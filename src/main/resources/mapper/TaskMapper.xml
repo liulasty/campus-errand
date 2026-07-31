@@ -96,5 +96,61 @@
 		WHERE TaskID = #{id}
 	</select>
 
+	<select id="searchHallPage" resultType="com.lz.pojo.entity.Task">
+		SELECT t.*, u.CreditScore AS ownerCredit
+		FROM task t
+		LEFT JOIN users u ON t.OwnerID = u.UserID
+		<where>
+			<choose>
+				<when test="statusDb != null and statusDb != ''">
+					AND t.STATUS = #{statusDb}
+				</when>
+				<otherwise>
+					AND t.STATUS IN ('ACCEPTED','ONGOING','COMPLETED')
+				</otherwise>
+			</choose>
+			<if test="taskTypeId != null">
+				AND t.TaskType = #{taskTypeId}
+			</if>
+			<if test="location != null and location != ''">
+				AND t.Location = #{location}
+			</if>
+			<if test="description != null and description != ''">
+				AND t.Description LIKE CONCAT('%', #{description}, '%')
+			</if>
+		</where>
+		ORDER BY u.CreditScore DESC,
+		<choose>
+			<when test="startTimeAsc">t.StartTime ASC</when>
+			<otherwise>t.StartTime DESC</otherwise>
+		</choose>,
+		t.TaskID DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+
+	<select id="countHallPage" resultType="java.lang.Long">
+		SELECT COUNT(*)
+		FROM task t
+		<where>
+			<choose>
+				<when test="statusDb != null and statusDb != ''">
+					AND t.STATUS = #{statusDb}
+				</when>
+				<otherwise>
+					AND t.STATUS IN ('ACCEPTED','ONGOING','COMPLETED')
+				</otherwise>
+			</choose>
+			<if test="taskTypeId != null">
+				AND t.TaskType = #{taskTypeId}
+			</if>
+			<if test="location != null and location != ''">
+				AND t.Location = #{location}
+			</if>
+			<if test="description != null and description != ''">
+				AND t.Description LIKE CONCAT('%', #{description}, '%')
+			</if>
+		</where>
+	</select>
+
 
 </mapper>

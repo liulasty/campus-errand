@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
 import java.util.List;
@@ -87,4 +88,31 @@ public interface TaskMapper extends BaseMapper<Task> {
      * 按委托类型分组统计，返回 [{typeId, value}]
      */
     List<Map<String, Object>> countGroupByType();
+
+    /**
+     * 大厅分页查询：JOIN users 按发布者信用分排序（只取当前页，零内存压力）
+     *
+     * @param statusDb     状态 dbValue，null 时用默认三态
+     * @param taskTypeId   委托类型（可空）
+     * @param location     地点（可空）
+     * @param description  描述模糊（可空）
+     * @param startTimeAsc 次键 StartTime 是否升序
+     * @param pageSize     页大小
+     * @param offset       偏移
+     */
+    List<Task> searchHallPage(@Param("statusDb") String statusDb,
+            @Param("taskTypeId") Long taskTypeId,
+            @Param("location") String location,
+            @Param("description") String description,
+            @Param("startTimeAsc") boolean startTimeAsc,
+            @Param("pageSize") int pageSize,
+            @Param("offset") int offset);
+
+    /**
+     * 大厅过滤后的总条数
+     */
+    Long countHallPage(@Param("statusDb") String statusDb,
+            @Param("taskTypeId") Long taskTypeId,
+            @Param("location") String location,
+            @Param("description") String description);
 }
