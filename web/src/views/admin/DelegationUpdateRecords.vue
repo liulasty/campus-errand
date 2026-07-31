@@ -28,12 +28,19 @@
             <el-table-column label="更新记录编号" align="center" prop="updateId" />
             <el-table-column label="委托任务ID" align="center" prop="taskId" />
             <el-table-column label="操作人员ID" align="center" prop="userId" />
-            <el-table-column label="更新类型" align="center" prop="updateType" width="120">
+            <el-table-column label="更新类型" align="center" width="130" :filters="autoAdvanceFilters" :filter-method="filterUpdateType">
                 <template slot-scope="scope">
-                    <el-tag v-if="nodeMeta(scope.row.updateType)" :color="nodeMeta(scope.row.updateType).color" size="small" effect="dark">
+                    <el-tag v-if="scope.row.updateType === '自动推进'" type="danger" size="small" effect="dark">系统自动推进</el-tag>
+                    <el-tag v-else-if="nodeMeta(scope.row.updateType)" :color="nodeMeta(scope.row.updateType).color" size="small" effect="dark">
                         {{ nodeMeta(scope.row.updateType).label }}
                     </el-tag>
                     <el-tag v-else size="small" type="info">{{ scope.row.updateType }}</el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column label="节点进度" align="center" width="80">
+                <template slot-scope="scope">
+                    <span v-if="scope.row.nodeIndex">{{ scope.row.nodeIndex }}/3</span>
+                    <span v-else>-</span>
                 </template>
             </el-table-column>
             <el-table-column label="更新内容" align="center" prop="updateDescription" show-overflow-tooltip />
@@ -44,9 +51,9 @@
                 </template>
             </el-table-column>
             <el-table-column label="打卡定位" align="center" prop="location" show-overflow-tooltip />
-            <el-table-column label="更新时间时间" align="center" prop="updateTime" width="180">
+            <el-table-column label="更新时间" align="center" width="150">
                 <template slot-scope="scope">
-                    <span>{{ scope.row.updateTime }}</span>
+                    <span>{{ scope.row.updateTime | dateTime }}</span>
                 </template>
             </el-table-column>
             <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -113,6 +120,9 @@
                 title: "",
                 // 是否显示弹出层
                 open: false,
+                autoAdvanceFilters: [
+                    { text: '仅系统自动推进', value: 'auto' }
+                ],
                 // 查询参数
                 queryParams: {
                     pageNum: 1,
@@ -148,6 +158,9 @@
             this.getList();
         },
         methods: {
+            filterUpdateType(value, row) {
+                return row.updateType === '自动推进'
+            },
             getTaskUpdateType() {
                 getDelegateUpdateType().then(request => {
                     console.log("响应结果", request);
