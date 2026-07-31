@@ -33,7 +33,7 @@
 | Redis | 缓存 |
 | RabbitMQ | 消息队列 |
 | Spring Security + JWT | 认证授权 |
-| Aliyun OSS | 对象存储 |
+| 七牛云对象存储 | 对象存储（图片上传/头像） |
 | Knife4j | API 文档 |
 | EasyExcel / POI | Excel 处理 |
 
@@ -53,9 +53,10 @@
 
 ### 环境要求
 
-- JDK 8+, Maven 3.6+
+- JDK 8~17（推荐 JDK 17；JDK 21 已通过 Lombok 1.18.30 支持编译）
+- Maven 3.6+
 - Node.js + npm
-- MySQL 5.7+, Redis, RabbitMQ
+- MySQL 8.0+，Redis，RabbitMQ（Redis/RabbitMQ 未启动时后端可启动，但缓存、消息通知相关功能不可用）
 
 ### 后端
 
@@ -66,11 +67,13 @@ mysql -u root -p campus_entrustment < src/main/resources/sql/校园委托0.99.sq
 # 2. 配置数据库/Redis/RabbitMQ/OSS 连接信息
 # 编辑 src/main/resources/application-dev*.yml
 
-# 3. 启动
+# 3. 启动（默认端口 80，上下文路径 /campus_entrustment）
 mvn spring-boot:run
 
-# API 文档: http://localhost:8080/doc.html
+# API 文档: http://localhost/campus_entrustment/doc.html
 ```
+
+> 说明：`server.port` 为 80，`context-path` 为 `/campus_entrustment`。若 80 端口被占用或权限不足，可在 `application-dev.yml` 中调整。
 
 ### 前端
 
@@ -79,8 +82,10 @@ cd web
 npm install
 npm run serve
 
-# 页面: http://localhost:8081
+# 页面: http://localhost:8080/campus_entrustment/
 ```
+
+> 说明：dev server 端口 8080，`vue.config.js` 将 `/api` 代理到 `http://localhost:80`（去掉 `/api` 前缀后转发到后端 `/campus_entrustment` 上下文）。
 
 ### Docker 部署
 
