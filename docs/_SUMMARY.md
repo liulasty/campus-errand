@@ -23,4 +23,7 @@
 ## 控制器文档
 - [DelegateAuditRecordsController（已废弃）](controllers/DelegateAuditRecordsController.md)
 
+## AI 协作与验收
+- [协作工作流启动提示词（Validator-Agent / Coding-Agent 复用）](协作工作流_启动提示词.md)
+
 > 仓库根目录 `README.md` 为项目总览入口，其余文档统一归档在 `docs/` 下。
