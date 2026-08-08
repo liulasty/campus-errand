@@ -23,7 +23,7 @@
         </div>
 
         <div class="rna-table-card">
-            <el-table :data="filteredList" v-loading="loading" stripe>
+            <el-table :data="records" v-loading="loading" stripe>
                 <el-table-column label="用户" min-width="200">
                     <template slot-scope="scope">
                         <div class="rna-user-cell">
@@ -73,6 +73,10 @@
                     </div>
                 </template>
             </el-table>
+            <el-pagination class="rna-pagination" background layout="total, sizes, prev, pager, next, jumper"
+                :total="total" :current-page="pageNum" :page-size="pageSize" :page-sizes="[10, 20, 50]"
+                @size-change="handleSizeChange" @current-change="handleCurrentChange">
+            </el-pagination>
         </div>
     </div>
 </template>
@@ -84,8 +88,12 @@
         data() {
             return {
                 activeTab: '认证中',
-                allUsers: [],
+                records: [],
+                total: 0,
+                pageNum: 1,
+                pageSize: 10,
                 loading: false,
+                statCounts: { '认证中': 0, '认证通过': 0, '认证失败': 0, ALL: 0 },
                 statCards: [
                     { name: '认证中', label: '待审核', cls: 'rna-st-warn', icon: 'el-icon-time' },
                     { name: '认证通过', label: '已通过', cls: 'rna-st-ok', icon: 'el-icon-circle-check' },
@@ -94,21 +102,17 @@
                 ]
             }
         },
-        computed: {
-            filteredList() {
-                if (this.activeTab === 'ALL') return this.allUsers
-                return this.allUsers.filter(u => u.authStatus === this.activeTab)
-            }
-        },
         created() {
             this.loadData()
         },
         methods: {
             loadData() {
                 this.loading = true
-                getUserList({ page: 1, size: 200 }).then(res => {
+                const authStatus = this.activeTab === 'ALL' ? undefined : this.activeTab
+                getUserList({ pageNum: this.pageNum, pageSize: this.pageSize, authStatus }).then(res => {
                     if (res.data.code === SUCCESS_CODE) {
-                        this.allUsers = res.data.data.records || []
+                        this.records = res.data.data.records || []
+                        this.total = res.data.data.total || 0
                     }
                     this.loading = false
                 }).catch(err => {
@@ -116,16 +120,41 @@
                     this.$message.error('请求异常，请稍后重试')
                     this.loading = false
                 })
+                this.loadStatCounts()
+            },
+            loadStatCounts() {
+                const tabs = ['认证中', '认证通过', '认证失败']
+                Promise.all(tabs.map(t => this.countByStatus(t))).then(([a, b, c]) => {
+                    this.statCounts['认证中'] = a
+                    this.statCounts['认证通过'] = b
+                    this.statCounts['认证失败'] = c
+                })
+                this.countByStatus(undefined).then(n => { this.statCounts.ALL = n })
+            },
+            countByStatus(authStatus) {
+                return getUserList({ pageNum: 1, pageSize: 1, authStatus }).then(res =>
+                    res.data.code === SUCCESS_CODE ? (res.data.data.total || 0) : 0
+                ).catch(() => 0)
             },
             switchTab(name) {
                 if (this.activeTab !== name) {
                     this.activeTab = name
+                    this.pageNum = 1
                     this.loadData()
                 }
             },
             statCount(name) {
-                if (name === 'ALL') return this.allUsers.length
-                return this.allUsers.filter(u => u.authStatus === name).length
+                if (name === 'ALL') return this.statCounts.ALL
+                return this.statCounts[name] || 0
+            },
+            handleSizeChange(size) {
+                this.pageSize = size
+                this.pageNum = 1
+                this.loadData()
+            },
+            handleCurrentChange(page) {
+                this.pageNum = page
+                this.loadData()
             },
             nameInitial(name) {
                 return name ? name.charAt(0) : '?'
@@ -399,6 +428,12 @@
     .rna-empty-wrap p {
         margin: 0;
         font-size: 13px;
+    }
+
+    .rna-pagination {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 14px;
     }
 
     /* 入场动画 */
