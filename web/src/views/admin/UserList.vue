@@ -142,8 +142,8 @@
             </el-table>
             <div class="block">
                 <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
-                    :hide-on-single-page="hide_on_single_page" :current-page=userInfoConfig.page
-                    :page-sizes="[5, 7, 10, 15]" :page-size=userInfoConfig.size
+                    :hide-on-single-page="hide_on_single_page" :current-page=userInfoConfig.pageNum
+                    :page-sizes="[5, 7, 10, 15]" :page-size=userInfoConfig.pageSize
                     layout="total, sizes, prev, pager, next, jumper" :total="total">
                 </el-pagination>
             </div>
@@ -224,8 +224,8 @@
                     username: "",
                     email: "",
                     isActive: "",
-                    size: 5,
-                    page: 1
+                    pageSize: 5,
+                    pageNum: 1
                 },
                 total: 0,
                 userList: [],
@@ -337,12 +337,12 @@
             },
             handleSizeChange(val) {
                 console.log(`每页 ${val} 条`);
-                this.userInfoConfig.size = val
+                this.userInfoConfig.pageSize = val
                 this.getUserPage()
             },
             handleCurrentChange(val) {
                 console.log(`当前页: ${val}`);
-                this.userInfoConfig.page = val
+                this.userInfoConfig.pageNum = val
                 this.getUserPage()
             },
 
