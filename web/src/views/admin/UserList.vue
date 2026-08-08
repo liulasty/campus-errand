@@ -289,8 +289,15 @@
             //单个删除用户
             handleDelete(id) {
                 deleteAccounts(id).then((res) => {
-                    console.log("删除成功");
-                    this.getUserPage()
+                    if (res.data.code === 1) {
+                        this.$message.success(res.data.msg || '删除成功');
+                        this.getUserPage()
+                    } else {
+                        this.$message.error(res.data.msg || '删除失败');
+                    }
+                }).catch(err => {
+                    console.error('删除用户失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             handleValue(data) {

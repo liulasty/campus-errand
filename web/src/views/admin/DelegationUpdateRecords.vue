@@ -27,7 +27,9 @@
         <el-table v-loading="loading" :data="delegateUpdatesRecordsList" @selection-change="handleSelectionChange">
             <el-table-column label="更新记录编号" align="center" prop="updateId" />
             <el-table-column label="委托任务ID" align="center" prop="taskId" />
-            <el-table-column label="操作人员ID" align="center" prop="userId" />
+            <el-table-column label="操作人员" align="center">
+                <template slot-scope="scope">{{ scope.row.userName || scope.row.userId }}</template>
+            </el-table-column>
             <el-table-column label="更新类型" align="center" width="130" :filters="autoAdvanceFilters" :filter-method="filterUpdateType">
                 <template slot-scope="scope">
                     <el-tag v-if="scope.row.updateType === '自动推进'" type="danger" size="small" effect="dark">系统自动推进</el-tag>

@@ -1,65 +1,35 @@
 <template>
-    <div>
-        <el-row>
-            <el-tabs @tab-click="handleClick">
-                <el-tab-pane v-for="notice in noticeType" :key="notice.value" :label="notice.label">
-                    <el-col>
-                        <el-card class="box-card" body-style="height: 400px; width: 100%">
-                            <el-table :data="tableData" style="width: 100%">
-                                <el-table-column prop="date" label="日期">
-                                </el-table-column>
-                                <el-table-column prop="title" label="主题">
-                                </el-table-column>
-                                <el-table-column prop="isRead" label="是否已读">
-                                    <template slot-scope="scope">
-                                        <el-tag size="medium" v-if="scope.row.isRead == 0" type="success">未读</el-tag>
-                                        <el-tag size="medium" v-else type="danger">已读</el-tag>
-                                    </template>
-                                </el-table-column>
-                                <el-table-column prop="content" label="操作">
-                                    <template slot-scope="scope">
-                                        <el-button type="primary" @click="handleView(scope.row.id)">查看</el-button>
-                                    </template>
-                                </el-table-column>
-                            </el-table>
+    <div class="notice-center">
+        <el-tabs @tab-click="handleClick">
+            <el-tab-pane v-for="notice in noticeType" :key="notice.value" :label="notice.label">
+                <el-card class="notice-table-card" shadow="never">
+                    <el-table :data="tableData" style="width: 100%" :empty-text="'暂无通知'">
+                        <el-table-column prop="date" label="日期" width="170">
+                        </el-table-column>
+                        <el-table-column prop="title" label="主题" show-overflow-tooltip>
+                        </el-table-column>
+                        <el-table-column prop="isRead" label="状态" width="90" align="center">
+                            <template slot-scope="scope">
+                                <el-tag v-if="scope.row.isRead == 0" type="success" size="small">未读</el-tag>
+                                <el-tag v-else type="info" size="small">已读</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="90" align="center">
+                            <template slot-scope="scope">
+                                <el-button type="primary" size="small" plain @click="handleView(scope.row.id)">查看</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </el-card>
+            </el-tab-pane>
+        </el-tabs>
 
-                        </el-card>
-
-                    </el-col>
-
-
-
-
-
-
-                </el-tab-pane>
-            </el-tabs>
-
-        </el-row>
-        <el-dialog width="30%" title="通知详情" :visible.sync="innerVisible" append-to-body>
-            <el-card class="box-card notice-card">
-                <div class="header">
-                    <h1 class="title">{{ notice.title }}</h1>
-
-                </div>
-
-                <div class="announcement-list">
-                    <!-- 示例公告卡片 -->
-                    <div class="announcement-card">
-                        <p>{{ notice.description }}</p>
-                    </div>
-                    <!-- 更多公告卡片可按需添加 -->
-                </div>
-
-                <footer class="fixed-footer">
-                    <div class="notice-footer announcement-card">
-                        <p>发送时间: {{ notice.date }}</p>
-                        <p>&copy; SNUT 2024年 All rights reserved Liu Yu.</p>
-                    </div>
-
-                </footer>
-
-            </el-card>
+        <el-dialog width="480px" title="通知详情" :visible.sync="innerVisible" append-to-body>
+            <div class="notice-detail">
+                <h2 class="notice-title">{{ notice.title }}</h2>
+                <div class="notice-meta">发送时间：{{ notice.date }}</div>
+                <div class="notice-content">{{ notice.description }}</div>
+            </div>
         </el-dialog>
     </div>
 
@@ -249,8 +219,6 @@
 
 
 
-
-
             cancel(form) {
                 this.resetForm(form);
             },
@@ -263,87 +231,44 @@
         }
     }
 </script>
-<style scoped>
-    * {
-        margin: 0;
-        padding: 0;
-    }
+<style lang="less" scoped>
+    .notice-center {
+        padding: 4px;
 
+        .notice-table-card {
+            border-radius: 10px;
 
+            /deep/ .el-table__body-wrapper {
+                max-height: 380px;
+                overflow-y: auto;
+            }
+        }
 
+        .notice-detail {
+            padding: 4px 8px;
 
+            .notice-title {
+                margin: 0 0 10px;
+                font-size: 20px;
+                font-weight: 600;
+                color: var(--ce-text);
+            }
 
-    .el-tabs {
-        height: 500px;
-    }
+            .notice-meta {
+                font-size: 13px;
+                color: var(--ce-text-2);
+                padding-bottom: 14px;
+                border-bottom: 1px solid var(--ce-border);
+                margin-bottom: 16px;
+            }
 
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-    }
-
-    .header {
-        background-color: #94c3f9;
-        padding: 20px;
-        text-align: center;
-        border-radius: 10px;
-    }
-
-    .title {
-        font-size: 24px;
-    }
-
-    .nav a {
-        color: white;
-        text-decoration: none;
-    }
-
-    .announcement-list {
-        display: grid;
-        /* 将元素设置为网格布局 */
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        /* 自动适配网格列数，每列最小宽度300px，占据可用空间的1/1 */
-        gap: 20px;
-        /* 设置网格元素之间的间距 */
-        padding: 20px;
-        /* 设置网格外部的边距 */
-        line-height: 8;
-    }
-
-    .announcement-card {
-        border: 1px solid #b3c5fa;
-        padding: 10px;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .card-title {
-        font-weight: bold;
-    }
-
-    .card-date {
-        color: #999;
-    }
-
-    .notice-card {
-        border: 1px solid #7cb6f4;
-        height: 400px;
-        margin-left: 5px;
-    }
-
-    .el-tag {
-        margin-right: 5px;
-        width: 50px;
-        text-align: center;
-    }
-
-    .el-button--primary {
-        width: 100px;
-        line-height: 2;
-    }
-
-    .notice-footer {
-        margin-top: 20px;
+            .notice-content {
+                font-size: 14px;
+                line-height: 1.8;
+                color: var(--ce-text);
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+        }
     }
 </style>

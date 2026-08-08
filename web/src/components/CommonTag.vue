@@ -95,7 +95,7 @@ export default {
         align-items: center;
 
         &:hover {
-            color: #409EFF;
+            color: var(--ce-primary);
             border-color: #c6e2ff;
             background-color: #ecf5ff;
             transform: translateY(-1px);
@@ -104,9 +104,9 @@ export default {
 
         /* 覆盖 Element UI 的 dark effect 样式，或者直接在这里利用选择器优先级 */
         &.el-tag--dark {
-            background-color: #409EFF;
+            background-color: var(--ce-primary);
             color: #fff;
-            border-color: #409EFF;
+            border-color: var(--ce-primary);
             box-shadow: 0 2px 6px rgba(64, 158, 255, 0.4);
 
             &:hover {

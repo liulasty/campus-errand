@@ -74,6 +74,13 @@
                     <el-form-item label="发布者身份" prop="userRole">
                         {{form.usersInfo.userRole}}
                     </el-form-item>
+                    <el-form-item label="发布者学号" prop="identityNo">
+                        {{form.usersInfo.identityNo}}
+                    </el-form-item>
+                    <el-form-item label="发布者实名" prop="authLevel">
+                        <el-tag v-if="form.usersInfo.authLevel >= 1" type="success" size="mini">L1 已实名</el-tag>
+                        <el-tag v-else type="info" size="mini">未实名</el-tag>
+                    </el-form-item>
                 </el-form-item>
                 <el-form-item label="委托内容" prop="task">
                     <el-form-item label="委托任务内容" prop="name">
@@ -367,7 +374,7 @@
                                 this.form.task = response.data.data.task;
                                 this.form.usersInfo = response.data.data.usersInfo;
                                 this.form.usersInfo.userRole = this.identity[this.form.usersInfo.userRole];
-                                this.form.task.type = this.taskType[`${this.form.task.type}`];
+                                this.form.task.type = this.taskType[`${this.form.task.taskType}`];
                                 this.operation = this.operations[`${row.status}`];
                                 this.form.id = row.id;
                                 console.log("委托接收记录详情", this.form);
@@ -503,6 +510,9 @@
                     } else {
                         this.$message.error(result.data.msg || '图片上传失败');
                     }
+                }).catch(err => {
+                    console.error('图片上传失败：', err)
+                    this.$message.error('图片上传异常，请稍后重试')
                 });
             },
             fillMockLocation() {

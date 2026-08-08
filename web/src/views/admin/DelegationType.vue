@@ -205,6 +205,9 @@
                                     type: "error",
                                 });
                             }
+                        }).catch(err => {
+                            console.error('更新委托分类失败：', err)
+                            this.$message.error('请求异常，请稍后重试')
                         });
                     } else {
                         console.log('error submit!!');

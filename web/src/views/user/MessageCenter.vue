@@ -1,28 +1,28 @@
 <template>
     <div class="message-center">
-        <el-card shadow="hover">
+        <el-card shadow="never" class="msg-card">
             <div slot="header" class="clearfix">
-                <span><i class="el-icon-bell"></i> 消息中心</span>
-                <el-tabs v-model="activeTab" class="msg-tabs" @tab-click="handleTab">
-                    <el-tab-pane label="全部" name="all"></el-tab-pane>
-                    <el-tab-pane label="未读" name="unread"></el-tab-pane>
-                </el-tabs>
+                <span class="card-title"><i class="el-icon-bell"></i> 消息中心</span>
             </div>
-            <div v-loading="loading">
+            <el-tabs v-model="activeTab" class="msg-tabs" @tab-click="handleTab">
+                <el-tab-pane label="全部" name="all"></el-tab-pane>
+                <el-tab-pane label="未读" name="unread"></el-tab-pane>
+            </el-tabs>
+            <div v-loading="loading" class="msg-body">
                 <el-empty v-if="list.length === 0" description="暂无消息"></el-empty>
                 <div v-for="item in list" :key="item.id" class="msg-item" :class="{ unread: !item.isRead }"
                     @click="handleRead(item)">
                     <div class="msg-title">
                         <span v-if="!item.isRead" class="dot"></span>
                         <span class="title">{{ item.title }}</span>
-                        <el-tag v-if="item.notificationType" size="mini" type="info">{{ item.notificationType }}</el-tag>
+                        <el-tag v-if="item.notificationType" size="mini" class="type-tag">{{ item.notificationType }}</el-tag>
                     </div>
                     <div class="msg-desc">{{ item.description }}</div>
                     <div class="msg-date">{{ formatDate(item.date) }}</div>
                 </div>
                 <el-pagination v-if="total > 0" @current-change="handleCurrentChange" :current-page="queryParams.pageNum"
                     :page-size="queryParams.pageSize" layout="total, prev, pager, next" :total="total" background
-                    style="text-align:right; margin-top: 15px;">
+                    class="msg-pagination">
                 </el-pagination>
             </div>
         </el-card>
@@ -71,6 +71,10 @@
                         this.$message.error(response.data.msg || '获取消息失败')
                         this.loading = false
                     }
+                }).catch(err => {
+                    console.error('获取消息失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
+                    this.loading = false
                 })
             },
             handleTab() {
@@ -85,6 +89,8 @@
                 if (!item.isRead) {
                     markNotificationRead(item.id).then(() => {
                         item.isRead = true
+                    }).catch(err => {
+                        console.error('标记已读失败：', err)
                     })
                 }
                 this.$alert(item.description, item.title, { confirmButtonText: '知道了' })
@@ -98,60 +104,97 @@
         }
     }
 </script>
-<style scoped>
+<style lang="less" scoped>
     .message-center {
-        padding: 10px;
+        padding: 12px;
+    }
+
+    .msg-card {
+        border-radius: 12px;
+
+        .card-title {
+            font-weight: 600;
+            color: var(--ce-text);
+
+            i {
+                margin-right: 6px;
+                color: var(--ce-primary);
+            }
+        }
     }
 
     .msg-tabs {
-        display: inline-block;
-        margin-left: 24px;
-        vertical-align: middle;
+        margin-bottom: 8px;
+
+        /deep/ .el-tabs__item.is-active {
+            color: var(--ce-primary);
+        }
+
+        /deep/ .el-tabs__active-bar {
+            background-color: var(--ce-primary);
+        }
+    }
+
+    .msg-body {
+        min-height: 60px;
     }
 
     .msg-item {
-        padding: 12px 8px;
-        border-bottom: 1px dashed #ebeef5;
+        padding: 14px 12px;
+        border-radius: 10px;
+        border-bottom: 1px dashed var(--ce-border);
         cursor: pointer;
-        transition: background 0.2s;
+        transition: background .2s;
+
+        &:hover {
+            background: #f7faf9;
+        }
+
+        &.unread {
+            background: #f0f7f5;
+            border-left: 3px solid var(--ce-primary);
+        }
+
+        .msg-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .title {
+                font-weight: 600;
+                color: var(--ce-text);
+            }
+
+            .type-tag {
+                flex-shrink: 0;
+            }
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--ce-accent);
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .msg-desc {
+            color: var(--ce-text-2);
+            font-size: 13px;
+            margin-top: 4px;
+            line-height: 1.6;
+        }
+
+        .msg-date {
+            color: #9aa3ad;
+            font-size: 12px;
+            margin-top: 4px;
+        }
     }
 
-    .msg-item:hover {
-        background: #f5f7fa;
-    }
-
-    .msg-item.unread {
-        background: #f0f7ff;
-    }
-
-    .msg-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .msg-title .title {
-        font-weight: 600;
-        color: #303133;
-    }
-
-    .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #f56c6c;
-        display: inline-block;
-    }
-
-    .msg-desc {
-        color: #909399;
-        font-size: 13px;
-        margin-top: 4px;
-    }
-
-    .msg-date {
-        color: #c0c4cc;
-        font-size: 12px;
-        margin-top: 4px;
+    .msg-pagination {
+        text-align: right;
+        margin-top: 15px;
     }
 </style>

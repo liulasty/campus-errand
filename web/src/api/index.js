@@ -239,6 +239,11 @@ export const updateSystemBulletin = (data) => {
     return http.put('/system-announcements', data)
 }
 
+export const createSystemBulletin = (data) => {
+    // console.log("新增系统公告", data);
+    return http.post('/system-announcements', data)
+}
+
 
 export const listNotifications = (query) => {
     console.log("获取通知列表");

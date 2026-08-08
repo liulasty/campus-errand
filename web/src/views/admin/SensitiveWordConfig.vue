@@ -78,6 +78,9 @@
                     } else {
                         this.$message.error(res.data.msg || '添加失败')
                     }
+                }).catch(err => {
+                    console.error('添加敏感词失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             handleDelete(row) {
@@ -86,7 +89,12 @@
                         if (res.data.code === 1) {
                             this.$message.success('删除成功')
                             this.getList()
+                        } else {
+                            this.$message.error(res.data.msg || '删除失败')
                         }
+                    }).catch(err => {
+                        console.error('删除敏感词失败：', err)
+                        this.$message.error('请求异常，请稍后重试')
                     })
                 }).catch(() => {})
             },
@@ -98,7 +106,12 @@
                 checkSensitiveText(this.testText).then(res => {
                     if (res.data.code === 1) {
                         this.checkResult = res.data.data || []
+                    } else {
+                        this.$message.error(res.data.msg || '校验失败')
                     }
+                }).catch(err => {
+                    console.error('敏感词校验失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             formatDate(date) {

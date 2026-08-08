@@ -413,7 +413,7 @@
                     if (response.data.code == 1) {
                         this.viewOnGoingList = response.data.data.records.map((record) => {
 
-                            record.type = this.taskType[`${record.type}`]; // 确保类型安全
+                            record.type = this.taskType[`${record.taskType}`]; // 确保类型安全
 
                             return record;
                         });
@@ -447,7 +447,7 @@
                         this.form = response.data.data;
 
                         this.form.usersInfo.userRole = this.identity[this.form.usersInfo.userRole];
-                        this.form.task.type = this.taskType[`${this.form.task.type}`];
+                        this.form.task.type = this.taskType[`${this.form.task.taskType}`];
                         this.form.taskAcceptRecords.forEach(element => {
                             element.entrustedCompletionStatus = "已完成委托次数: " + element.taskAccomplishCount + ", 委托完成评分: " + element.taskAccomplishGrade;
                         });

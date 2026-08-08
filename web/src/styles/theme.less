@@ -1,0 +1,180 @@
+/* ============================================================
+ * 校园委托 · 全局视觉规范（Campus Clarity）
+ * 主色：深青绿（信任/校园）  点缀：暖琥珀（信用/评分）
+ * 统一：按钮 / 标签 / 表格 / 卡片 / 对话框 / 表单 / 分页
+ * ============================================================ */
+
+:root {
+  --ce-primary: #0e7c66;
+  --ce-primary-dark: #0a5f4e;
+  --ce-primary-light: #e7f4f0;
+  --ce-accent: #f59e0b;
+  --ce-danger: #d64545;
+  --ce-bg: #f5f6f8;
+  --ce-card-bg: #ffffff;
+  --ce-border: #e6e9ed;
+  --ce-text: #23272e;
+  --ce-text-2: #6b7280;
+  --ce-radius: 10px;
+  --ce-radius-sm: 6px;
+  --ce-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .06);
+  --ce-shadow-md: 0 4px 12px rgba(16, 24, 40, .08);
+}
+
+html,
+body,
+#app {
+  background-color: var(--ce-bg);
+  color: var(--ce-text);
+}
+
+/* ---------- 按钮 ---------- */
+.el-button {
+  border-radius: var(--ce-radius-sm);
+}
+.el-button--primary {
+  background-color: var(--ce-primary);
+  border-color: var(--ce-primary);
+}
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background-color: var(--ce-primary-dark);
+  border-color: var(--ce-primary-dark);
+}
+.el-button--primary.is-plain {
+  background-color: var(--ce-primary-light);
+  border-color: #bfe0d8;
+  color: var(--ce-primary);
+}
+.el-button--primary.is-plain:hover,
+.el-button--primary.is-plain:focus {
+  background-color: var(--ce-primary);
+  border-color: var(--ce-primary);
+  color: #fff;
+}
+.el-button--primary.is-disabled,
+.el-button--primary.is-disabled:hover {
+  background-color: #9ccbc0;
+  border-color: #9ccbc0;
+}
+
+/* ---------- 标签 ---------- */
+.el-tag {
+  border-radius: var(--ce-radius-sm);
+}
+.el-tag--success {
+  background-color: var(--ce-primary-light);
+  border-color: #bfe0d8;
+  color: var(--ce-primary);
+}
+.el-tag--warning {
+  background-color: #fdf3e2;
+  border-color: #f6d9a8;
+  color: #b4790a;
+}
+.el-tag--danger {
+  background-color: #fdecec;
+  border-color: #f5c6c6;
+  color: #c13c3c;
+}
+
+/* ---------- 卡片 ---------- */
+.el-card {
+  border-radius: 12px;
+  border-color: var(--ce-border);
+  box-shadow: var(--ce-shadow);
+}
+.el-card.is-always-shadow {
+  box-shadow: var(--ce-shadow);
+}
+.el-card__header {
+  border-bottom: 1px solid var(--ce-border);
+  font-weight: 600;
+  color: var(--ce-text);
+}
+
+/* ---------- 表格 ---------- */
+.el-table {
+  border-radius: 8px;
+  color: var(--ce-text);
+}
+.el-table th.el-table__cell {
+  background-color: #f3f5f7;
+  color: #4b5563;
+  font-weight: 600;
+}
+.el-table--border,
+.el-table--group {
+  border-color: var(--ce-border);
+}
+.el-table .el-table__cell {
+  border-bottom: 1px solid #eef0f3;
+}
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background-color: #fafbfc;
+}
+.el-table__row:hover > td.el-table__cell {
+  background-color: #f5faf8 !important;
+}
+
+/* ---------- 对话框 ---------- */
+.el-dialog {
+  border-radius: 14px;
+  box-shadow: var(--ce-shadow-md);
+}
+.el-dialog__header {
+  border-bottom: 1px solid var(--ce-border);
+  padding-bottom: 16px;
+}
+.el-dialog__title {
+  font-weight: 600;
+  color: var(--ce-text);
+}
+
+/* ---------- 表单 ---------- */
+.el-form-item__label {
+  color: #374151;
+}
+.el-input__inner,
+.el-textarea__inner {
+  border-radius: var(--ce-radius-sm);
+}
+.el-input__inner:focus,
+.el-textarea__inner:focus,
+.el-select .el-input.is-focus .el-input__inner {
+  border-color: var(--ce-primary);
+}
+
+/* ---------- 分页 ---------- */
+.el-pagination.is-background .el-pager li.is-active {
+  background-color: var(--ce-primary);
+}
+
+/* ---------- 通知/消息 ---------- */
+.el-message {
+  border-radius: var(--ce-radius-sm);
+}
+
+/* ---------- 评分（信用/评级点缀色） ---------- */
+.el-rate__icon {
+  color: var(--ce-accent);
+}
+
+/* ---------- 通用页面外壳 ---------- */
+.ce-page {
+  padding: 14px;
+}
+.ce-page .ce-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ce-page .ce-search {
+  margin-bottom: 12px;
+}
+.ce-page .ce-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}

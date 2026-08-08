@@ -66,8 +66,9 @@
                 <el-table-column label="任务地点" align="center" prop="location" width="120" />
                 <el-table-column label="状态" align="center" prop="status" width="120">
                      <template slot-scope="scope">
-                        <el-tag v-if="scope.row.status==='ONGOING'" type="success" size="small">发布中</el-tag>
-                        <el-tag v-else-if="scope.row.status==='ACCEPTED'" type="warning" size="small">已接收</el-tag>
+                        <el-tag v-if="scope.row.status==='委托发布中'" type="success" size="small">发布中</el-tag>
+                        <el-tag v-else-if="scope.row.status==='已接收'" type="warning" size="small">已接收</el-tag>
+                        <el-tag v-else-if="scope.row.status==='已完成'" type="success" size="small">已完成</el-tag>
                         <el-tag v-else type="info" size="small">{{ scope.row.status }}</el-tag>
                     </template>
                 </el-table-column>
@@ -87,117 +88,81 @@
         </el-card>
 
         <!-- 添加或修改存储委托信息审核记录对话框 -->
-        <el-dialog :title="title" :visible.sync="open" width="850px" top="10vh" append-to-body center custom-class="detail-dialog">
-            <el-row :gutter="20">
+        <el-dialog :title="title" :visible.sync="open" width="880px" top="8vh" append-to-body center custom-class="detail-dialog">
+            <el-row :gutter="16">
                 <el-col :span="12">
-                    <el-card class="box-card info-card" shadow="never">
+                    <el-card class="box-card detail-info-card" shadow="never">
                         <div slot="header">
                             <span>发布者信息</span>
                         </div>
-                        <el-form ref="form" :model="form" label-width="100px" label-position="left">
-
-                            <el-form-item label="姓名">
-                                {{form.usersInfo.name}}
+                        <el-form ref="form" :model="form" label-width="90px" label-position="left" class="detail-form">
+                            <el-form-item label="姓名">{{form.usersInfo.name}}</el-form-item>
+                            <el-form-item label="QQ">{{form.usersInfo.qqNumber}}</el-form-item>
+                            <el-form-item label="电话">{{form.usersInfo.phoneNumber}}</el-form-item>
+                            <el-form-item label="身份"><el-tag size="small">{{form.usersInfo.userRole}}</el-tag></el-form-item>
+                            <el-form-item label="学号">{{form.usersInfo.identityNo}}</el-form-item>
+                            <el-form-item label="实名">
+                                <el-tag v-if="form.usersInfo.authLevel >= 1" type="success" size="small">L1 已实名</el-tag>
+                                <el-tag v-else type="info" size="small">未实名</el-tag>
                             </el-form-item>
-                            <el-form-item label="QQ">
-                                {{form.usersInfo.qqNumber}}
-                            </el-form-item>
-                            <el-form-item label="电话">
-                                {{form.usersInfo.phoneNumber}}
-                            </el-form-item>
-                            <el-form-item label="身份">
-                                <el-tag size="mini">{{form.usersInfo.userRole}}</el-tag>
-                            </el-form-item>
+                            <el-form-item label="信用分"><el-tag size="small">{{ detailCredit }}</el-tag></el-form-item>
                         </el-form>
                     </el-card>
                 </el-col>
                 <el-col :span="12">
-                     <el-card class="box-card info-card" shadow="never">
+                    <el-card class="box-card detail-info-card" shadow="never">
                         <div slot="header">
                             <span>任务详情</span>
                         </div>
-                        <el-form ref="formTask" :model="form" label-width="100px" label-position="left">
-                            <el-form-item label="任务内容">
-                                {{form.task.description}}
-                            </el-form-item>
-                            <el-form-item label="任务地点">
-                                {{form.task.location}}
-                            </el-form-item>
-                            <el-form-item label="委托类型">
-                                {{form.task.type}}
-                            </el-form-item>
-                            <el-form-item label="截止时间">
-                                {{form.task.endTime}}
-                            </el-form-item>
+                        <el-form ref="formTask" :model="form" label-width="90px" label-position="left" class="detail-form">
+                            <el-form-item label="任务内容">{{form.task.description}}</el-form-item>
+                            <el-form-item label="任务地点">{{form.task.location}}</el-form-item>
+                            <el-form-item label="委托类型">{{form.task.type}}</el-form-item>
+                            <el-form-item label="截止时间">{{form.task.endTime}}</el-form-item>
                         </el-form>
                     </el-card>
                 </el-col>
-                    <el-card class="box-card publisher-card">
-                        <div slot="header" class="clearfix">
-                            <span>该委托发布者发布情况</span>
-
-                            <!-- <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button> -->
+            </el-row>
+            <el-row :gutter="16" style="margin-top:16px">
+                <el-col :span="24">
+                    <el-card class="box-card detail-info-card" shadow="never">
+                        <div slot="header"><span>该委托发布者发布情况</span></div>
+                        <div class="publish-stats">
+                            <div class="stat-item">
+                                <el-statistic :value="form.taskPublishedTotal" title="已发布委托数"></el-statistic>
+                            </div>
+                            <div class="stat-item">
+                                <el-statistic :value="form.taskAcceptedTotal" title="已完成委托数"></el-statistic>
+                            </div>
+                            <div class="stat-item">
+                                <el-statistic :value="form.taskCanceledTotal" title="已取消委托数"></el-statistic>
+                            </div>
+                            <div class="stat-item">
+                                <el-statistic :value="form.taskOverdueTotal" title="已过期委托数"></el-statistic>
+                            </div>
                         </div>
-                        <el-row :gutter="20">
-                            <el-col :span="10" class="el-statistic-wrapper">
-                                <div>
-                                    <el-statistic :value="form.taskPublishedTotal" title="当前已发布委托数">
-                                    </el-statistic>
-                                </div>
-                            </el-col>
-                            <el-col :span="10" class="el-statistic-wrapper">
-                                <div>
-                                    <el-statistic :value="form.taskAcceptedTotal" title="发布委托已完成数">
-                                    </el-statistic>
-                                </div>
-                            </el-col>
-
-                        </el-row>
-                        <el-row :gutter="20">
-                            <el-col :span="10" class="el-statistic-wrapper">
-                                <div>
-                                    <el-statistic :value="form.taskCanceledTotal" title="已取消发布委托数">
-                                    </el-statistic>
-                                </div>
-                            </el-col>
-                            <el-col :span="10" class="el-statistic-wrapper">
-                                <div>
-                                    <el-statistic :value="form.taskOverdueTotal" title="已过期发布委托数">
-                                    </el-statistic>
-                                </div>
-                            </el-col>
-                        </el-row>
                     </el-card>
-                    <div v-show="form.task.status=='已完成'">
-                        <el-rate v-model="taskRateValue" disabled show-score text-color="#ff9900"
-                            score-template="{value}">
-                        </el-rate>
-
-                        <!-- <el-rate v-model="value2" :colors="colors">
-                        </el-rate> -->
-                    </div>
-                    <div v-show="form.task.status=='委托发布中'">
-                        <div v-if="!isPublisher(form.task)">
-                            <div v-show="form.taskAcceptRecords === null">
-                                <el-input type="textarea" v-model="delegationStr" placeholder="请输入你的接收委托留言信息"
-                                    size="large" rows="6" maxlength="180">
-                                </el-input>
-                            </div>
-                            <div v-show="form.taskAcceptRecords !== null">
-                                <el-tag type="info">请在我的委托-我的接收里查看详情</el-tag>
-
-                            </div>
-                        </div>
-                        <div v-if="isPublisher(form.task)">
-                            <el-tag type="info">请在我的委托-我的发布里查看详情</el-tag>
-                        </div>
-
-
-
-                    </div>
-
                 </el-col>
             </el-row>
+            <div v-show="form.task.status=='已完成'" class="status-area">
+                <el-rate v-model="taskRateValue" disabled show-score text-color="#f59e0b" score-template="{value}">
+                </el-rate>
+            </div>
+            <div v-show="form.task.status=='委托发布中'" class="status-area">
+                <div v-if="!isPublisher(form.task)">
+                    <div v-show="form.taskAcceptRecords === null">
+                        <el-input type="textarea" v-model="delegationStr" placeholder="请输入你的接收委托留言信息"
+                            size="large" rows="5" maxlength="180">
+                        </el-input>
+                    </div>
+                    <div v-show="form.taskAcceptRecords !== null">
+                        <el-tag type="info">请在我的委托-我的接收里查看详情</el-tag>
+                    </div>
+                </div>
+                <div v-if="isPublisher(form.task)">
+                    <el-tag type="info">请在我的委托-我的发布里查看详情</el-tag>
+                </div>
+            </div>
 
             <div slot="footer" class="dialog-footer">
                 <div v-if="Array.isArray(operation.title)">
@@ -315,6 +280,8 @@
                     },
                     task: {}
                 },
+                // 当前行发布者信用分（旁证展示用）
+                detailCredit: null,
                 // 发布者已发布信息统计
                 publishedValue: 0,
                 colors: ['#99A9BF', '#F7BA2A', '#FF9900'],
@@ -402,13 +369,14 @@
             },
             handleView(row) {
                 console.log(row);
+                this.detailCredit = row.ownerCredit;
                 getTaskAndPublishUserInfoByTaskId(row.taskId).then(response => {
                     if (response.data.code === 1) {
 
                         this.form = response.data.data;
                         console.log(this.form);
                         this.form.usersInfo.userRole = this.identity[this.form.usersInfo.userRole];
-                        this.form.task.type = this.taskType[`${this.form.task.type}`];
+                        this.form.task.type = this.taskType[`${this.form.task.taskType}`];
                         // console.log("form", this.form.task.status);
                         this.operation = this.operations[`${this.form.task.status}`];
                         this.open = true;
@@ -420,6 +388,9 @@
                             }
                         )
                     }
+                }).catch(err => {
+                    console.error('查看委托详情失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 });
 
             },
@@ -494,7 +465,7 @@
                 
                 i {
                     margin-right: 5px;
-                    color: #409EFF;
+                    color: var(--ce-primary);
                 }
             }
         }
@@ -513,7 +484,7 @@
                 
                 i {
                     margin-right: 5px;
-                    color: #409EFF;
+                    color: var(--ce-primary);
                 }
             }
         }
@@ -524,24 +495,63 @@
         }
     }
     
-    .info-card {
+    .detail-info-card {
         height: 100%;
-        
+        border-radius: 10px;
+
         /deep/ .el-card__header {
-            padding: 10px 20px;
-            font-weight: bold;
-            background-color: #f5f7fa;
+            padding: 10px 18px;
+            font-weight: 600;
+            color: #374151;
+            background-color: #f7f8fa;
+            border-radius: 10px 10px 0 0;
         }
-        
-        .el-form-item {
-            margin-bottom: 5px;
-            border-bottom: 1px dashed #ebeef5;
-            padding-bottom: 5px;
-            
-            &:last-child {
-                border-bottom: none;
+
+        .detail-form {
+            .el-form-item {
+                margin-bottom: 4px;
+                border-bottom: 1px dashed #f0f2f5;
+                padding-bottom: 4px;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+            }
+
+            /deep/ .el-form-item__content {
+                color: #4b5563;
+                line-height: 22px;
+                word-break: break-all;
             }
         }
+    }
+
+    .publish-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        .stat-item {
+            flex: 1 1 0;
+            min-width: 120px;
+            padding: 14px 8px;
+            background: #f7f8fa;
+            border-radius: 10px;
+            text-align: center;
+
+            /deep/ .el-statistic__content {
+                color: var(--ce-primary);
+                font-weight: 700;
+            }
+        }
+    }
+
+    .status-area {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border: 1px solid var(--ce-border);
+        border-radius: 10px;
+        background: #fbfcfd;
     }
     
     /deep/ .detail-dialog {

@@ -8,9 +8,9 @@
             </el-form-item>
             <el-form-item label="公告状态" prop="status" class="input-reader-name">
                 <el-select v-model="queryParams.status" clearable>
-                    <el-option label="草稿" value="草稿" />
-                    <el-option label="已发布" value="已发布" />
-                    <el-option label="已撤回" value="已撤回" />
+                    <el-option label="草稿" value="DRAFT" />
+                    <el-option label="已发布" value="PUBLISHED" />
+                    <el-option label="已撤回" value="WITHDRAWN" />
                 </el-select>
             </el-form-item>
             <el-form-item label="排序规则" prop="queryRules" class="input-reader-name">
@@ -45,6 +45,7 @@
                         <el-table-column prop="content" label="内容" width="150" show-overflow-tooltip>
                         </el-table-column>
                         <el-table-column prop="status" label="公告状态" width="100">
+                            <template slot-scope="scope">{{ statusLabel(scope.row.status) }}</template>
                         </el-table-column>
                         <el-table-column label="发布时间" width="150">
                             <template slot-scope="scope">{{ scope.row.publishTime | dateTime }}</template>
@@ -87,16 +88,16 @@
 
         </div>
         <div>
-            <el-dialog title="更改系统公告" :visible.sync="open" width="700px" append-to-body>
+            <el-dialog :title="dialogMode === 'add' ? '新增系统公告' : '更改系统公告'" :visible.sync="open" width="700px" append-to-body>
                 <el-form ref="form" :model="form" :rules="rules" label-width="120px">
                     <el-form-item label="公告主题" prop="title">
-                        <el-input v-model="form.title" placeholder="请输入公告内容" />
+                        <el-input v-model="form.title" placeholder="请输入公告主题" />
                     </el-form-item>
                     <el-form-item label="公告状态" prop="status">
                         <el-select v-model="form.status">
-                            <el-option label="草稿" value="草稿" />
-                            <el-option label="已发布" value="已发布" />
-                            <el-option label="已撤回" value="已撤回" />
+                            <el-option label="草稿" value="DRAFT" />
+                            <el-option label="已发布" value="PUBLISHED" />
+                            <el-option label="已撤回" value="WITHDRAWN" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="公告内容" prop="content">
@@ -131,7 +132,7 @@
 
 
 <script>
-    import { getSystemBulletinList, deleteSystemBulletin, getSystemBulletinById, updateSystemBulletin } from "@/api/";
+    import { getSystemBulletinList, deleteSystemBulletin, getSystemBulletinById, updateSystemBulletin, createSystemBulletin } from "@/api/";
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
     export default {
         name: "SystemBulletinList",
@@ -139,6 +140,7 @@
             return {
                 list: [],
                 open: false,
+                dialogMode: 'edit',
                 showSearch: true,
                 loading: true,
                 total: 0,
@@ -256,6 +258,7 @@
                 console.log("获取公告", id);
                 getSystemBulletinById(id).then(response => {
                     if (response.data.code == 1) {
+                        this.dialogMode = 'edit';
                         this.form = response.data.data;
                         this.dateTimeRange = [this.strToDate(this.form.startEffectiveTime), this.strToDate(this.form.endEffectiveTime)];
                         this.form.publishTime = this.strToDate(this.form.publishTime);
@@ -294,32 +297,57 @@
                 this.$refs["form"].validate(valid => {
 
 
-                    if (valid && this.dateTimeRange[0] > this.form.publishTime) {
+                    if (valid && this.dateTimeRange && this.dateTimeRange.length === 2 && this.dateTimeRange[0] > this.form.publishTime) {
                         this.form.startEffectiveTime = this.dateToString(this.dateTimeRange[0]);
                         this.form.endEffectiveTime = this.dateToString(this.dateTimeRange[1]);
                         this.form.publishTime = this.dateToString(this.form.publishTime);
                         this.form.createdAt = null;
                         this.form.updatedAt = null;
 
-                        updateSystemBulletin(this.form).then(response => {
-                            if (response.data.code == 1) {
-                                this.$message({
-                                    message: response.data.msg,
-                                    type: 'success'
-                                });
-                                this.open = false;
-                                this.getList();
-                            } else {
-                                this.$message({
-                                    message: response.data.msg,
-                                    type: 'error'
-                                });
-                            }
-                        });
+                        if (this.dialogMode === 'add') {
+                            this.form.announcementId = undefined;
+                            createSystemBulletin(this.form).then(response => {
+                                if (response.data.code == 1) {
+                                    this.$message({
+                                        message: response.data.msg,
+                                        type: 'success'
+                                    });
+                                    this.open = false;
+                                    this.getList();
+                                } else {
+                                    this.$message({
+                                        message: response.data.msg,
+                                        type: 'error'
+                                    });
+                                }
+                            }).catch(err => {
+                                console.error('新增系统公告失败：', err)
+                                this.$message.error('请求异常，请稍后重试')
+                            });
+                        } else {
+                            updateSystemBulletin(this.form).then(response => {
+                                if (response.data.code == 1) {
+                                    this.$message({
+                                        message: response.data.msg,
+                                        type: 'success'
+                                    });
+                                    this.open = false;
+                                    this.getList();
+                                } else {
+                                    this.$message({
+                                        message: response.data.msg,
+                                        type: 'error'
+                                    });
+                                }
+                            }).catch(err => {
+                                console.error('更新系统公告失败：', err)
+                                this.$message.error('请求异常，请稍后重试')
+                            });
+                        }
 
 
                     } else {
-                        if (this.dateTimeRange[0] < this.form.publishTime) {
+                        if (this.dateTimeRange && this.dateTimeRange.length === 2 && this.dateTimeRange[0] < this.form.publishTime) {
                             this.$message({
                                 message: "发布时间不能大于生效时间",
                                 type: 'error'
@@ -331,7 +359,22 @@
                 });
             },
             addDialogSystemBulletin() {
-
+                this.dialogMode = 'add';
+                this.form = {
+                    title: '',
+                    content: '',
+                    status: 'DRAFT',
+                    isPinned: false,
+                    publishTime: null,
+                    startEffectiveTime: null,
+                    endEffectiveTime: null
+                };
+                this.dateTimeRange = [];
+                this.open = true;
+            },
+            statusLabel(status) {
+                const map = { DRAFT: '草稿', PUBLISHED: '已发布', WITHDRAWN: '已撤回' };
+                return map[status] || status;
             }
         }
     }

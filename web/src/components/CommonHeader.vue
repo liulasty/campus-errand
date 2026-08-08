@@ -216,9 +216,9 @@
         transition: all 0.3s;
         
         &:hover {
-          color: #409EFF;
+          color: var(--ce-primary);
           transform: scale(1.1);
-          background-color: rgba(64, 158, 255, 0.1);
+          background-color: rgba(14, 124, 102, 0.1);
         }
       }
 
@@ -237,7 +237,7 @@
             transition: color 0.3s;
             
             &.is-link:hover {
-              color: #409EFF;
+              color: var(--ce-primary);
               font-weight: 600;
             }
           }
@@ -269,7 +269,7 @@
 
         &:hover {
           background: rgba(0, 0, 0, 0.04);
-          color: #409EFF;
+          color: var(--ce-primary);
         }
         
         .action-icon {

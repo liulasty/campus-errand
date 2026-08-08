@@ -1,6 +1,6 @@
 <template>
     <el-menu :default-active="activeIndex" class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose"
-        :collapse="isCollapse" background-color="#304156" text-color="#bfcbd9" active-text-color="#409EFF"
+        :collapse="isCollapse" background-color="#304156" text-color="#bfcbd9" active-text-color="var(--ce-primary)"
         :unique-opened="isUniqueOpened">
         <div class="sidebar-logo-container" :class="{'collapse': isCollapse}">
             <transition name="sidebarLogoFade">
@@ -72,11 +72,11 @@
 
             &.is-active {
                 background-color: #1f2d3d !important;
-                color: #409EFF !important;
-                border-left-color: #409EFF;
+                color: var(--ce-primary) !important;
+                border-left-color: var(--ce-primary);
 
                 i {
-                    color: #409EFF;
+                    color: var(--ce-primary);
                 }
             }
         }

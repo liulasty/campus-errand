@@ -449,8 +449,18 @@
 
                 getDraftDetailsBasedOnCommissionId(row.taskId).then((data) => {
                     console.log(data.data);
-                    this.DraftFrom = data.data.data
-                    this.dialogVisibleEdit = true;
+                    if (data.data.code === SUCCESS_CODE) {
+                        this.DraftFrom = data.data.data
+                        this.dialogVisibleEdit = true;
+                    } else {
+                        this.$message({
+                            message: data.data.msg,
+                            type: 'error'
+                        });
+                    }
+                }).catch(err => {
+                    console.error('获取草稿详情失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             //刷新委托列表
@@ -469,7 +479,15 @@
                         });
                         this.dialogVisibleEdit = false;
                         this.refresh()
+                    } else {
+                        this.$message({
+                            message: data.data.msg,
+                            type: 'error'
+                        });
                     }
+                }).catch(err => {
+                    console.error('更新草稿失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
 
             },
@@ -490,7 +508,15 @@
                                     type: 'success'
                                 });
                                 this.refresh()
+                            } else {
+                                this.$message({
+                                    message: data.data.msg,
+                                    type: 'error'
+                                });
                             }
+                        }).catch(err => {
+                            console.error('删除草稿失败：', err)
+                            this.$message.error('请求异常，请稍后重试')
                         })
                     })
                     .catch(action => {
@@ -591,6 +617,9 @@
                     }
                     this.$emit('childEvent');
                     this.dialogVisiblePublish = false;
+                }).catch(err => {
+                    console.error('发布委托失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
 
@@ -610,6 +639,9 @@
                             message: data.data.msg
                         });
                     }
+                }).catch(err => {
+                    console.error('查看驳回原因失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             cancel(form) {
@@ -635,7 +667,7 @@
             
             i {
                 margin-right: 5px;
-                color: #409EFF;
+                color: var(--ce-primary);
             }
         }
         
@@ -718,7 +750,7 @@
             
             i {
                 margin-right: 5px;
-                color: #409EFF;
+                color: var(--ce-primary);
             }
         }
         
@@ -739,7 +771,7 @@
             
             .icon {
                 font-size: 18px;
-                color: #409EFF;
+                color: var(--ce-primary);
                 margin-right: 10px;
                 margin-top: 2px;
             }
