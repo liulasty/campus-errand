@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
@@ -113,47 +114,60 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
 
     @Override
     public PageResult getUserByPage(UsersConfig config) {
-        QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
-        if (config.getUsername() != null && !config.getUsername().trim().isEmpty()) {
-            queryWrapper.like("Username", config.getUsername());
-        }
-        if (config.getEmail() != null && !config.getEmail().trim().isEmpty()) {
-            queryWrapper.like("Email", config.getEmail());
-        }
-        if (config.getIsActive() != null) {
-            queryWrapper.eq("IsActive", config.getIsActive());
-        }
-
-        Page<Users> page = new Page<>(config.getPage(), config.getSize());
-
-        Page<Users> usersPage = usersMapper.selectPage(page, queryWrapper);
-        ArrayList<UserPageVO> userPageVOS = new ArrayList<>();
-        for (Users users : usersPage.getRecords()) {
-            UserPageVO userPageVO = new UserPageVO();
-            BeanUtils.copyProperties(users, userPageVO);
-            UsersInfo byId = usersInfoMapper.selectById(users.getUserId());
-
-            // 设置认证状态、认证等级、身份标识、信用分、实名材料
-            if (byId == null) {
-                userPageVO.setAuthStatus(AuthenticationStatus.UNAUTHORIZED);
-                userPageVO.setAuthLevel(0);
-            } else {
-                log.info("用户信息 {}", byId);
-                userPageVO.setAuthStatus(byId.getAuthStatus());
-                userPageVO.setAuthLevel(byId.getAuthLevel());
-                userPageVO.setIdentityNo(byId.getIdentityNo());
-                userPageVO.setName(byId.getName());
-                userPageVO.setUserRole(byId.getUserRole());
-                userPageVO.setRoleImgSrc(byId.getRoleImgSrc());
-                userPageVO.setCertifieTime(byId.getCertifieTime());
+        applyAuthStatusFilter(config);
+        long total = usersMapper.countFilteredUsers(config);
+        List<UserPageVO> userPageVOS = new ArrayList<>();
+        if (total > 0) {
+            config.setOffset((config.getPageNum() - 1) * config.getPageSize());
+            List<Long> userIds = usersMapper.selectFilteredUserIds(config);
+            if (!userIds.isEmpty()) {
+                Map<Long, Users> userMap = usersMapper.selectBatchIds(userIds).stream()
+                        .collect(Collectors.toMap(Users::getUserId, u -> u, (a, b) -> a));
+                Map<Long, UsersInfo> infoMap = usersInfoMapper.selectBatchIds(userIds).stream()
+                        .collect(Collectors.toMap(UsersInfo::getUserId, ui -> ui, (a, b) -> a));
+                for (Long userId : userIds) {
+                    Users users = userMap.get(userId);
+                    if (users == null) {
+                        continue;
+                    }
+                    UserPageVO userPageVO = new UserPageVO();
+                    BeanUtils.copyProperties(users, userPageVO);
+                    UsersInfo byId = infoMap.get(userId);
+                    if (byId == null) {
+                        userPageVO.setAuthStatus(AuthenticationStatus.UNAUTHORIZED);
+                        userPageVO.setAuthLevel(0);
+                    } else {
+                        userPageVO.setAuthStatus(byId.getAuthStatus());
+                        userPageVO.setAuthLevel(byId.getAuthLevel());
+                        userPageVO.setIdentityNo(byId.getIdentityNo());
+                        userPageVO.setName(byId.getName());
+                        userPageVO.setUserRole(byId.getUserRole());
+                        userPageVO.setRoleImgSrc(byId.getRoleImgSrc());
+                        userPageVO.setCertifieTime(byId.getCertifieTime());
+                    }
+                    userPageVO.setCreditScore(users.getCreditScore());
+                    userPageVOS.add(userPageVO);
+                }
             }
-            userPageVO.setCreditScore(users.getCreditScore());
-            userPageVOS.add(userPageVO);
         }
+        return new PageResult<>(total, userPageVOS);
+    }
 
-        return new PageResult<>(usersPage.getTotal(),
-                userPageVOS);
-
+    private void applyAuthStatusFilter(UsersConfig config) {
+        config.setAuthStatusDb(null);
+        config.setUnauthenticatedOnly(false);
+        String authStatus = config.getAuthStatus();
+        if (authStatus == null || authStatus.trim().isEmpty()) {
+            return;
+        }
+        if ("未认证".equals(authStatus)) {
+            config.setUnauthenticatedOnly(true);
+            return;
+        }
+        AuthenticationStatus status = AuthenticationStatus.fromDescription(authStatus);
+        if (status != null) {
+            config.setAuthStatusDb(status.getDbValue());
+        }
     }
 
     /**
