@@ -71,4 +71,8 @@ public class TaskUpdates implements Serializable {
     @TableField("NodeIndex")
     private Integer nodeIndex;
 
+    @ApiModelProperty(value = "操作人用户名（瞬态，不落库，列表展示用）")
+    @TableField(exist = false)
+    private String userName;
+
 }

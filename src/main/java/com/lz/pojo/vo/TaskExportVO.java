@@ -23,6 +23,12 @@ public class TaskExportVO {
     private Long taskId;
     @ExcelProperty("发布者ID")
     private Long ownerId;
+    @ExcelProperty("发布者用户名")
+    private String ownerName;
+    @ExcelProperty("发布者信用分")
+    private Integer ownerCredit;
+    @ExcelProperty("实名等级")
+    private Integer authLevel;
     @ExcelProperty("描述")
     private String description;
     @ExcelProperty("地点")

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -76,7 +77,7 @@ public class AcceptController {
      * @return 后端统一返回结果
      */
     @PostMapping
-    public Result<?> accept(@RequestBody AcceptDTO acceptDTO) {
+    public Result<?> accept(@Validated @RequestBody AcceptDTO acceptDTO) {
         log.info("接收委托留言 {}", acceptDTO);
         realNameAuthenticationService.ensureCurrentUserL1();
         taskAcceptRecordsService.create(acceptDTO);

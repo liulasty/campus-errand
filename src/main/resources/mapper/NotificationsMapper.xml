@@ -9,7 +9,7 @@
 				AND NotificationType = #{messageType}
 			</if>
 			<if test="description != null and description != ''" >
-				AND description = #{description}
+				AND (Title LIKE CONCAT('%', #{description}, '%') OR Message LIKE CONCAT('%', #{description}, '%'))
 			</if>
 			<if test="createAt != null">
 				AND DATE(NotificationTime) = #{createAt}

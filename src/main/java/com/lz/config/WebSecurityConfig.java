@@ -81,6 +81,7 @@ public class WebSecurityConfig {
                 .and()
                 .authorizeRequests()
                 .antMatchers(AUTH_WHITELIST).permitAll()
+                .antMatchers("/admin/**", PATH_SEPARATOR + "/admin/**").hasAuthority("ADMIN")
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling()
@@ -88,6 +89,12 @@ public class WebSecurityConfig {
                     response.setContentType("application/json;charset=UTF-8");
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     Result<String> result = Result.error(ErrorCode.UNAUTHORIZED);
+                    response.getWriter().write(objectMapper.writeValueAsString(result));
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    Result<String> result = Result.error(ErrorCode.FORBIDDEN, "无权限执行该操作");
                     response.getWriter().write(objectMapper.writeValueAsString(result));
                 })
                 .and()

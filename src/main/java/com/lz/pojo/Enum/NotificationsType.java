@@ -2,6 +2,7 @@ package com.lz.pojo.Enum;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.baomidou.mybatisplus.annotation.IEnum;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -46,6 +47,27 @@ public enum NotificationsType{
         throw new IllegalArgumentException("无效的通知类型值: " + dbValue);
     }
 
+    /**
+     * JSON 反序列化：兼容枚举名 / dbValue / webValue 三种写法。
+     * 与 {@link JsonValue} 序列化（输出中文 webValue）形成往返闭环，避免
+     * 请求体带 webValue 时 Jackson 无法按枚举名反序列化导致 500。
+     */
+    @JsonCreator
+    public static NotificationsType fromValue(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        String v = value.trim();
+        for (NotificationsType type : values()) {
+            if (type.name().equalsIgnoreCase(v)
+                    || type.getDbValue().equalsIgnoreCase(v)
+                    || type.getWebValue().equals(v)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException("无效的通知类型值: " + v);
+    }
 
-    
+
+
 }

@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
@@ -326,7 +327,8 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         wrapper
                 // 设置排序规则
                 .orderByDesc("CreatedAt")
-                .lt("CreatedAt", new Date(System.currentTimeMillis()))
+                // 用 le 而非 lt，避免创建时间与查询时间同秒时草稿被漏查
+                .le("CreatedAt", new Date(System.currentTimeMillis()))
                 // 设置查询条件
                 .eq("OwnerID", userId)
                 .in("Status", Arrays.asList(TaskStatus.DRAFT,
@@ -348,12 +350,12 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
     }
 
     /**
-     * 创建用户委托草稿
+     * 创建用户委托草稿，返回新草稿的 taskId
      *
      * @param taskDTO
      */
     @Override
-    public void createTask(TaskDTO taskDTO) throws MyException {
+    public Long createTask(TaskDTO taskDTO) throws MyException {
         Users users = usersMapper.selectById(taskDTO.getOwnerId());
 
         Users currentAdmin = getCurrentAdmin();
@@ -388,6 +390,8 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
                 .updateTime(new Date(System.currentTimeMillis()))
                 .userId(taskDTO.getOwnerId()).build();
         taskUpdatesMapper.insert(taskUpdates);
+
+        return task.getTaskId();
     }
 
     /**
@@ -435,14 +439,23 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
 
         page = taskMapper.selectPage(page, wrapper);
 
-        // 富化发布者姓名与信用分（信用账本对齐：管理员决策依据）
-        for (Task task : page.getRecords()) {
-            if (task.getOwnerId() != null) {
-                Users owner = usersMapper.selectById(task.getOwnerId());
-                if (owner != null) {
-                    task.setOwnerName(owner.getUsername());
-                    task.setOwnerCredit(owner.getCreditScore());
-                }
+        // 富化发布者姓名与信用分（信用账本对齐：管理员决策依据）——批量联表避免 N+1
+        List<Task> adminRecords = page.getRecords();
+        if (adminRecords != null && !adminRecords.isEmpty()) {
+            Set<Long> ownerIds = adminRecords.stream()
+                    .map(Task::getOwnerId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            if (!ownerIds.isEmpty()) {
+                Map<Long, Users> ownerMap = usersMapper.selectBatchIds(ownerIds).stream()
+                        .collect(Collectors.toMap(Users::getUserId, u -> u, (a, b) -> a));
+                adminRecords.forEach(task -> {
+                    Users owner = ownerMap.get(task.getOwnerId());
+                    if (owner != null) {
+                        task.setOwnerName(owner.getUsername());
+                        task.setOwnerCredit(owner.getCreditScore());
+                    }
+                });
             }
         }
 
@@ -594,6 +607,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         usersInfo.setRoleImgSrc("");
         usersInfo.setCertifieTime(null);
         usersInfo.setCertifiedTime(null);
+        usersInfo.setIdentityNo(maskIdentityNo(usersInfo.getIdentityNo()));
         List<TaskAcceptRecords> records = taskAcceptRecordsMapper
                 .selectList(new QueryWrapper<TaskAcceptRecords>().eq("taskId", id));
 
@@ -654,6 +668,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         usersInfo.setRoleImgSrc("");
         usersInfo.setCertifieTime(null);
         usersInfo.setCertifiedTime(null);
+        usersInfo.setIdentityNo(maskIdentityNo(usersInfo.getIdentityNo()));
         Long userId = getCurrentAdmin().getUserId();
         TaskAcceptRecords taskAcceptRecords = taskAcceptRecordsMapper.selectOne(new QueryWrapper<TaskAcceptRecords>()
                 .eq("taskId", id)
@@ -856,6 +871,19 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         return usersMapper.getByUsername(adminName);
     }
 
+    /**
+     * 学号/工号脱敏（保留前4位+后2位；过短则前2位+****），与前端掩码规则保持一致
+     */
+    private String maskIdentityNo(String no) {
+        if (no == null || no.isEmpty()) {
+            return no;
+        }
+        if (no.length() <= 6) {
+            return no.substring(0, Math.min(2, no.length())) + "****";
+        }
+        return no.substring(0, 4) + "*****" + no.substring(no.length() - 2);
+    }
+
     @Override
     public void cancelPublish(Long id) throws MyException {
         Users users = getCurrentAdmin();
@@ -890,28 +918,23 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
             throw new MyException(MessageConstants.TASK_NOT_EXIST);
         }
 
-        if (task.getStatus() == TaskStatus.ONGOING) {
-            log.info("取消发布任务 {}", id);
-            task.setStatus(TaskStatus.CANCELLED);
-            updateById(task);
-            TaskUpdates taskUpdates = TaskUpdates.builder()
-                    .taskId(id)
-                    .updateDescription(MessageConstants.TASK_CANCEL_PUBLISH_SUCCESS)
-                    .updateType(TaskUpdateType.RESULT)
-                    .updateTime(new Date(System.currentTimeMillis()))
-                    .build();
-            taskUpdateService.save(taskUpdates);
-            taskAcceptRecordsMapper.update(
-                    null,
-                    new UpdateWrapper<TaskAcceptRecords>()
-                            .eq("taskId", id)
-                            .set("status", AcceptStatus.EXPIRED)
-                            .set("adoptTime",
-                                    new Date(System.currentTimeMillis())));
-        }
-
-        throw new MyException(MessageConstants.TASK_NOT_EXIST);
-
+        log.info("取消发布任务 {}", id);
+        task.setStatus(TaskStatus.CANCELLED);
+        updateById(task);
+        TaskUpdates taskUpdates = TaskUpdates.builder()
+                .taskId(id)
+                .updateDescription(MessageConstants.TASK_CANCEL_PUBLISH_SUCCESS)
+                .updateType(TaskUpdateType.RESULT)
+                .updateTime(new Date(System.currentTimeMillis()))
+                .build();
+        taskUpdateService.save(taskUpdates);
+        taskAcceptRecordsMapper.update(
+                null,
+                new UpdateWrapper<TaskAcceptRecords>()
+                        .eq("taskId", id)
+                        .set("status", AcceptStatus.EXPIRED)
+                        .set("adoptTime",
+                                new Date(System.currentTimeMillis())));
     }
 
     @Override
@@ -925,6 +948,13 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
                 task.getReceiverId() == null) {
             log.error("任务状态异常{}{}{}", task.getStatus(), task.getOwnerId(), task.getReceiverId());
             throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
+
+        // 评分范围守卫（1-5）
+        if (dto.getTaskAccomplishGrade() == null
+                || dto.getTaskAccomplishGrade() < 1
+                || dto.getTaskAccomplishGrade() > 5) {
+            throw new MyException("评分必须在1-5之间");
         }
 
         Task updateTask = Task.builder()

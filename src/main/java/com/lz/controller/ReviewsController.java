@@ -37,7 +37,7 @@ public class ReviewsController {
     private IReviewsService reviewsService;
 
     @PostMapping("/addReviews")
-    public Result<?> addReviews(@RequestBody ReviewsDTO reviewsDTO) {
+    public Result<?> addReviews(@RequestBody ReviewsDTO reviewsDTO) throws MyException {
         reviewsService.save(reviewsDTO);
         return Result.success(MessageConstants.REVIEWS_ADD_SUCCESS);
     }

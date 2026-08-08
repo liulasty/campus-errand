@@ -31,6 +31,7 @@ import com.lz.pojo.constants.MessageConstants;
 import com.lz.pojo.entity.Task;
 import com.lz.pojo.entity.TaskUpdates;
 import com.lz.pojo.entity.Users;
+import com.lz.pojo.entity.UsersInfo;
 import com.lz.pojo.result.PageResult;
 import com.lz.pojo.result.Result;
 import com.lz.pojo.vo.TaskExportVO;
@@ -39,6 +40,7 @@ import com.lz.service.INotificationReadStatusService;
 import com.lz.service.INotificationsService;
 import com.lz.service.ITaskService;
 import com.lz.service.ITaskUpdatesService;
+import com.lz.service.IUsersInfoService;
 import com.lz.service.IUsersService;
 import com.lz.utils.excelutil.EasyExcelUtil;
 
@@ -48,6 +50,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -64,6 +69,7 @@ public class TaskAdminController {
     private final ITaskService taskService;
     private final IDelegateAuditRecordsService delegateAuditRecordsService;
     private final IUsersService usersService;
+    private final IUsersInfoService usersInfoService;
     private final ITaskUpdatesService taskUpdatesService;
     private final INotificationReadStatusService notificationReadStatusService;
     private final INotificationsService notificationsService;
@@ -74,6 +80,7 @@ public class TaskAdminController {
      * @param taskService                   任务服务
      * @param delegateAuditRecordsService   委派审计记录服务
      * @param usersService                  用户服务
+     * @param usersInfoService              用户详情服务
      * @param taskUpdatesService            任务更新服务
      * @param notificationReadStatusService 通知读取状态服务
      * @param notificationsService          通知服务
@@ -83,12 +90,14 @@ public class TaskAdminController {
     public TaskAdminController(ITaskService taskService,
             IDelegateAuditRecordsService delegateAuditRecordsService,
             IUsersService usersService,
+            IUsersInfoService usersInfoService,
             ITaskUpdatesService taskUpdatesService,
             INotificationReadStatusService notificationReadStatusService,
             INotificationsService notificationsService) {
         this.taskService = taskService;
         this.delegateAuditRecordsService = delegateAuditRecordsService;
         this.usersService = usersService;
+        this.usersInfoService = usersInfoService;
         this.taskUpdatesService = taskUpdatesService;
         this.notificationReadStatusService = notificationReadStatusService;
         this.notificationsService = notificationsService;
@@ -136,17 +145,33 @@ public class TaskAdminController {
     @com.lz.Annotation.NoReturnHandle
     public void exportExcel(HttpServletResponse response) throws MyException {
         List<Task> tasks = taskService.list();
-        List<TaskExportVO> rows = tasks.stream().map(t -> TaskExportVO.builder()
-                .taskId(t.getTaskId())
-                .ownerId(t.getOwnerId())
-                .description(t.getDescription())
-                .location(t.getLocation())
-                .money(t.getMoney())
-                .status(t.getStatus() != null ? t.getStatus().getWebValue() : null)
-                .startTime(t.getStartTime())
-                .endTime(t.getEndTime())
-                .createdAt(t.getCreatedAt())
-                .build()).collect(Collectors.toList());
+        Set<Long> ownerIds = tasks.stream().map(Task::getOwnerId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, Users> userMap = ownerIds.isEmpty() ? java.util.Collections.emptyMap()
+                : usersService.listByIds(ownerIds).stream()
+                        .collect(Collectors.toMap(Users::getUserId, u -> u, (a, b) -> a));
+        Map<Long, Integer> authMap = ownerIds.isEmpty() ? java.util.Collections.emptyMap()
+                : usersInfoService.listByIds(ownerIds).stream()
+                        .collect(Collectors.toMap(UsersInfo::getUserId,
+                                ui -> ui.getAuthLevel() == null ? 0 : ui.getAuthLevel(),
+                                (a, b) -> Math.max(a, b)));
+
+        List<TaskExportVO> rows = tasks.stream().map(t -> {
+            Users owner = userMap.get(t.getOwnerId());
+            return TaskExportVO.builder()
+                    .taskId(t.getTaskId())
+                    .ownerId(t.getOwnerId())
+                    .ownerName(owner != null ? owner.getUsername() : null)
+                    .ownerCredit(owner != null ? owner.getCreditScore() : null)
+                    .authLevel(authMap.getOrDefault(t.getOwnerId(), 0))
+                    .description(t.getDescription())
+                    .location(t.getLocation())
+                    .money(t.getMoney())
+                    .status(t.getStatus() != null ? t.getStatus().getWebValue() : null)
+                    .startTime(t.getStartTime())
+                    .endTime(t.getEndTime())
+                    .createdAt(t.getCreatedAt())
+                    .build();
+        }).collect(Collectors.toList());
         EasyExcelUtil.exportExcel(response, "委托列表", "委托列表", "委托列表", rows, TaskExportVO.class);
     }
 

@@ -99,6 +99,7 @@ public class MessageConstants {
     public static final String ADD_MESSAGE_SUCCESS = "添加通知消息成功";
     public static final String DELETE_MESSAGE_SUCCESS = "删除通知消息成功";
     public static final String SYSTEM_ANNOUNCEMENTS_DELETE_SUCCESS = "删除系统公告成功";
+    public static final String SYSTEM_ANNOUNCEMENTS_ADD_SUCCESS = "新增系统公告成功";
     
     //委托类别更新成功
     public static final String TASK_CATEGORY_UPDATE_SUCCESS = "委托类别更新成功";

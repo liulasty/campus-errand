@@ -14,6 +14,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -89,7 +90,26 @@ public class SystemAnnouncementsController {
         return Result.success(systemAnnouncements);
     }
 
-    
+    @PostMapping()
+    @ApiOperation("新增系统公告")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public Result<Long> create(@RequestBody SystemAnnouncements systemAnnouncements) {
+        Users admin = getCurrentAdmin();
+        Date now = new Date(System.currentTimeMillis());
+        systemAnnouncements.setPublisherId(admin.getUserId());
+        systemAnnouncements.setPublishTime(now);
+        systemAnnouncements.setCreatedAt(now);
+        systemAnnouncements.setUpdatedAt(now);
+        systemAnnouncements.setUpdatedBy(admin.getUserId());
+        if (systemAnnouncements.getStatus() == null || systemAnnouncements.getStatus().trim().isEmpty()) {
+            systemAnnouncements.setStatus("DRAFT");
+        }
+        systemAnnouncementsService.save(systemAnnouncements);
+        return Result.success(systemAnnouncements.getAnnouncementId(),
+                MessageConstants.SYSTEM_ANNOUNCEMENTS_ADD_SUCCESS);
+    }
+
+
     @PutMapping()
     public Result<String> update(@RequestBody SystemAnnouncements systemAnnouncements) {
         systemAnnouncements.setUpdatedAt(new Date(System.currentTimeMillis()))

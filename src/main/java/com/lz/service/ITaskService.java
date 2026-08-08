@@ -105,10 +105,11 @@ public interface ITaskService extends IService<Task> {
     List<UserDelegateDraft> getUserDelegateDraft(Long userId);
 
     /**
-     * 创建用户委托草稿
+     * 创建用户委托草稿，返回新草稿的 taskId
      * @param taskDTO
+     * @return 新草稿 taskId
      */
-    void createTask(TaskDTO taskDTO) throws MyException;
+    Long createTask(TaskDTO taskDTO) throws MyException;
 
     /**
      * 管理员搜索委托

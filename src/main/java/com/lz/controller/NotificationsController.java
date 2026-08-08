@@ -69,7 +69,18 @@ public class NotificationsController {
             @RequestParam(value = "description", required = false) String description) {
         Page<Notifications> page = new Page<>(pageNum, pageSize);
 
-        Page<Notifications> notificationsPage = notificationsService.selectList(page, createAt, messageType,
+        // messageType 兼容 dbValue / webValue / 枚举名，统一翻译为 dbValue 再过滤
+        String dbMessageType = messageType;
+        if (messageType != null && !messageType.trim().isEmpty()) {
+            try {
+                NotificationsType type = NotificationsType.fromValue(messageType.trim());
+                dbMessageType = type == null ? null : type.getDbValue();
+            } catch (IllegalArgumentException e) {
+                dbMessageType = messageType;
+            }
+        }
+
+        Page<Notifications> notificationsPage = notificationsService.selectList(page, createAt, dbMessageType,
                 description);
         log.info("分页查询结果：{}", notificationsPage);
         return Result

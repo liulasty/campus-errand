@@ -24,6 +24,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
@@ -275,6 +276,7 @@ public class UsersController {
 
     @PostMapping(value = "/updateUserInfoByAdmin")
     @ApiOperation("管理员更新用户信息")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Result<String> updateUserInfoByAdmin(@RequestBody Users users) {
         log.info("管理员更新用户信息:{}", users);
         usersService.updateById(users);
@@ -290,6 +292,7 @@ public class UsersController {
      */
     @DeleteMapping(value = "/deleteUserInfoById/{id}")
     @ApiOperation("根据用户id删除用户信息")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Result<String> deleteUserInfoById(@PathVariable Long id) {
         log.info("根据用户id删除用户信息:{}", id);
         usersService.removeById(id);
@@ -305,6 +308,7 @@ public class UsersController {
      */
     @DeleteMapping(value = "/deleteUserInfoByAdmin")
     @ApiOperation("批量删除用户信息")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Result<String> deleteUserInfoByAdmin(@RequestBody List<Long> ids) {
         log.info("批量删除用户信息:{}", ids);
         usersService.removeByIds(ids);
@@ -313,6 +317,7 @@ public class UsersController {
 
 
     @PutMapping("/adminActivation/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Result<String> adminActivation(@PathVariable Long id) throws MyException {
         log.info("管理员激活用户");
         Users user = usersService.getById(id);
@@ -338,6 +343,7 @@ public class UsersController {
 
     @PutMapping(value = "/handleDisableByAdmin/{id}")
     @ApiOperation("管理员禁用用户")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Result<String> disableUserByAdmin(@PathVariable Long id) throws MyException {
         log.info("管理员禁用用户:{}", id);
         usersService.disableUser(id);
@@ -355,6 +361,7 @@ public class UsersController {
 
     @PutMapping(value = "/handleEnableByAdmin/{id}")
     @ApiOperation("管理员取消禁用用户")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Result<String> cancelDisableUserByAdmin(@PathVariable Long id) throws MyException {
         log.info("管理员取消禁用用户:{}", id);
         usersService.cancelDisableUser(id);
@@ -385,6 +392,7 @@ public class UsersController {
     }
 
     @PostMapping("/deleteUser")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Result<String> deleteAccounts(@RequestBody int[] deleteUsers) throws MyException {
         log.info("删除用户:{}", deleteUsers);
 

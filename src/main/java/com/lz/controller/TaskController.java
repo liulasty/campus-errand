@@ -72,17 +72,17 @@ public class TaskController {
     //创建单个委托
     @PostMapping("/addTaskDraft")
     @ApiOperation("创建单个委托草稿")
-    public Result<String> createTask(@RequestBody @Validated TaskDTO taskDTO,
-                                     BindingResult result) throws MyException {
+    public Result<Long> createTask(@RequestBody @Validated TaskDTO taskDTO,
+                                   BindingResult result) throws MyException {
         if (ValidateUtil.validate(result) != null) {
 
             return Result.error(ValidateUtil.validate(result));
         }
 
-        taskService.createTask(taskDTO);
+        Long taskId = taskService.createTask(taskDTO);
 
 
-        return Result.success(MessageConstants.TASK_CREATE_SUCCESS);
+        return Result.success(taskId, MessageConstants.TASK_CREATE_SUCCESS);
     }
 
 

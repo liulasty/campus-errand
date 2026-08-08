@@ -26,7 +26,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -174,6 +178,19 @@ public class TaskUpdatesServiceImpl extends ServiceImpl<TaskUpdatesMapper, TaskU
         log.info("delegateComment: {}, reviewStatus: {}, reviewTime: {}, taskId: {}", delegateComment, reviewStatus, reviewTime, taskId);
         IPage<TaskUpdates> list = taskUpdatesMapper.page(page, delegateComment,
                                                      reviewStatus, reviewTime, taskId);
+        // 富化操作人用户名（联表 users），替代裸 UserID 展示
+        List<TaskUpdates> records = list.getRecords();
+        if (records != null && !records.isEmpty()) {
+            Set<Long> userIds = records.stream()
+                    .map(TaskUpdates::getUserId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            if (!userIds.isEmpty()) {
+                Map<Long, String> nameMap = usersMapper.selectBatchIds(userIds).stream()
+                        .collect(Collectors.toMap(Users::getUserId, Users::getUsername, (a, b) -> a));
+                records.forEach(r -> r.setUserName(nameMap.get(r.getUserId())));
+            }
+        }
         return list;
     }
 

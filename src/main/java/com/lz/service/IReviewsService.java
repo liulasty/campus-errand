@@ -1,5 +1,6 @@
 package com.lz.service;
 
+import com.lz.Exception.MyException;
 import com.lz.pojo.dto.ReviewsDTO;
 import com.lz.pojo.entity.Reviews;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -17,7 +18,7 @@ import java.util.List;
  */
 public interface IReviewsService extends IService<Reviews> {
 
-    void save(ReviewsDTO reviewsDTO);
+    void save(ReviewsDTO reviewsDTO) throws MyException;
 
     List<Reviews> exportExcel();
 }

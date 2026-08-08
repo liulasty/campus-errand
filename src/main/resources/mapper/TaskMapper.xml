@@ -97,7 +97,7 @@
 	</select>
 
 	<select id="searchHallPage" resultType="com.lz.pojo.entity.Task">
-		SELECT t.*, u.CreditScore AS ownerCredit
+		SELECT t.*, u.CreditScore AS ownerCredit, u.Username AS ownerName
 		FROM task t
 		LEFT JOIN users u ON t.OwnerID = u.UserID
 		<where>

@@ -9,12 +9,16 @@ package com.lz.pojo.dto;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * @author lz
  */
 @Data
 public class AcceptDTO {
+    @NotNull(message = "任务ID不能为空")
     private Long task;
+    @NotNull(message = "用户ID不能为空")
     private Long user;
     private String str;
 }
