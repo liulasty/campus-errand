@@ -87,17 +87,17 @@
         name: 'RealNameAudit',
         data() {
             return {
-                activeTab: '认证中',
+                activeTab: 'AUTHENTICATING',
                 records: [],
                 total: 0,
                 pageNum: 1,
                 pageSize: 10,
                 loading: false,
-                statCounts: { '认证中': 0, '认证通过': 0, '认证失败': 0, ALL: 0 },
+                statCounts: { AUTHENTICATING: 0, AUTHENTICATED: 0, AUTHENTICATION_FAILED: 0, ALL: 0 },
                 statCards: [
-                    { name: '认证中', label: '待审核', cls: 'rna-st-warn', icon: 'el-icon-time' },
-                    { name: '认证通过', label: '已通过', cls: 'rna-st-ok', icon: 'el-icon-circle-check' },
-                    { name: '认证失败', label: '已驳回', cls: 'rna-st-fail', icon: 'el-icon-circle-close' },
+                    { name: 'AUTHENTICATING', label: '待审核', cls: 'rna-st-warn', icon: 'el-icon-time' },
+                    { name: 'AUTHENTICATED', label: '已通过', cls: 'rna-st-ok', icon: 'el-icon-circle-check' },
+                    { name: 'AUTHENTICATION_FAILED', label: '已驳回', cls: 'rna-st-fail', icon: 'el-icon-circle-close' },
                     { name: 'ALL', label: '全部', cls: 'rna-st-all', icon: 'el-icon-tickets' }
                 ]
             }
@@ -126,11 +126,11 @@
                 this.loadStatCounts()
             },
             loadStatCounts() {
-                const tabs = ['认证中', '认证通过', '认证失败']
+                const tabs = ['AUTHENTICATING', 'AUTHENTICATED', 'AUTHENTICATION_FAILED']
                 Promise.all(tabs.map(t => this.countByStatus(t))).then(([a, b, c]) => {
-                    this.statCounts['认证中'] = a
-                    this.statCounts['认证通过'] = b
-                    this.statCounts['认证失败'] = c
+                    this.statCounts.AUTHENTICATING = a
+                    this.statCounts.AUTHENTICATED = b
+                    this.statCounts.AUTHENTICATION_FAILED = c
                 })
                 this.countByStatus(undefined).then(n => { this.statCounts.ALL = n })
             },
