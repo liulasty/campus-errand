@@ -243,15 +243,16 @@ public class UsersController {
     public Result<PageResult> getUserInfoByPage(@RequestParam(required = false) String username,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String isActive,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size) {
+            @RequestParam(required = false) String authStatus,
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize) {
         log.info("分页查询用户信息:{}", isActive);
         Boolean is = null;
         if (isActive != null && !"".equals(isActive)) {
             is = "TRUE".equals(isActive);
         }
         UsersConfig config = UsersConfig.builder().username(username).email(email).isActive(is)
-                .page(page).size(size).build();
+                .authStatus(authStatus).pageNum(pageNum).pageSize(pageSize).build();
         log.info("分页查询用户信息:{}", config);
         return Result.success(usersService.getUserByPage(config));
     }
