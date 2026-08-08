@@ -23,6 +23,7 @@ import com.lz.utils.ValidateUtil;
 import com.lz.utils.excelutil.EasyExcelUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -243,7 +244,9 @@ public class UsersController {
     public Result<PageResult> getUserInfoByPage(@RequestParam(required = false) String username,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String isActive,
-            @RequestParam(required = false) String authStatus,
+            @RequestParam(required = false)
+            @ApiParam(value = "认证状态（英文枚举名）：AUTHENTICATING / AUTHENTICATED / AUTHENTICATION_FAILED / UNAUTHORIZED")
+            String authStatus,
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize) {
         log.info("分页查询用户信息:{}", isActive);

@@ -58,14 +58,4 @@ public enum AuthenticationStatus  {
         return null;
     }
 
-    public static AuthenticationStatus fromDescription(String description) {
-        for (AuthenticationStatus status : AuthenticationStatus.values()) {
-            if (status.getDescription().equals(description)) {
-                return status;
-            }
-        }
-        return null;
-    }
-
-
 }

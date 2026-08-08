@@ -160,13 +160,15 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         if (authStatus == null || authStatus.trim().isEmpty()) {
             return;
         }
-        if ("未认证".equals(authStatus)) {
+        if ("UNAUTHORIZED".equalsIgnoreCase(authStatus) || "未认证".equals(authStatus)) {
             config.setUnauthenticatedOnly(true);
             return;
         }
-        AuthenticationStatus status = AuthenticationStatus.fromDescription(authStatus);
-        if (status != null) {
-            config.setAuthStatusDb(status.getDbValue());
+        for (AuthenticationStatus status : AuthenticationStatus.values()) {
+            if (status.name().equalsIgnoreCase(authStatus) || status.getDescription().equals(authStatus)) {
+                config.setAuthStatusDb(status.getDbValue());
+                return;
+            }
         }
     }
 
