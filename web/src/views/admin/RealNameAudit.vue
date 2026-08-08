@@ -108,14 +108,17 @@
         methods: {
             loadData() {
                 this.loading = true
+                const seq = (this._loadSeq = (this._loadSeq || 0) + 1)
                 const authStatus = this.activeTab === 'ALL' ? undefined : this.activeTab
                 getUserList({ pageNum: this.pageNum, pageSize: this.pageSize, authStatus }).then(res => {
+                    if (seq !== this._loadSeq) return
                     if (res.data.code === SUCCESS_CODE) {
                         this.records = res.data.data.records || []
                         this.total = res.data.data.total || 0
                     }
                     this.loading = false
                 }).catch(err => {
+                    if (seq !== this._loadSeq) return
                     console.error('获取实名申请失败：', err)
                     this.$message.error('请求异常，请稍后重试')
                     this.loading = false
