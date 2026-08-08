@@ -206,8 +206,12 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
 
         QueryWrapper<Task> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("status", TaskStatus.AUDITING);
-        queryWrapper.like("description", taskPageDTO.getDescription());
-        queryWrapper.like("location", taskPageDTO.getLocation());
+        if (taskPageDTO.getDescription() != null && !"".equals(taskPageDTO.getDescription())) {
+            queryWrapper.like("description", taskPageDTO.getDescription());
+        }
+        if (taskPageDTO.getLocation() != null && !"".equals(taskPageDTO.getLocation())) {
+            queryWrapper.like("location", taskPageDTO.getLocation());
+        }
         log.info("查询条件：{}", queryWrapper);
         Page<Task> taskPage = page(page, queryWrapper);
 

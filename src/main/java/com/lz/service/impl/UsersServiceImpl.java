@@ -162,8 +162,20 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
      * @param users 用户
      */
     @Override
-    public void resetPassword(Users users) {
-
+    public void resetPassword(Users users) throws MyException {
+        if (users == null || users.getUserId() == null) {
+            throw new MyException(MessageConstants.DATA_VALIDATION_ERROR);
+        }
+        Users dbUser = usersMapper.selectById(users.getUserId());
+        if (dbUser == null) {
+            throw new MyException(MessageConstants.USER_NOT_EXIST);
+        }
+        String rawPassword = users.getPassword();
+        if (rawPassword == null || rawPassword.isEmpty()) {
+            throw new MyException(MessageConstants.DATA_VALIDATION_ERROR);
+        }
+        dbUser.setPassword(PasswordUtils.hashPassword(rawPassword));
+        usersMapper.updateById(dbUser);
     }
 
     /**
@@ -243,8 +255,12 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
     public void deleteUsers(int[] singleton) throws MyException {
 
         List<Integer> collect = Arrays.stream(singleton)
-                .filter(id -> "user".equals(usersMapper.selectById(id).getRole())
-                        && usersInfoMapper.selectById(id) == null)
+                .filter(id -> {
+                    Users user = usersMapper.selectById(id);
+                    return user != null
+                            && "USER".equalsIgnoreCase(user.getRole())
+                            && usersInfoMapper.selectById(id) == null;
+                })
                 .boxed()
                 .collect(Collectors.toList());
         if (collect.size() == 0 || collect.size() != singleton.length) {
@@ -271,8 +287,8 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
     public void editPassword(PassWordDTO passWordDTO) throws MyException {
         Users users = getCurrentAdmin();
         if (passWordDTO.getNewPassword().equals(passWordDTO.getConfirmPassword())) {
-            if (users.getPassword().equals(passWordDTO.getOldPassword())) {
-                users.setPassword(passWordDTO.getNewPassword());
+            if (PasswordUtils.check(passWordDTO.getOldPassword(), users.getPassword())) {
+                users.setPassword(PasswordUtils.hashPassword(passWordDTO.getNewPassword()));
                 usersMapper.updateById(users);
                 log.info("修改密码成功");
             } else {

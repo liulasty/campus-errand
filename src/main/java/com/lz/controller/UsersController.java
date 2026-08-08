@@ -3,6 +3,7 @@ package com.lz.controller;
 
 import com.lz.Annotation.NoReturnHandle;
 import com.lz.Exception.MyException;
+import com.lz.common.security.JwtTokenBlacklist;
 import com.lz.config.AppConfig;
 import com.lz.pojo.Page.UsersConfig;
 import com.lz.pojo.constants.MessageConstants;
@@ -25,12 +26,13 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -65,6 +67,9 @@ public class UsersController {
 
     @Autowired
     private AppConfig appConfig;
+
+    @Autowired
+    private JwtTokenBlacklist jwtTokenBlacklist;
 
     private final AuthenticationManager authenticationManager;
 
@@ -178,22 +183,15 @@ public class UsersController {
      * @return boolean
      */
     private boolean tryLogout(HttpServletRequest request) {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-            if (authentication != null) {
-                new SecurityContextLogoutHandler().logout(request, null, authentication);
-                SecurityContextHolder.clearContext();
-                log.info("用户登出成功");
-                return true;
-            } else {
-                log.warn("尝试登出时，Authentication为null");
-                return false;
-            }
-        } catch (Exception e) {
-            log.error("登出过程中发生异常", e);
-            return false;
+        String token = request.getHeader("JWT");
+        if (StringUtils.hasText(token)) {
+            jwtTokenBlacklist.add(token);
+            SecurityContextHolder.clearContext();
+            log.info("用户登出成功");
+            return true;
         }
+        log.warn("登出请求未携带 JWT");
+        return false;
     }
 
     /**
@@ -378,7 +376,7 @@ public class UsersController {
      */
     @PostMapping(value = "/resetPassword")
     @ApiOperation("重置密码")
-    public Result<String> resetPassword(@RequestBody Users users) {
+    public Result<String> resetPassword(@RequestBody Users users) throws MyException {
         log.info("重置密码:{}", users);
         usersService.resetPassword(users);
         return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
@@ -386,9 +384,16 @@ public class UsersController {
 
     @GetMapping("/check")
     @ApiOperation("检查用户是否登录")
-    public Result<String> check() {
+    public Result<String> check(HttpServletRequest request) {
         log.info("检查用户是否登录");
-        return Result.success("用户已登录");
+        String token = request.getHeader("JWT");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean loggedIn = StringUtils.hasText(token)
+                && !jwtTokenBlacklist.contains(token)
+                && authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken);
+        return loggedIn ? Result.success("用户已登录") : Result.error("用户未登录");
     }
 
     @PostMapping("/deleteUser")

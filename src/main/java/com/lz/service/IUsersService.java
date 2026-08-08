@@ -49,7 +49,7 @@ public interface IUsersService extends IService<Users> {
      *
      * @param users 用户
      */
-    void resetPassword(Users users);
+    void resetPassword(Users users) throws MyException;
 
     /**
      * 取消禁用用户

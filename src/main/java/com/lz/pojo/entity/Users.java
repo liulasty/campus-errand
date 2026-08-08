@@ -10,9 +10,11 @@ import com.baomidou.mybatisplus.annotation.TableName;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
  * 用户
@@ -26,6 +28,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 @TableName("users")
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @ApiModel(value = "Users对象", description = "存储系统用户信息")
 public class Users implements Serializable {
 

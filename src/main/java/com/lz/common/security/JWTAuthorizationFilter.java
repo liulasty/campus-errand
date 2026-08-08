@@ -43,30 +43,35 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
     @Autowired
     private AppConfig appConfig;
 
+    @Autowired
+    private JwtTokenBlacklist jwtTokenBlacklist;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String token = request.getHeader("JWT");
 
         if (StringUtils.hasText(token)) {
-            try {
-                if (isValidToken(token)) {
-                    // Token is valid and context is set in isValidToken
-                } else {
-                    // Token present but invalid
-                    log.error("Token invalid");
-                    // We can choose to throw exception or just clear context.
-                    // Original code threw exception.
-                    throw new InvalidTokenException("令牌无效");
+            if (jwtTokenBlacklist.contains(token)) {
+                // 登出后的令牌：不恢复登录态，交由安全配置判定。
+                // 受保护路径走匿名拒绝（401）；白名单路径（如 /user/check）可达并自行校验。
+                log.info("令牌已登出，不恢复登录态");
+            } else {
+                try {
+                    if (!isValidToken(token)) {
+                        // Token present but invalid
+                        log.error("Token invalid");
+                        throw new InvalidTokenException("令牌无效");
+                    }
+                } catch (Exception e) {
+                    log.error("令牌验证失败: {}", e.getMessage());
+                    // Handle exception by forwarding to /error or just clearing context
+                    // Forwarding to /error to maintain consistent error response structure if desired
+                    request.setAttribute("javax.servlet.error.status_code", HttpServletResponse.SC_UNAUTHORIZED);
+                    request.setAttribute("exception", "令牌无效或过期");
+                    request.getRequestDispatcher("/error").forward(request, response);
+                    return; // Stop filter chain
                 }
-            } catch (Exception e) {
-                log.error("令牌验证失败: {}", e.getMessage());
-                // Handle exception by forwarding to /error or just clearing context
-                // Forwarding to /error to maintain consistent error response structure if desired
-                request.setAttribute("javax.servlet.error.status_code", HttpServletResponse.SC_UNAUTHORIZED);
-                request.setAttribute("exception", "令牌无效或过期");
-                request.getRequestDispatcher("/error").forward(request, response);
-                return; // Stop filter chain
             }
         }
 

@@ -30,7 +30,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -88,8 +91,16 @@ public class TaskController {
 
     @PostMapping("/getTask")
     @ApiOperation("获取任务列表")
-    public Result<String> getPendingAuditList() {
-        return null;
+    public Result<List<Task>> getPendingAuditList(@RequestBody(required = false) Map<String, String> body)
+            throws MyException {
+        TaskStatus status = TaskStatus.AUDITING;
+        if (body != null && body.get("status") != null) {
+            status = TaskStatus.fromDbValue(body.get("status"));
+        }
+        List<Task> taskList = taskService.list(new QueryWrapper<Task>()
+                .eq("status", status)
+                .orderByDesc("CreatedAt"));
+        return Result.success(taskList);
     }
 
 
@@ -146,9 +157,13 @@ public class TaskController {
 
     @PostMapping("/deleteTask")
     @ApiOperation("删除委托")
-    public Result<String> deleteTask() {
-
-        return null;
+    public Result<String> deleteTask(@RequestBody(required = false) Map<String, Long> body) throws MyException {
+        Long taskId = body == null ? null : body.get("taskId");
+        if (taskId == null || taskService.getById(taskId) == null) {
+            throw new MyException(MessageConstants.DATA_VALIDATION_ERROR);
+        }
+        taskService.removeById(taskId);
+        return Result.success(MessageConstants.TASK_DELETE_SUCCESS);
     }
 
     /**

@@ -55,10 +55,10 @@ public class CommonController {
         log.info("客户端IP地址：{}", clientIp);
 
         IpLogs ipLogs = IpLogs.builder().ip(clientIp)
-                .userAgent(((HttpServletRequest) request).getHeader("User-Agent"))
+                .userAgent(request.getHeader("User-Agent"))
                 .visitTime(new Date(System.currentTimeMillis()))
                 .build();
         ipLogsService.save(ipLogs);
-        return Result.success();
+        return Result.success((Object) clientIp);
     }
 }

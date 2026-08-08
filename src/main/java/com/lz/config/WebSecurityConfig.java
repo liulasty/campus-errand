@@ -48,6 +48,8 @@ public class WebSecurityConfig {
             PATH_SEPARATOR + "/user/login",
             "/user/login",
             "/user/register",
+            PATH_SEPARATOR + "/user/check",
+            "/user/check",
             "/swagger-ui.html",
             "/swagger-resources/**",
             "/webjars/**",
