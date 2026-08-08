@@ -41,7 +41,7 @@ public interface UsersMapper extends BaseMapper<Users> {
             + "<if test='username != null and username.trim() != \"\"'> AND u.Username LIKE CONCAT('%', #{username}, '%')</if>"
             + "<if test='email != null and email.trim() != \"\"'> AND u.Email LIKE CONCAT('%', #{email}, '%')</if>"
             + "<if test='isActive != null'> AND u.IsActive = #{isActive}</if>"
-            + "<if test='authStatusDb != null'> AND ui.AuthStatus = #{authStatusDb}</if>"
+            + "<if test='authStatusDb != null'> AND ui.auth_status = #{authStatusDb}</if>"
             + "<if test='unauthenticatedOnly'> AND ui.UserID IS NULL</if>"
             + "</where>"
             + "ORDER BY u.UserID "
@@ -62,7 +62,7 @@ public interface UsersMapper extends BaseMapper<Users> {
             + "<if test='username != null and username.trim() != \"\"'> AND u.Username LIKE CONCAT('%', #{username}, '%')</if>"
             + "<if test='email != null and email.trim() != \"\"'> AND u.Email LIKE CONCAT('%', #{email}, '%')</if>"
             + "<if test='isActive != null'> AND u.IsActive = #{isActive}</if>"
-            + "<if test='authStatusDb != null'> AND ui.AuthStatus = #{authStatusDb}</if>"
+            + "<if test='authStatusDb != null'> AND ui.auth_status = #{authStatusDb}</if>"
             + "<if test='unauthenticatedOnly'> AND ui.UserID IS NULL</if>"
             + "</where>"
             + "</script>")
