@@ -67,25 +67,21 @@ export default {
       registerInfo: {
         username: '',
         password: '',
-        email: '',
-        phoneNumber: ''
+        email: ''
       },
       rules: {
+        // 与后端 @emailVerification 对齐：邮箱 或 5-9 位字母数字下划线
         username: {
           label: '用户名',
-          pattern: /^[a-zA-Z0-9_]{4,16}$/u,
+          pattern: /^([\w.-]+@[\w.-]+\.[a-zA-Z]{2,7}|\w{5,9})$/u,
         },
+        // 与后端一致：仅要求非空（后端无密码强度策略，避免拦截后端合法密码）
         password: {
-          label: '密码',
-          pattern: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/u,
+          label: '密码'
         },
         email: {
           label: '邮箱',
           pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/u,
-        },
-        phoneNumber: {
-          label: '电话号码',
-          pattern: /^\d{11}$/u,
         },
       },
       // 登录只校验非空，格式规则仅用于注册（登录账号可能为邮箱/含特殊字符密码）
