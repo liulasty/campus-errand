@@ -35,7 +35,7 @@
 - 流程：
   1. 点击选图（隐藏 `<input type=file>`，`accept="image/*"`）→ 复用现有校验（类型 JPG/JPEG/PNG/GIF、大小 ≤5MB）→ 通过后把图片 URL 载入裁剪器。
      - **变更**：现有校验含「长宽比 0.66~1.5」限制，裁剪式下不再需要（用户可自行裁成任意方形），移除该项校验。
-  2. 用户调整裁剪框 → 监听 `cropmove`（节流）调用 `refs.cropper.getCropData`（base64）驱动右侧圆形预览；`cropend` 再做一次最终刷新。
+  2. 用户调整裁剪框 → 右侧圆形预览通过 `@real-time` 事件载荷的 `div`/`img` transform 样式组合实现（vue-cropper README 模式，`data.url` 是原图而非裁剪结果，须用 transform 才真实反映裁剪区），外层按 `previews.w` 等比缩放进 96px 圆形容器。
   3. 点「确认上传」→ `getCropBlob()` 得 Blob → `new File([blob], 'avatar.jpg', { type: 'image/jpeg' })` → 走现有 `uploadAvatar` 接口（POST `/img/uploadAvatar`）→ 成功后更新 store mutation `updatedAvatarSrc` + `localStorage.avatarSrc`，并通知父组件刷新。
 - 弹窗样式沿用现有 `my-dialog` 体系（`CommonHeader.vue` 中 `/deep/` 覆盖：圆角 8px、头部/主体留白）。裁剪器容器适配弹窗宽度，移动端单栏堆叠。
 

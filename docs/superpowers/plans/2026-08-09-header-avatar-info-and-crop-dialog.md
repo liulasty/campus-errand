@@ -394,6 +394,12 @@ git commit -m "feat: 右上角头像区展示姓名/角色徽章，下拉新增�
 **Files:**
 - Rewrite: `web/src/components/avatarShow.vue`
 
+> **审查后修正（commit `904c51a`，以下方说明为准，本任务下方的旧代码块已被取代）**：
+> 1. **实时预览不能用 `@real-time` 的 `data.url`**——vue-cropper 0.6.5 中它是原图。改为 README 模式：保存整个载荷到 `previews`，用 `:style="previews.div"` 套 `:style="previews.img"`，外层 `previewScaleStyle`（`width/height=previews.w`，`transform: scale(96/previews.w)`，origin top-left）缩放进 96px 圆形（`overflow:hidden`）。
+> 2. **确认上传静默失效兜底**：`getCropBlob` 仅在裁剪布局就绪后回调。新增 `cropReady`（`@img-load` 置 true / `@img-load-error` 置 false 并报错），确认按钮 `:disabled="!cropReady || uploading"`；`confirmUpload` 开头同步置 `uploading=true`，加 3s 超时 `settled` 守卫，未回调时提示「裁剪生成超时」。
+> 3. **损坏/伪装图片**：绑定 `@img-load-error`；`onFileChange` 开头重置 `previews`/`cropReady`；`fileToDataUrl` 包 try/catch 提示「图片读取失败」。
+> 修正后实现以 `904c51a` 为准（模板含 `@img-load`/`@img-load-error`、`previews`/`cropReady`/`uploading` 数据字段、`circleStyle`/`previewScaleStyle` computed）。
+
 - [ ] **Step 1: 用以下内容整体覆盖 `web/src/components/avatarShow.vue`**
 
 ```vue
