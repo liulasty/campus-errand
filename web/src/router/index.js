@@ -30,6 +30,10 @@ import CreditProfile from '@/views/user/CreditProfile.vue'
 import SensitiveWordConfig from '@/views/admin/SensitiveWordConfig.vue'
 
 Vue.use(VueRouter)
+
+// 注意：菜单叶子路由必须保持 /main 的扁平子路由（不要嵌套无 component 的分组路由），
+// vue-router 3 的 router-view 按 matched 位置取组件，中间记录无组件会导致页面空白。
+// 菜单分组信息通过 meta.menu 承载，由 router/menu.js 组装菜单树。
 const routes = [
     // 登录页面
     {
@@ -48,176 +52,123 @@ const routes = [
                     default: Home
                 }
             },
-            // 共享首页（两级角色可见）
+            // 共享首页（两级角色可见，顶层独立菜单项）
             {
                 path: '/home',
                 name: 'home',
                 component: Home,
-                meta: { title: '数据驾驶舱', icon: 'data-line', roles: ['ADMIN', 'USER'] }
+                meta: { title: '数据驾驶舱', icon: 'data-line', roles: ['ADMIN', 'USER'], menu: { group: null } }
             },
             // 用户工作台（仅 USER）
             {
-                path: '/workbench',
-                meta: { title: '工作台', icon: 's-home', roles: ['USER'] },
-                children: [
-                    {
-                        path: '/viewOnGoingList',
-                        name: 'viewOnGoingList',
-                        component: ViewOnGoingList,
-                        meta: { title: '委托大厅', icon: 'search' }
-                    },
-                    {
-                        path: '/myTasks',
-                        meta: { title: '我的委托', icon: 's-order' },
-                        children: [
-                            {
-                                path: '/createDelegation',
-                                name: 'createDelegation',
-                                component: CreateDelegation,
-                                meta: { title: '发布委托', icon: 'edit-outline' }
-                            },
-                            {
-                                path: '/myDelegationPublishList',
-                                name: 'myDelegationPublishList',
-                                component: MyDelegationPublishList,
-                                meta: { title: '我发布的订单', icon: 'document-add' }
-                            },
-                            {
-                                path: '/myDelegationAcceptList',
-                                name: 'myDelegationAcceptList',
-                                component: MyDelegationAcceptList,
-                                meta: { title: '我承接的订单', icon: 'document-checked' }
-                            }
-                        ]
-                    },
-                    {
-                        path: '/messageCenter',
-                        name: 'messageCenter',
-                        component: MessageCenter,
-                        meta: { title: '消息中心', icon: 'bell' }
-                    },
-                    {
-                        path: '/profile',
-                        meta: { title: '个人中心', icon: 'user' },
-                        children: [
-                            {
-                                path: '/myInfo',
-                                name: 'myInfo',
-                                component: MyInfo,
-                                meta: { title: '基础信息', icon: 'user-solid' }
-                            },
-                            {
-                                path: '/creditProfile',
-                                name: 'creditProfile',
-                                component: CreditProfile,
-                                meta: { title: '信用档案', icon: 'medal' }
-                            }
-                        ]
-                    },
-                    // 详情页：不进菜单，但属于 USER 域（继承工作台 USER 角色，防 ADMIN 绕过）
-                    {
-                        path: '/myDelegationProgress',
-                        name: 'myDelegationProgress',
-                        component: MyDelegationProgress
-                    }
-                ]
+                path: '/viewOnGoingList',
+                name: 'viewOnGoingList',
+                component: ViewOnGoingList,
+                meta: { title: '委托大厅', icon: 'search', roles: ['USER'], menu: { group: 'workbench', submenu: null } }
+            },
+            {
+                path: '/createDelegation',
+                name: 'createDelegation',
+                component: CreateDelegation,
+                meta: { title: '发布委托', icon: 'edit-outline', roles: ['USER'], menu: { group: 'workbench', submenu: 'myTasks' } }
+            },
+            {
+                path: '/myDelegationPublishList',
+                name: 'myDelegationPublishList',
+                component: MyDelegationPublishList,
+                meta: { title: '我发布的订单', icon: 'document-add', roles: ['USER'], menu: { group: 'workbench', submenu: 'myTasks' } }
+            },
+            {
+                path: '/myDelegationAcceptList',
+                name: 'myDelegationAcceptList',
+                component: MyDelegationAcceptList,
+                meta: { title: '我承接的订单', icon: 'document-checked', roles: ['USER'], menu: { group: 'workbench', submenu: 'myTasks' } }
+            },
+            {
+                path: '/messageCenter',
+                name: 'messageCenter',
+                component: MessageCenter,
+                meta: { title: '消息中心', icon: 'bell', roles: ['USER'], menu: { group: 'workbench', submenu: null } }
+            },
+            {
+                path: '/myInfo',
+                name: 'myInfo',
+                component: MyInfo,
+                meta: { title: '基础信息', icon: 'user-solid', roles: ['USER'], menu: { group: 'workbench', submenu: 'profile' } }
+            },
+            {
+                path: '/creditProfile',
+                name: 'creditProfile',
+                component: CreditProfile,
+                meta: { title: '信用档案', icon: 'medal', roles: ['USER'], menu: { group: 'workbench', submenu: 'profile' } }
+            },
+            // 详情页：USER 域，不进菜单
+            {
+                path: '/myDelegationProgress',
+                name: 'myDelegationProgress',
+                component: MyDelegationProgress,
+                meta: { roles: ['USER'] }
             },
             // 平台管理中心（仅 ADMIN）
             {
-                path: '/adminPanel',
-                meta: { title: '平台管理中心', icon: 's-tools', roles: ['ADMIN'] },
-                children: [
-                    {
-                        path: '/delegationAdmin',
-                        meta: { title: '委托管理', icon: 's-order' },
-                        children: [
-                            {
-                                path: '/publishedList',
-                                name: 'publishedList',
-                                component: PublishedList,
-                                meta: { title: '全部委托', icon: 'tickets' }
-                            },
-                            {
-                                path: '/auditList',
-                                name: 'auditList',
-                                component: AuditList,
-                                meta: { title: '委托审核', icon: 's-check' }
-                            },
-                            {
-                                path: '/expireDelegationList',
-                                name: 'expireDelegationList',
-                                component: ExpireDelegationList,
-                                meta: { title: '未完成委托', icon: 'warning-outline' }
-                            },
-                            {
-                                path: '/delegationUpdateRecords',
-                                name: 'delegationUpdateRecords',
-                                component: DelegationUpdateRecords,
-                                meta: { title: '履约记录查询', icon: 's-flag' }
-                            }
-                        ]
-                    },
-                    {
-                        path: '/userAdmin',
-                        meta: { title: '用户管理', icon: 'user' },
-                        children: [
-                            {
-                                path: '/userList',
-                                name: 'userList',
-                                component: UserList,
-                                meta: { title: '用户列表', icon: 'user' }
-                            },
-                            {
-                                path: '/admin/realNameAudit',
-                                name: 'realNameAudit',
-                                component: RealNameAudit,
-                                meta: { title: '实名审核', icon: 'postcard' }
-                            }
-                        ]
-                    },
-                    {
-                        path: '/bulletinAdmin',
-                        meta: { title: '平台公告', icon: 'chat-dot-round' },
-                        children: [
-                            {
-                                path: '/systemBulletinList',
-                                name: 'systemBulletinList',
-                                component: SystemBulletinList,
-                                meta: { title: '公告管理', icon: 'chat-dot-round' }
-                            }
-                        ]
-                    },
-                    {
-                        path: '/noticeAdmin',
-                        meta: { title: '消息管理', icon: 'bell' },
-                        children: [
-                            {
-                                path: '/notificationReadStatus',
-                                name: 'notificationReadStatus',
-                                component: NotificationReadStatus,
-                                meta: { title: '消息管理', icon: 's-comment' }
-                            }
-                        ]
-                    },
-                    {
-                        path: '/systemConfig',
-                        meta: { title: '系统配置', icon: 'setting' },
-                        children: [
-                            {
-                                path: '/delegationType',
-                                name: 'delegationType',
-                                component: DelegationType,
-                                meta: { title: '委托分类配置', icon: 'menu' }
-                            },
-                            {
-                                path: '/sensitiveWord',
-                                name: 'sensitiveWord',
-                                component: SensitiveWordConfig,
-                                meta: { title: '敏感词管控', icon: 'lock' }
-                            }
-                        ]
-                    }
-                ]
+                path: '/publishedList',
+                name: 'publishedList',
+                component: PublishedList,
+                meta: { title: '全部委托', icon: 'tickets', roles: ['ADMIN'], menu: { group: 'adminPanel', submenu: 'delegationAdmin' } }
+            },
+            {
+                path: '/auditList',
+                name: 'auditList',
+                component: AuditList,
+                meta: { title: '委托审核', icon: 's-check', roles: ['ADMIN'], menu: { group: 'adminPanel', submenu: 'delegationAdmin' } }
+            },
+            {
+                path: '/expireDelegationList',
+                name: 'expireDelegationList',
+                component: ExpireDelegationList,
+                meta: { title: '未完成委托', icon: 'warning-outline', roles: ['ADMIN'], menu: { group: 'adminPanel', submenu: 'delegationAdmin' } }
+            },
+            {
+                path: '/delegationUpdateRecords',
+                name: 'delegationUpdateRecords',
+                component: DelegationUpdateRecords,
+                meta: { title: '履约记录查询', icon: 's-flag', roles: ['ADMIN'], menu: { group: 'adminPanel', submenu: 'delegationAdmin' } }
+            },
+            {
+                path: '/userList',
+                name: 'userList',
+                component: UserList,
+                meta: { title: '用户列表', icon: 'user', roles: ['ADMIN'], menu: { group: 'adminPanel', submenu: 'userAdmin' } }
+            },
+            {
+                path: '/admin/realNameAudit',
+                name: 'realNameAudit',
+                component: RealNameAudit,
+                meta: { title: '实名审核', icon: 'postcard', roles: ['ADMIN'], menu: { group: 'adminPanel', submenu: 'userAdmin' } }
+            },
+            {
+                path: '/systemBulletinList',
+                name: 'systemBulletinList',
+                component: SystemBulletinList,
+                meta: { title: '公告管理', icon: 'chat-dot-round', roles: ['ADMIN'], menu: { group: 'adminPanel', submenu: 'bulletinAdmin' } }
+            },
+            {
+                path: '/notificationReadStatus',
+                name: 'notificationReadStatus',
+                component: NotificationReadStatus,
+                meta: { title: '消息管理', icon: 's-comment', roles: ['ADMIN'], menu: { group: 'adminPanel', submenu: 'noticeAdmin' } }
+            },
+            {
+                path: '/delegationType',
+                name: 'delegationType',
+                component: DelegationType,
+                meta: { title: '委托分类配置', icon: 'menu', roles: ['ADMIN'], menu: { group: 'adminPanel', submenu: 'systemConfig' } }
+            },
+            {
+                path: '/sensitiveWord',
+                name: 'sensitiveWord',
+                component: SensitiveWordConfig,
+                meta: { title: '敏感词管控', icon: 'lock', roles: ['ADMIN'], menu: { group: 'adminPanel', submenu: 'systemConfig' } }
             },
             // 未接入菜单的遗留路由（不进菜单，保持原可访问性；无角色限制）
             { path: '/draftList', name: 'draftList', component: DraftList },
@@ -235,7 +186,6 @@ const routes = [
         component: Landing
     }
 ]
-
 
 // 添加的方法
 // 这段代码是为了解决重复点击导航时控制台出现报错的问题。具体来说，它重写了VueRouter的push方法。
@@ -299,5 +249,3 @@ router.beforeEach((to, from, next) => {
 });
 
 export default router
-
-
