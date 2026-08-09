@@ -187,7 +187,7 @@ CREATE TABLE `task` (
   `TaskID` int NOT NULL AUTO_INCREMENT COMMENT '任务ID',
   `OwnerID` int DEFAULT NULL COMMENT '任务所有者的用户ID',
   `ReceiverID` int DEFAULT NULL COMMENT '任务接收者的用户ID',
-  `CreatedAt` datetime DEFAULT NULL COMMENT '委托创建时间',
+  `CreatedAt` datetime(3) DEFAULT NULL COMMENT '委托创建时间',
   `Description` varchar(255) NOT NULL COMMENT '委托描述',
   `Location` varchar(255) DEFAULT NULL COMMENT '委托地点',
   `StartTime` datetime DEFAULT NULL COMMENT '委托发布时间',
