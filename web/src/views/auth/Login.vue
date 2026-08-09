@@ -88,6 +88,11 @@ export default {
           pattern: /^\d{11}$/u,
         },
       },
+      // 登录只校验非空，格式规则仅用于注册（登录账号可能为邮箱/含特殊字符密码）
+      loginRules: {
+        username: { label: '用户名' },
+        password: { label: '密码' }
+      },
     };
   },
   methods: {
@@ -95,7 +100,7 @@ export default {
       this.isPanelActive = isActive;
     },
     async loginCheck() {
-      const msg = this.validate(this.loginInfo, this.rules);
+      const msg = this.validate(this.loginInfo, this.loginRules);
       if (!msg.validate) {
         this.$message({
           showClose: true,
