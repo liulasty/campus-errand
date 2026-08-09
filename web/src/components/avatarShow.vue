@@ -153,16 +153,16 @@ export default {
       return true;
     },
     rotateLeft() {
-      this.$refs.cropper.rotateLeft();
+      if (this.$refs.cropper) this.$refs.cropper.rotateLeft();
     },
     rotateRight() {
-      this.$refs.cropper.rotateRight();
+      if (this.$refs.cropper) this.$refs.cropper.rotateRight();
     },
     zoomIn() {
-      this.$refs.cropper.changeScale(0.1);
+      if (this.$refs.cropper) this.$refs.cropper.changeScale(0.1);
     },
     zoomOut() {
-      this.$refs.cropper.changeScale(-0.1);
+      if (this.$refs.cropper) this.$refs.cropper.changeScale(-0.1);
     },
     confirmUpload() {
       if (!this.$refs.cropper) return;

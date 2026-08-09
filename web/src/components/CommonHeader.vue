@@ -82,7 +82,7 @@
 
   import avatarShowVue from './avatarShow.vue';
   import { mapState } from 'vuex';
-  import { logout, uploadAvatar, fetchUserBasicInfo, getUserInfo } from '@/api';
+  import { logout, fetchUserBasicInfo, getUserInfo } from '@/api';
   import { SUCCESS_CODE } from '@/constants/http';
   import noticeVue from './noticeList.vue';
 
@@ -94,8 +94,6 @@
     data() {
       return {
         dialogAvatarVisible: false,
-        imageUrl: '',
-        initialImageSrc: '',
         avatarSrc: '',
         defaultAvatar: require('../assets/avatar.jpg'),
         userProfile: null,
