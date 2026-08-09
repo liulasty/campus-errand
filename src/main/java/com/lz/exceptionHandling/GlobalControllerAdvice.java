@@ -20,6 +20,8 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import com.lz.Exception.InvalidTokenException;
@@ -115,6 +117,20 @@ public class GlobalControllerAdvice {
     public Result<?> missingServletRequestPartException(MissingServletRequestPartException e) {
         log.error("缺少 multipart 文件参数: {}", e.getMessage());
         return Result.error(ErrorCode.PARAM_ERROR, "缺少文件参数");
+    }
+
+    // 请求完全无 multipart body / 非 multipart Content-Type，补齐 D-15 同类缺口
+    @ExceptionHandler(MultipartException.class)
+    public Result<?> multipartException(MultipartException e) {
+        log.error("multipart 请求无效: {}", e.getMessage());
+        return Result.error(ErrorCode.PARAM_ERROR, "请求不是有效的 multipart/form-data");
+    }
+
+    // 超过服务端 multipart 大小上限（MaxUploadSizeExceededException 是 MultipartException 子类，需更具体优先匹配）
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public Result<?> maxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        log.error("上传文件超过大小限制: {}", e.getMessage());
+        return Result.error(ErrorCode.PARAM_ERROR, "文件大小超过限制");
     }
 
     // 普通必填请求参数缺失（如 query 参数），同样返回明确 400
