@@ -68,7 +68,15 @@ public class ITaskAcceptRecordsServiceImpl extends ServiceImpl<TaskAcceptRecords
     @SneakyThrows
     @Override
     public void create(AcceptDTO acceptDTO) {
+        // 空 body / 缺字段兜底（防止 task.getStatus() NPE）
+        if (acceptDTO == null || acceptDTO.getTask() == null || acceptDTO.getUser() == null) {
+            throw new MyException("任务ID和用户ID不能为空");
+        }
         Task task = taskMapper.selectById(acceptDTO.getTask());
+        if (task == null) {
+            log.error("任务不存在");
+            throw new MyException("任务不存在");
+        }
         if (task.getStatus() != TaskStatus.ONGOING){
             log.error("任务状态错误");
             throw  new MyException("任务状态错误");

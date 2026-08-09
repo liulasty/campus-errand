@@ -10,6 +10,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
@@ -98,6 +99,13 @@ public class GlobalControllerAdvice {
     public Result<?> exceptionHandler(NullPointerException e) {
         log.error("发生空指针异常:", e);
         return Result.error(ErrorCode.SYSTEM_ERROR, "系统内部错误(NPE)");
+    }
+
+    // 请求体缺失或 JSON 解析失败（如 /user/accept 空 body）
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public Result<?> httpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.error("请求体缺失或格式错误: {}", e.getMessage());
+        return Result.error(ErrorCode.PARAM_ERROR, "请求体缺失或格式错误");
     }
 
     @ExceptionHandler(MyException.class)
