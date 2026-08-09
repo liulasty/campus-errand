@@ -18,6 +18,8 @@
         :auto-crop-width="240"
         :auto-crop-height="240"
         @real-time="onRealTime"
+        @img-load="onImgLoad"
+        @img-load-error="onImgLoadError"
       />
       <el-empty v-else description="请选择一张图片" />
       <div v-if="cropImg" class="crop-tools">
@@ -30,12 +32,18 @@
 
     <div class="side-area">
       <div class="preview-wrap">
-        <div class="preview-circle" :style="previewStyle"></div>
+        <div class="preview-circle" :style="circleStyle">
+          <div v-if="previews.url" :style="previewScaleStyle">
+            <div :style="previews.div">
+              <img :src="previews.url" :style="previews.img" alt="预览">
+            </div>
+          </div>
+        </div>
         <p class="preview-label">头像预览</p>
       </div>
       <div class="actions">
         <el-button type="primary" @click="handleUpload">{{ cropImg ? '重新选择' : '选择图片' }}</el-button>
-        <el-button type="success" :disabled="!cropImg || uploading" :loading="uploading" @click="confirmUpload">
+        <el-button type="success" :disabled="!cropReady || uploading" :loading="uploading" @click="confirmUpload">
           确认上传
         </el-button>
       </div>
@@ -67,22 +75,42 @@ export default {
     return {
       imageSrc: this.initialSrc,
       cropImg: '',
-      previewUrl: '',
+      previews: { url: '', div: {}, img: {}, w: 0 },
+      cropReady: false,
       uploading: false,
     };
   },
   computed: {
-    previewStyle() {
-      const url = this.previewUrl || this.imageSrc;
+    circleStyle() {
+      if (this.previews.url) return {};
       return {
-        backgroundImage: url ? `url(${url})` : 'none',
+        backgroundImage: this.imageSrc ? `url(${this.imageSrc})` : 'none',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    },
+    previewScaleStyle() {
+      const w = this.previews.w || 240;
+      return {
+        width: w + 'px',
+        height: w + 'px',
+        transform: `scale(${(96 / w).toFixed(4)})`,
+        transformOrigin: 'top left',
       };
     },
   },
   methods: {
     onRealTime(data) {
-      // vue-cropper 实时裁剪事件，payload.data.url 为裁剪结果 base64
-      this.previewUrl = data.url || '';
+      // vue-cropper real-time 事件：data.url 为原图，data.div/data.img 为裁剪窗口与图片位移/缩放样式，
+      // 组合后精确反映当前裁剪框内区域（实时预览）
+      this.previews = data || { url: '', div: {}, img: {}, w: 0 };
+    },
+    onImgLoad() {
+      this.cropReady = true;
+    },
+    onImgLoadError() {
+      this.cropReady = false;
+      this.$message.error('图片加载失败，请更换图片');
     },
     handleUpload() {
       this.$refs.fileInput.click();
@@ -93,8 +121,14 @@ export default {
       if (!file) return;
       if (!this.validateFileType(file)) return;
       if (!this.validateFileSize(file)) return;
-      const dataUrl = await this.fileToDataUrl(file);
-      this.cropImg = dataUrl;
+      this.cropReady = false;
+      this.previews = { url: '', div: {}, img: {}, w: 0 };
+      try {
+        const dataUrl = await this.fileToDataUrl(file);
+        this.cropImg = dataUrl;
+      } catch (e) {
+        this.$message.error('图片读取失败，请重试');
+      }
     },
     fileToDataUrl(file) {
       return new Promise((resolve, reject) => {
@@ -132,13 +166,25 @@ export default {
     },
     confirmUpload() {
       if (!this.$refs.cropper) return;
+      this.uploading = true;
+      let settled = false;
+      const timeout = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          this.uploading = false;
+          this.$message.error('裁剪生成超时，请重试');
+        }
+      }, 3000);
       this.$refs.cropper.getCropBlob((blob) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
         if (!blob) {
+          this.uploading = false;
           this.$message.error('裁剪失败，请重试');
           return;
         }
         const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
-        this.uploading = true;
         uploadAvatar(file)
           .then((result) => {
             if (result.data && result.data.code === SUCCESS_CODE && result.data.data) {
@@ -200,6 +246,7 @@ export default {
       height: 96px;
       margin: 0 auto;
       border-radius: 50%;
+      overflow: hidden;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
