@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import java.io.Serializable;
 import java.util.Date;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.lz.pojo.Enum.AnnouncementStatus;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -53,8 +52,7 @@ public class SystemAnnouncements implements Serializable {
 
     @ApiModelProperty(value = "发布时间")
     @TableField("publish_time")
-    @JsonFormat(pattern = "yyyy年MM月dd日HH:mm:ss")
-    private Date  publishTime;
+    private Date publishTime;
 
     @ApiModelProperty(value = "公告状态（如：草稿、已发布、已撤回等）")
     @TableField("status")
@@ -62,12 +60,10 @@ public class SystemAnnouncements implements Serializable {
 
     @ApiModelProperty(value = "公告开始生效时间（如有）")
     @TableField("start_effective_time")
-    @JsonFormat(pattern = "yyyy年MM月dd日HH:mm:ss")
     private Date startEffectiveTime;
 
     @ApiModelProperty(value = "公告结束生效时间（如有）")
     @TableField("end_effective_time")
-    @JsonFormat(pattern = "yyyy年MM月dd日HH:mm:ss")
     private Date endEffectiveTime;
 
     @ApiModelProperty(value = "是否置顶（0：否，1：是）")

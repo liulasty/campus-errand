@@ -16,7 +16,7 @@
                                 {{ item.content }}
                             </p>
                             <div class="info-meta">
-                                <span class="time"><i class="el-icon-time"></i> {{ item.publishTime }}</span>
+                                <span class="time"><i class="el-icon-time"></i> {{ item.publishTime | dateTime }}</span>
                             </div>
                         </div>
                     </el-carousel-item>

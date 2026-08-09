@@ -219,49 +219,17 @@
                     }
                 });
             },
-            strToDate(dateString) {
-                // 假设dateString的格式为 "YYYY年MM月DD日HH:mm:ss"  
-                const parts = dateString.split(/[年月日:]/); // 使用年月日和冒号作为分隔符分割字符串  
-
-                // 提取并转换年、月、日、时、分、秒  
-                const year = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1; // 注意月份从0开始  
-                const day = parseInt(parts[2], 10);
-                const hours = parseInt(parts[3], 10);
-                const minutes = parseInt(parts[4], 10);
-                const seconds = parseInt(parts[5], 10);
-
-                // 创建一个新的Date对象  
-                const date = new Date(year, month, day, hours, minutes, seconds);
-                // console.log("转换后的日期：", date);
-                // 返回Date对象  
-                return date;
-            },
-            dateToString(date) {
-
-
-                // 获取年、月、日、小时、分钟和秒
-                const year = date.getFullYear();
-                const month = date.getMonth() + 1; // 月份从 0 开始，需要加 1
-                const day = date.getDate();
-                const hours = date.getHours();
-                const minutes = date.getMinutes();
-                const seconds = date.getSeconds();
-
-                // 格式化为指定字符串
-                const formattedDateString = `${year}年${month < 10 ? '0' + month : month}月${day < 10 ? '0' + day : day}日${hours < 10 ? '0' + hours : hours}:${minutes < 10 ? '0' + minutes : minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
-
-                // console.log("格式化后的日期：", formattedDateString);
-                return formattedDateString;
-            },
             handleUpdate(id) {
                 console.log("获取公告", id);
                 getSystemBulletinById(id).then(response => {
                     if (response.data.code == 1) {
                         this.dialogMode = 'edit';
                         this.form = response.data.data;
-                        this.dateTimeRange = [this.strToDate(this.form.startEffectiveTime), this.strToDate(this.form.endEffectiveTime)];
-                        this.form.publishTime = this.strToDate(this.form.publishTime);
+                        this.dateTimeRange = [
+                            this.form.startEffectiveTime ? new Date(this.form.startEffectiveTime) : null,
+                            this.form.endEffectiveTime ? new Date(this.form.endEffectiveTime) : null
+                        ];
+                        this.form.publishTime = this.form.publishTime ? new Date(this.form.publishTime) : null;
                         console.log("获取公告", this.form, this.dateTimeRange);
                         this.open = true;
                     } else {
@@ -298,9 +266,8 @@
 
 
                     if (valid && this.dateTimeRange && this.dateTimeRange.length === 2 && this.dateTimeRange[0] > this.form.publishTime) {
-                        this.form.startEffectiveTime = this.dateToString(this.dateTimeRange[0]);
-                        this.form.endEffectiveTime = this.dateToString(this.dateTimeRange[1]);
-                        this.form.publishTime = this.dateToString(this.form.publishTime);
+                        this.form.startEffectiveTime = this.dateTimeRange[0];
+                        this.form.endEffectiveTime = this.dateTimeRange[1];
                         this.form.createdAt = null;
                         this.form.updatedAt = null;
 
