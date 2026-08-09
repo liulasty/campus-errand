@@ -66,9 +66,9 @@
                 <el-table-column label="任务地点" align="center" prop="location" width="120" />
                 <el-table-column label="状态" align="center" prop="status" width="120">
                      <template slot-scope="scope">
-                        <el-tag v-if="scope.row.status==='委托发布中'" type="success" size="small">发布中</el-tag>
-                        <el-tag v-else-if="scope.row.status==='已接收'" type="warning" size="small">已接收</el-tag>
-                        <el-tag v-else-if="scope.row.status==='已完成'" type="success" size="small">已完成</el-tag>
+                        <el-tag v-if="scope.row.status===TASK_STATUS.ONGOING" type="success" size="small">发布中</el-tag>
+                        <el-tag v-else-if="scope.row.status===TASK_STATUS.ACCEPTED" type="warning" size="small">已接收</el-tag>
+                        <el-tag v-else-if="scope.row.status===TASK_STATUS.COMPLETED" type="success" size="small">已完成</el-tag>
                         <el-tag v-else type="info" size="small">{{ scope.row.status }}</el-tag>
                     </template>
                 </el-table-column>
@@ -144,11 +144,11 @@
                     </el-card>
                 </el-col>
             </el-row>
-            <div v-show="form.task.status=='已完成'" class="status-area">
+            <div v-show="form.task.status==TASK_STATUS.COMPLETED" class="status-area">
                 <el-rate v-model="taskRateValue" disabled show-score text-color="#f59e0b" score-template="{value}">
                 </el-rate>
             </div>
-            <div v-show="form.task.status=='委托发布中'" class="status-area">
+            <div v-show="form.task.status==TASK_STATUS.ONGOING" class="status-area">
                 <div v-if="!isPublisher(form.task)">
                     <div v-show="form.taskAcceptRecords === null">
                         <el-input type="textarea" v-model="delegationStr" placeholder="请输入你的接收委托留言信息"
@@ -187,9 +187,11 @@
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction.js'
     import { creditScore, creditLevel, creditColor } from '@/utils/creditLevel'
     import { SUCCESS_CODE } from '@/constants/http'
+    import { TASK_STATUS } from '@/constants/enums'
     export default {
         data() {
             return {
+                TASK_STATUS,
                 // 遮罩层
                 loading: true,
                 //委托留言

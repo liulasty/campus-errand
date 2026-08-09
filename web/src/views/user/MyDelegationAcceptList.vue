@@ -103,7 +103,7 @@
                     {{ form.acceptMessage}}
                 </el-form-item>
             </el-form>
-            <el-card v-show="form.task.status === '已接收'" class="box-card node-card" style="margin-top: 10px;">
+            <el-card v-show="form.task.status === TASK_STATUS.ACCEPTED" class="box-card node-card" style="margin-top: 10px;">
                 <div slot="header" class="clearfix">
                     <span>履约打卡</span>
                     <el-button style="float: right; padding: 3px 0" type="text" icon="el-icon-view"
@@ -170,9 +170,12 @@
     import { TASK_NODE_TYPES, MOCK_LOCATION, getNodeMeta } from '@/utils/taskNode.js'
     import { acceptDelegationList, queryTheEntrustmentDetailsByEntrustmentNumber, acceptCommission, cancelAcceptorByAcceptor, getTaskAcceptById } from '@/api/user.js'
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction.js'
+    import { ACCEPT_STATUS, TASK_STATUS } from '@/constants/enums'
     export default {
         data() {
             return {
+                ACCEPT_STATUS,
+                TASK_STATUS,
                 nodeDialogVisible: false,
                 nodeSubmitting: false,
                 nodeForm: {
@@ -242,31 +245,31 @@
                 taskType: {
                 },
                 operations: {
-                    "待处理": {
+                    [ACCEPT_STATUS.PENDING]: {
                         index: 0,
                         title: ["取消待接收"],
                         type: ["info"],
                         click: ["cancelAcceptor"]
                     },
-                    "已取消": {
+                    [ACCEPT_STATUS.CANCEL]: {
                         index: 1,
                         title: [],
                         type: [],
                         click: []
                     },
-                    "已过期": {
+                    [ACCEPT_STATUS.EXPIRED]: {
                         index: 2,
                         title: [],
                         type: [],
                         click: []
                     },
-                    "未选中": {
+                    [ACCEPT_STATUS.UNCHECKED]: {
                         index: 3,
                         title: [],
                         type: [],
                         click: []
                     },
-                    "已接收": {
+                    [ACCEPT_STATUS.CHECKED]: {
                         index: 4,
                         title: ["觉得很赞", "觉得很差"],
                         type: ["success", "warning"],
@@ -378,7 +381,7 @@
                                 this.operation = this.operations[`${row.status}`];
                                 this.form.id = row.id;
                                 console.log("委托接收记录详情", this.form);
-                                if (this.form.task.status === '已接收') {
+                                if (this.form.task.status === TASK_STATUS.ACCEPTED) {
                                     this.loadTaskUpdates(this.form.task.taskId);
                                 }
                                 this.open = true;

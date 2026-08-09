@@ -99,11 +99,13 @@
     } from "@/api/";
 
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
+    import { TASK_STATUS } from '@/constants/enums'
 
     export default {
         name: "Delegateauditrecords",
         data() {
             return {
+                TASK_STATUS,
                 // 遮罩层
                 loading: true,
                 // 选中数组
@@ -169,7 +171,7 @@
                         type: ["warning", "warn"],
                         click: ["withdrawReleaseAdmin", "fallbackDraftAdmin"]
                     },
-                    "已取消": {
+                    [TASK_STATUS.CANCELLED]: {
                         index: 1,
                         title: ["删除记录"],
                         type: ["warning"],

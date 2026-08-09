@@ -108,7 +108,7 @@
                     {{form.task.money}} 元
                 </el-descriptions-item>
             </el-descriptions>
-            <el-card v-show="form.task.status === '委托发布中'" class="box-card" style="margin-top: 10px;">
+            <el-card v-show="form.task.status === TASK_STATUS.ONGOING" class="box-card" style="margin-top: 10px;">
                 <div style="height: 250px;" v-show="form.taskAcceptRecordsStatus">
                     <div slot="header" class="clearfix" style="margin-bottom: 5px;">
                         <span>该委托接收情况</span>
@@ -152,7 +152,7 @@
                 </div>
             </el-card>
 
-            <el-card v-show="form.task.status === '已接收' || form.task.status === '已完成'" class="box-card" style="margin-top: 10px;">
+            <el-card v-show="form.task.status === TASK_STATUS.ACCEPTED || form.task.status === TASK_STATUS.COMPLETED" class="box-card" style="margin-top: 10px;">
                 <div slot="header" class="clearfix">
                     <span>任务动态</span>
                 </div>
@@ -186,7 +186,7 @@
                 </div>
             </el-card>
 
-            <el-card v-show="form.task.status === '已接收'" class="box-card" style="margin-top: 10px;">
+            <el-card v-show="form.task.status === TASK_STATUS.ACCEPTED" class="box-card" style="margin-top: 10px;">
 
                 <div slot="header" class="clearfix" style="margin-bottom: 5px;">
                     <el-rate v-model="taskRateValue" show-text text-color="#ff9900">
@@ -197,7 +197,7 @@
                 </div>
 
             </el-card>
-            <el-card v-show="form.task.status === '已完成'" class="box-card" style="margin-top: 10px;">
+            <el-card v-show="form.task.status === TASK_STATUS.COMPLETED" class="box-card" style="margin-top: 10px;">
 
                 <div slot="header" class="clearfix" style="margin-bottom: 5px;">
                     <el-rate v-model="taskRateValue" show-text text-color="#ff9900">
@@ -235,6 +235,7 @@
     } from '@/api/user.js'
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction.js'
     import loadingVue from '@/components/Loading.vue'
+    import { TASK_STATUS } from '@/constants/enums'
     export default {
         components: {
             loadingVue
@@ -242,6 +243,7 @@
         data() {
 
             return {
+                TASK_STATUS,
                 taskUpdates: [],
                 //委托描述
                 descriptions: "",
@@ -319,7 +321,7 @@
                         type: ["info", "warning"],
                         click: ["fallbackDraftByPublisher", "deleteDelegation"]
                     },
-                    "已取消": {
+                    [TASK_STATUS.CANCELLED]: {
                         index: 3,
                         title: ["回退为草稿", "删除该委托"],
                         type: ["info", "warning"],
@@ -454,7 +456,7 @@
                         this.operation = this.operations[`${this.form.task.status}`]
                         console.log("已发布的委托信息", this.form);
                         
-                        if (this.form.task.status === '已接收' || this.form.task.status === '已完成') {
+                        if (this.form.task.status === TASK_STATUS.ACCEPTED || this.form.task.status === TASK_STATUS.COMPLETED) {
                             this.getTaskUpdates(this.form.task.taskId);
                         }
                         

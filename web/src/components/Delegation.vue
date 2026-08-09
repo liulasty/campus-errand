@@ -61,7 +61,7 @@
                                 <i class="el-icon-document-copy"></i>
                             </div>
                             <div class="text-info">
-                                <div class="num">{{ tasks.filter(t => t.status === '草稿').length }}</div>
+                                <div class="num">{{ tasks.filter(t => t.status === TASK_STATUS.DRAFT).length }}</div>
                                 <div class="label">待发布草稿</div>
                             </div>
                         </div>
@@ -71,7 +71,7 @@
                                 <i class="el-icon-s-check"></i>
                             </div>
                             <div class="text-info">
-                                <div class="num">{{ tasks.filter(t => t.status === '审核中').length }}</div>
+                                <div class="num">{{ tasks.filter(t => t.status === TASK_STATUS.AUDITING).length }}</div>
                                 <div class="label">审核中委托</div>
                             </div>
                         </div>
@@ -99,27 +99,27 @@
                         </el-table-column>
                         <el-table-column label="状态" width="80">
                             <template slot-scope="scope">
-                                <el-tag v-if="scope.row.status === '草稿'" type="info" size="mini" effect="plain">草稿</el-tag>
-                                <el-tag v-else-if="scope.row.status === '审核中'" type="warning" size="mini" effect="plain">审核中</el-tag>
-                                <el-tag v-else-if="scope.row.status === '等待发布'" type="success" size="mini" effect="plain">待发布</el-tag>
-                                <el-tag v-else-if="scope.row.status === '审核未通过'" type="danger" size="mini" effect="plain">未通过</el-tag>
+                                <el-tag v-if="scope.row.status === TASK_STATUS.DRAFT" type="info" size="mini" effect="plain">草稿</el-tag>
+                                <el-tag v-else-if="scope.row.status === TASK_STATUS.AUDITING" type="warning" size="mini" effect="plain">审核中</el-tag>
+                                <el-tag v-else-if="scope.row.status === TASK_STATUS.PENDING_RELEASE" type="success" size="mini" effect="plain">待发布</el-tag>
+                                <el-tag v-else-if="scope.row.status === TASK_STATUS.AUDIT_FAILED" type="danger" size="mini" effect="plain">未通过</el-tag>
                             </template>
                         </el-table-column>
                         <el-table-column label="操作" width="130" fixed="right" align="center">
                             <template slot-scope="scope">
-                                <div v-if="scope.row.status == '草稿'">
+                                <div v-if="scope.row.status == TASK_STATUS.DRAFT">
                                     <el-button size="mini" type="text" @click="handleEdit(scope.row)">编辑</el-button>
                                     <el-button size="mini" type="text" class="text-danger" @click="handleDelete(scope.row)">删除</el-button>
                                     <el-button size="mini" type="text" @click="handleOngoing(scope.row)">去审核</el-button>
                                 </div>
-                                <div v-else-if="scope.row.status == '审核中'">
+                                <div v-else-if="scope.row.status == TASK_STATUS.AUDITING">
                                     <span style="color: #909399; font-size: 12px;">审核中...</span>
                                 </div>
-                                <div v-else-if="scope.row.status == '等待发布'">
+                                <div v-else-if="scope.row.status == TASK_STATUS.PENDING_RELEASE">
                                     <el-button size="mini" type="text" class="text-danger" @click="handleDelete(scope.row)">删除</el-button>
                                     <el-button size="mini" type="text" @click="handleAudit(scope.row)">发布</el-button>
                                 </div>
-                                <div v-else-if="scope.row.status == '审核未通过'">
+                                <div v-else-if="scope.row.status == TASK_STATUS.AUDIT_FAILED">
                                     <el-button size="mini" type="text" @click="handleEdit(scope.row)">修改</el-button>
                                     <el-button size="mini" type="text" class="text-danger" @click="handleDelete(scope.row)">删除</el-button>
                                     <el-button size="mini" type="text" @click="handleDetail(scope.row)">原因</el-button>
@@ -299,6 +299,7 @@
 
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
     import { SUCCESS_CODE } from '@/constants/http'
+    import { TASK_STATUS } from '@/constants/enums'
 
     export default {
         props: {
@@ -336,6 +337,7 @@
         },
         data() {
             return {
+                TASK_STATUS,
                 dialogRulesVisible: false,
                 dialogPreviewVisible: false,
                 dialogVisibleEdit: false,
