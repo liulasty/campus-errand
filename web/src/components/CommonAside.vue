@@ -14,29 +14,35 @@
             </transition>
         </div>
 
-        <el-submenu v-for="group in menuData" :key="group.index" :index="group.index">
-            <template slot="title">
-                <i :class="`el-icon-${group.icon}`"></i>
-                <span slot="title">{{ group.label }}</span>
-            </template>
-            <template v-for="item in group.children">
-                <el-menu-item v-if="!item.children" :key="item.index" :index="item.index" @click="clickMenu(item)">
+        <template v-for="item in menuData">
+            <el-menu-item v-if="!item.children" :key="item.index" :index="item.index" @click="clickMenu(item)">
+                <i :class="`el-icon-${item.icon}`"></i>
+                <span slot="title">{{ item.label }}</span>
+            </el-menu-item>
+            <el-submenu v-else :key="item.index" :index="item.index">
+                <template slot="title">
                     <i :class="`el-icon-${item.icon}`"></i>
                     <span slot="title">{{ item.label }}</span>
-                </el-menu-item>
-                <el-submenu v-else :key="item.index" :index="item.index">
-                    <template slot="title">
-                        <i :class="`el-icon-${item.icon}`"></i>
-                        <span slot="title">{{ item.label }}</span>
-                    </template>
-                    <el-menu-item v-for="child in item.children" :key="child.index" :index="child.index"
-                        @click="clickMenu(child)">
+                </template>
+                <template v-for="child in item.children">
+                    <el-menu-item v-if="!child.children" :key="child.index" :index="child.index" @click="clickMenu(child)">
                         <i :class="`el-icon-${child.icon}`"></i>
                         <span slot="title">{{ child.label }}</span>
                     </el-menu-item>
-                </el-submenu>
-            </template>
-        </el-submenu>
+                    <el-submenu v-else :key="child.index" :index="child.index">
+                        <template slot="title">
+                            <i :class="`el-icon-${child.icon}`"></i>
+                            <span slot="title">{{ child.label }}</span>
+                        </template>
+                        <el-menu-item v-for="grand in child.children" :key="grand.index" :index="grand.index"
+                            @click="clickMenu(grand)">
+                            <i :class="`el-icon-${grand.icon}`"></i>
+                            <span slot="title">{{ grand.label }}</span>
+                        </el-menu-item>
+                    </el-submenu>
+                </template>
+            </el-submenu>
+        </template>
     </el-menu>
 </template>
 
@@ -144,6 +150,8 @@
 </style>
 
 <script>
+    import { buildMenu } from '../router/menu'
+
     export default {
         watch: {
             '$route'(to, from) {
@@ -153,91 +161,9 @@
         data() {
             return {
                 isUniqueOpened: true,
-                activeIndex: '1',
+                activeIndex: '/home',
                 openeds: [],
-                menuData: [
-                    {
-                        label: '工作台',
-                        icon: 's-home',
-                        index: 'workbench',
-                        children: [
-                            { path: '/home', name: 'home', label: '数据驾驶舱', icon: 'data-line', index: 'w-1' },
-                            { path: '/viewOnGoingList', name: 'viewOnGoingList', label: '委托大厅', icon: 'search', index: 'w-2' },
-                            {
-                                label: '我的委托',
-                                icon: 's-order',
-                                index: 'w-3',
-                                children: [
-                                    { path: '/createDelegation', name: 'createDelegation', label: '发布委托', icon: 'edit-outline', index: 'w-3-0' },
-                                    { path: '/myDelegationPublishList', name: 'myDelegationPublishList', label: '我发布的订单', icon: 'document-add', index: 'w-3-1' },
-                                    { path: '/myDelegationAcceptList', name: 'myDelegationAcceptList', label: '我承接的订单', icon: 'document-checked', index: 'w-3-2' }
-                                ]
-                            },
-                            { path: '/messageCenter', name: 'messageCenter', label: '消息中心', icon: 'bell', index: 'w-4' },
-                            {
-                                label: '个人中心',
-                                icon: 'user',
-                                index: 'w-5',
-                                children: [
-                                    { path: '/myInfo', name: 'myInfo', label: '基础信息', icon: 'user-solid', index: 'w-5-1' },
-                                    { path: '/creditProfile', name: 'creditProfile', label: '信用档案', icon: 'medal', index: 'w-5-2' }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        label: '平台管理中心',
-                        icon: 's-tools',
-                        index: 'admin',
-                        children: [
-                            {
-                                label: '委托管理',
-                                icon: 's-order',
-                                index: 'a-1',
-                                children: [
-                                    { path: '/publishedList', name: 'publishedList', label: '全部委托', icon: 'tickets', index: 'a-1-1' },
-                                    { path: '/auditList', name: 'auditList', label: '委托审核', icon: 's-check', index: 'a-1-2' },
-                                    { path: '/expireDelegationList', name: 'expireDelegationList', label: '未完成委托', icon: 'warning-outline', index: 'a-1-3' },
-                                    { path: '/delegationUpdateRecords', name: 'delegationUpdateRecords', label: '履约记录查询', icon: 's-flag', index: 'a-1-4' }
-                                ]
-                            },
-                            {
-                                label: '用户管理',
-                                icon: 'user',
-                                index: 'a-2',
-                                children: [
-                                    { path: '/userList', name: 'userList', label: '用户列表', icon: 'user', index: 'a-2-1' },
-                                    { path: '/admin/realNameAudit', name: 'realNameAudit', label: '实名审核', icon: 'postcard', index: 'a-2-2' }
-                                ]
-                            },
-                            {
-                                label: '平台公告',
-                                icon: 'chat-dot-round',
-                                index: 'a-3',
-                                children: [
-                                    { path: '/systemBulletinList', name: 'systemBulletinList', label: '公告管理', icon: 'chat-dot-round', index: 'a-3-1' }
-                                ]
-                            },
-                            {
-                                label: '消息管理',
-                                icon: 'bell',
-                                index: 'a-4',
-                                children: [
-                                    { path: '/notificationReadStatus', name: 'notificationReadStatus', label: '消息管理', icon: 's-comment', index: 'a-4-1' }
-                                ]
-                            },
-                            {
-                                label: '系统配置',
-                                icon: 'setting',
-                                index: 'a-5',
-                                children: [
-                                    { path: '/delegationType', name: 'delegationType', label: '委托分类配置', icon: 'menu', index: 'a-5-1' },
-                                    { path: '/sensitiveWord', name: 'sensitiveWord', label: '敏感词管控', icon: 'lock', index: 'a-5-2' }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+                menuData: []
             };
         },
         methods: {
@@ -277,12 +203,6 @@
                 walk(this.menuData);
                 return result;
             },
-            userPermissions(type) {
-                // 普通用户只保留「工作台」，管理员展示全部
-                if (type !== 'ADMIN') {
-                    this.menuData = this.menuData.filter(group => group.index !== 'admin');
-                }
-            },
             initAside() {
                 const currentPath = this.$route.path;
                 const walk = (items) => {
@@ -302,13 +222,13 @@
                 if (activeItem) {
                     this.activeIndex = activeItem.index;
                 } else {
-                    this.activeIndex = 'w-1';
+                    this.activeIndex = '/home';
                 }
             }
         },
         mounted() {
             this.setUserInfo()
-            this.userPermissions(this.$store.state.userInfo.userType)
+            this.menuData = buildMenu(this.$router.options.routes, this.$store.state.userInfo.userType)
             this.initAside()
         },
         computed: {
