@@ -58,10 +58,9 @@ export function enumOptions(enumMap, { empty = false, emptyLabel = '全部' } = 
 
 替换规则：
 1. **状态比较**：`scope.row.status === '委托发布中'` → `scope.row.status === TASK_STATUS.ONGOING`；认证 `=== '认证通过'` → `AUTH_STATUS.AUTHENTICATED`。
-2. **el-select 选项**：硬编码 `el-option` → `v-for="o in enumOptions(TASK_STATUS)"`。
-3. **查询参数**：`status: 'ONGOING'` → `status: TASK_STATUS.ONGOING`（值本身是英文，用常量便于联动改名）。
-4. **状态操作 map**：`'已取消': {...}` 的 key → `TASK_STATUS.CANCELLED`。
-5. **Vue2 模板约束**：import 的函数必须挂入 `methods`（或经 computed/data 暴露），不能模板直用 import 模块函数。
+2. **查询下拉 value 保持不变**：`value="ONGOING"` / `value="PUBLISHED"` 等是发送给后端的 **dbValue（英文）**，不可改成 `TASK_STATUS.ONGOING`（那会得到中文 webValue 导致查询失效）。仅当 select 的 value 本就是中文 webValue（如通知类型 `value: "个人信息通知"` → `NOTIFICATION_TYPE.OWN`）才用常量。
+3. **状态操作 map**：`'已取消': {...}` 的 key → `[TASK_STATUS.CANCELLED]: {...}`（计算属性键，运行时仍为中文 webValue，行为不变）。
+4. **Vue2 模板约束**：import 的常量须经 `data()` 暴露（`TASK_STATUS,`）才能在模板用 `TASK_STATUS.ONGOING`；脚本内直接用 import 常量。
 
 重构文件清单：
 - 任务相关：`ViewOnGoingList.vue`、`Delegation.vue`、`MyDelegationPublishList.vue`、`MyDelegationAcceptList.vue`、`ExpireDelegationList.vue`、`AuditList.vue`、`DraftList.vue`
