@@ -52,10 +52,13 @@ Vue.use(ElementUI);
 //   }
 // })
 
-// 全局日期格式化过滤器：yyyy-MM-dd HH:mm
+// 全局日期格式化过滤器：yyyy-MM-dd HH:mm（null/undefined/空串/非法时间戳统一返回 '—'）
 Vue.filter('dateTime', (val) => {
-  if (!val) return ''
-  const d = new Date(Number(val))
+  if (val === null || val === undefined || val === '') return '—'
+  const num = Number(val)
+  if (Number.isNaN(num)) return '—'
+  const d = new Date(num)
+  if (Number.isNaN(d.getTime())) return '—'
   const pad = n => (n < 10 ? '0' + n : n)
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 })

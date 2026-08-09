@@ -144,6 +144,7 @@
     ];
 
     export default {
+        name: 'DashboardHome',
         data() {
             return {
                 loading: true,
