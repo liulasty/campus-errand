@@ -102,7 +102,7 @@ public class GlobalControllerAdvice {
 
     @ExceptionHandler(MyException.class)
     public Result<?> myException(MyException e) {
-        log.error("发生业务异常: {}", e.getMessage());
+        log.error("发生业务异常: {}", e.getMessage(), e);
         return Result.error(ErrorCode.BUSINESS_ERROR, e.getMessage());
     }
 

@@ -364,6 +364,12 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
 
         Users currentAdmin = getCurrentAdmin();
         if (users == null || !Objects.equals(users.getRole(), "USER")) {
+            log.warn("创建委托被拒: ownerId={}, 目标用户=[{}/role={}], 当前登录=[{}/id={}]",
+                    taskDTO.getOwnerId(),
+                    users == null ? null : users.getUsername(),
+                    users == null ? null : users.getRole(),
+                    currentAdmin == null ? null : currentAdmin.getUsername(),
+                    currentAdmin == null ? null : currentAdmin.getUserId());
             throw new MyException("用户不存在");
         }
 
