@@ -34,10 +34,26 @@
       </div>
       <el-dropdown trigger="click" class="avatar-dropdown">
         <div class="avatar-wrapper">
-          <img class="userIcon" :src="avatarSrc || require('../assets/avatar.jpg')" alt="用户">
+          <img class="userIcon" :src="avatarSrc || defaultAvatar" alt="用户">
+          <div class="avatar-info">
+            <span class="avatar-name">{{ displayName }}</span>
+            <span class="role-tag" :class="roleInfo.cls">{{ roleInfo.label }}</span>
+          </div>
           <i class="el-icon-caret-bottom"></i>
         </div>
         <el-dropdown-menu slot="dropdown" class="user-dropdown">
+          <div class="user-panel">
+            <img class="panel-avatar" :src="avatarSrc || defaultAvatar" alt="用户">
+            <div class="panel-meta">
+              <div class="panel-name-row">
+                <span class="panel-name">{{ displayName }}</span>
+                <span class="role-tag" :class="roleInfo.cls">{{ roleInfo.label }}</span>
+              </div>
+              <div class="panel-row"><span class="panel-label">用户ID</span>{{ userId || '--' }}</div>
+              <div class="panel-row"><span class="panel-label">实名状态</span>{{ authDesc || '未认证' }}</div>
+              <div class="panel-row"><span class="panel-label">信用分</span>{{ creditDisplay }}</div>
+            </div>
+          </div>
           <el-dropdown-item @click.native="dialogAvatarVisible = true">
             <i class="el-icon-user"></i>
             修改头像
@@ -66,8 +82,8 @@
 
   import avatarShowVue from './avatarShow.vue';
   import { mapState } from 'vuex';
-  import { logout } from '@/api';
-  import { uploadAvatar } from '@/api';
+  import { logout, uploadAvatar, fetchUserBasicInfo } from '@/api';
+  import { SUCCESS_CODE } from '@/constants/http';
   import noticeVue from './noticeList.vue';
 
   export default {
@@ -81,6 +97,8 @@
         imageUrl: '',
         initialImageSrc: '',
         avatarSrc: '',
+        defaultAvatar: require('../assets/avatar.jpg'),
+        userProfile: null,
         dialogWidth: '600px',
         dialogNoticeVisible: false,
         userId: '',
@@ -120,6 +138,17 @@
             return 'current_bread';
           }
           return '';
+        }
+      },
+      async loadUserProfile(userId) {
+        try {
+          const res = await fetchUserBasicInfo(userId);
+          if (res.data && res.data.code === SUCCESS_CODE && res.data.data) {
+            const u = res.data.data;
+            this.userProfile = { name: u.username || '', credit: u.creditScore };
+          }
+        } catch (e) {
+          console.warn('加载用户资料失败', e);
         }
       },
       handleMenu() {
@@ -173,16 +202,44 @@
       //创建一个名为 tags 的计算属性，它将获取 Vuex 的状态中 state.tab.tabsList 的数据。
       ...mapState({
         tags: state => state.tab.tabsList
-      })
+      }),
+      roleInfo() {
+        const map = {
+          ADMIN: { label: '管理员', cls: 'role-admin' },
+          TEACHER: { label: '教师', cls: 'role-teacher' },
+          STUDENT: { label: '学生', cls: 'role-student' },
+        };
+        const role = this.$store.state.userInfo.userType || '';
+        return map[role] || { label: role || '', cls: 'role-default' };
+      },
+      displayName() {
+        return (this.userProfile && this.userProfile.name) || '用户';
+      },
+      creditDisplay() {
+        const c = this.userProfile ? this.userProfile.credit : null;
+        return (c !== null && c !== undefined) ? String(c) : '--';
+      },
+      authDesc() {
+        try {
+          return (JSON.parse(localStorage.getItem('TaskUser') || '{}')).Authorization || '';
+        } catch (e) {
+          return '';
+        }
+      },
     },
     mounted() {
-      // console.log(this.tags, 'tags')
-      const TaskUser = localStorage.getItem('TaskUser')
-      if (TaskUser) {
-        this.userId = JSON.parse(TaskUser).userId;
+      let taskUser = {};
+      try {
+        taskUser = JSON.parse(localStorage.getItem('TaskUser') || '{}') || {};
+      } catch (e) {
+        taskUser = {};
       }
-      const parsedUser = JSON.parse(TaskUser);
-      // this.avatarSrc = parsedUser.avatarSrc;
+      this.userId = taskUser.userId || this.$store.state.userInfo.userId || '';
+      // 修复：上传的头像在刷新后丢失（此前读取 localStorage 的代码被注释）
+      this.avatarSrc = localStorage.getItem('avatarSrc') || '';
+      if (this.userId) {
+        this.loadUserProfile(this.userId);
+      }
     }
 
   }
@@ -315,11 +372,89 @@
             }
           }
 
+          .avatar-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-left: 10px;
+            line-height: 1.2;
+
+            .avatar-name {
+              font-size: 14px;
+              font-weight: 600;
+              color: #303133;
+              max-width: 120px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+          }
+
           .el-icon-caret-bottom {
             margin-left: 8px;
             font-size: 12px;
             color: #909399;
           }
+        }
+      }
+    }
+
+    .role-tag {
+      display: inline-block;
+      margin-top: 2px;
+      padding: 0 6px;
+      font-size: 11px;
+      line-height: 18px;
+      border-radius: 3px;
+
+      &.role-admin { color: #b88230; background: #fdf6ec; border: 1px solid #f3d19e; }
+      &.role-teacher { color: #2d8f6f; background: #e6f7f0; border: 1px solid #b7e3d0; }
+      &.role-student { color: #3370ff; background: #ecf3ff; border: 1px solid #b9d0ff; }
+      &.role-default { color: #909399; background: #f4f4f5; border: 1px solid #dcdce0; }
+    }
+
+    .user-panel {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      min-width: 220px;
+      border-bottom: 1px solid #ebeef5;
+
+      .panel-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 12px;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .panel-meta {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .panel-name-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .panel-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #303133;
+      }
+
+      .panel-row {
+        font-size: 12px;
+        color: #909399;
+        margin-top: 4px;
+
+        .panel-label {
+          color: #c0c4cc;
+          margin-right: 6px;
         }
       }
     }
@@ -347,11 +482,15 @@
 
         .avatar-dropdown {
           margin-left: 10px;
-          
+
           .avatar-wrapper {
             .userIcon {
               width: 32px;
               height: 32px;
+            }
+
+            .avatar-info {
+              display: none;
             }
           }
         }
