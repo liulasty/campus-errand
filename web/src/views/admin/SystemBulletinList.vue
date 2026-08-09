@@ -134,10 +134,12 @@
 <script>
     import { getSystemBulletinList, deleteSystemBulletin, getSystemBulletinById, updateSystemBulletin, createSystemBulletin } from "@/api/";
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
+    import { ANNOUNCEMENT_STATUS } from '@/constants/enums'
     export default {
         name: "SystemBulletinList",
         data() {
             return {
+                ANNOUNCEMENT_STATUS,
                 list: [],
                 open: false,
                 dialogMode: 'edit',
@@ -340,7 +342,11 @@
                 this.open = true;
             },
             statusLabel(status) {
-                const map = { DRAFT: '草稿', PUBLISHED: '已发布', WITHDRAWN: '已撤回' };
+                const map = {
+                    DRAFT: ANNOUNCEMENT_STATUS.DRAFT,
+                    PUBLISHED: ANNOUNCEMENT_STATUS.PUBLISHED,
+                    WITHDRAWN: ANNOUNCEMENT_STATUS.WITHDRAWN
+                };
                 return map[status] || status;
             }
         }

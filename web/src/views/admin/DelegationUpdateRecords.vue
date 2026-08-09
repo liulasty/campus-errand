@@ -32,7 +32,7 @@
             </el-table-column>
             <el-table-column label="更新类型" align="center" width="130" :filters="autoAdvanceFilters" :filter-method="filterUpdateType">
                 <template slot-scope="scope">
-                    <el-tag v-if="scope.row.updateType === '自动推进'" type="danger" size="small" effect="dark">系统自动推进</el-tag>
+                    <el-tag v-if="scope.row.updateType === TASK_UPDATE_TYPE.AUTO_ADVANCE" type="danger" size="small" effect="dark">系统自动推进</el-tag>
                     <el-tag v-else-if="nodeMeta(scope.row.updateType)" :color="nodeMeta(scope.row.updateType).color" size="small" effect="dark">
                         {{ nodeMeta(scope.row.updateType).label }}
                     </el-tag>
@@ -99,11 +99,13 @@
     import initLayui from "@/layui/layuiInit";
 
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
+    import { TASK_UPDATE_TYPE } from '@/constants/enums'
 
     export default {
         name: "Delegateauditrecords",
         data() {
             return {
+                TASK_UPDATE_TYPE,
                 // 遮罩层
                 loading: true,
                 // 选中数组
@@ -161,7 +163,7 @@
         },
         methods: {
             filterUpdateType(value, row) {
-                return row.updateType === '自动推进'
+                return row.updateType === TASK_UPDATE_TYPE.AUTO_ADVANCE
             },
             getTaskUpdateType() {
                 getDelegateUpdateType().then(request => {

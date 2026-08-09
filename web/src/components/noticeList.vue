@@ -39,6 +39,7 @@
     import {
         getPersonalNoticeList, getNoticeById,
     } from "@/api/user.js"
+    import { NOTIFICATION_TYPE } from '@/constants/enums'
 
 
     export default {
@@ -51,25 +52,26 @@
         },
         data() {
             return {
+                NOTIFICATION_TYPE,
                 dialogVisibleEdit: false,
                 dialogVisibleReason: false,
                 dialogVisiblePublish: false,
                 noticeType: [
                     {
-                        value: "个人信息通知",
-                        label: '个人信息通知',
+                        value: NOTIFICATION_TYPE.OWN,
+                        label: NOTIFICATION_TYPE.OWN,
                     },
                     {
-                        value: "委托信息通知",
-                        label: '委托信息通知',
+                        value: NOTIFICATION_TYPE.TASK,
+                        label: NOTIFICATION_TYPE.TASK,
                     },
                     {
-                        value: "营销信息通知",
-                        label: '营销信息通知',
+                        value: NOTIFICATION_TYPE.MARKETING,
+                        label: NOTIFICATION_TYPE.MARKETING,
                     },
                     {
-                        value: "系统信息通知",
-                        label: '系统信息通知',
+                        value: NOTIFICATION_TYPE.SYSTEM,
+                        label: NOTIFICATION_TYPE.SYSTEM,
                     },
                 ],
                 DelegationFrom: {
@@ -131,16 +133,16 @@
                 // console.log(tab, event);
                 this.tableData = [];
                 switch (tab.label) {
-                    case "个人信息通知":
+                    case NOTIFICATION_TYPE.OWN:
                         this.getPersonalInformationNotification();
                         break;
-                    case "委托信息通知":
+                    case NOTIFICATION_TYPE.TASK:
                         this.getTaskInformationNotification();
                         break;
-                    case "营销信息通知":
+                    case NOTIFICATION_TYPE.MARKETING:
                         this.getMarketInformationNotification();
                         break;
-                    case "系统信息通知":
+                    case NOTIFICATION_TYPE.SYSTEM:
                         this.getSystemInformationNotification();
                         break;
                 }
