@@ -82,7 +82,7 @@
 
   import avatarShowVue from './avatarShow.vue';
   import { mapState } from 'vuex';
-  import { logout, uploadAvatar, fetchUserBasicInfo } from '@/api';
+  import { logout, uploadAvatar, fetchUserBasicInfo, getUserInfo } from '@/api';
   import { SUCCESS_CODE } from '@/constants/http';
   import noticeVue from './noticeList.vue';
 
@@ -145,10 +145,19 @@
           const res = await fetchUserBasicInfo(userId);
           if (res.data && res.data.code === SUCCESS_CODE && res.data.data) {
             const u = res.data.data;
-            this.userProfile = { name: u.username || '', credit: u.creditScore };
+            this.userProfile = { name: u.username || '', credit: u.creditScore, userRole: '' };
           }
         } catch (e) {
           console.warn('加载用户资料失败', e);
+        }
+        // users.Role 仅 USER/ADMIN，学生/教师来自 usersinfo.UserRole（小写 student/teacher，仅已实名用户存在）
+        try {
+          const r = await getUserInfo(userId);
+          if (r.data && r.data.code === SUCCESS_CODE && r.data.data && r.data.data.userRole) {
+            this.userProfile.userRole = r.data.data.userRole;
+          }
+        } catch (e) {
+          // 非实名/管理员无 usersinfo 记录，userRole 保持为空
         }
       },
       handleMenu() {
@@ -204,13 +213,16 @@
         tags: state => state.tab.tabsList
       }),
       roleInfo() {
-        const map = {
-          ADMIN: { label: '管理员', cls: 'role-admin' },
-          TEACHER: { label: '教师', cls: 'role-teacher' },
-          STUDENT: { label: '学生', cls: 'role-student' },
-        };
         const role = this.$store.state.userInfo.userType || '';
-        return map[role] || { label: role || '', cls: 'role-default' };
+        if (role === 'ADMIN') {
+          return { label: '管理员', cls: 'role-admin' };
+        }
+        const userRole = (this.userProfile && this.userProfile.userRole) || '';
+        const map = {
+          student: { label: '学生', cls: 'role-student' },
+          teacher: { label: '教师', cls: 'role-teacher' },
+        };
+        return map[userRole] || { label: '普通用户', cls: 'role-default' };
       },
       displayName() {
         return (this.userProfile && this.userProfile.name) || '用户';
@@ -399,63 +411,64 @@
       }
     }
 
-    .role-tag {
-      display: inline-block;
-      margin-top: 2px;
-      padding: 0 6px;
-      font-size: 11px;
-      line-height: 18px;
-      border-radius: 3px;
+  }
 
-      &.role-admin { color: #b88230; background: #fdf6ec; border: 1px solid #f3d19e; }
-      &.role-teacher { color: #2d8f6f; background: #e6f7f0; border: 1px solid #b7e3d0; }
-      &.role-student { color: #3370ff; background: #ecf3ff; border: 1px solid #b9d0ff; }
-      &.role-default { color: #909399; background: #f4f4f5; border: 1px solid #dcdce0; }
+  .role-tag {
+    display: inline-block;
+    margin-top: 2px;
+    padding: 0 6px;
+    font-size: 11px;
+    line-height: 18px;
+    border-radius: 3px;
+
+    &.role-admin { color: #b88230; background: #fdf6ec; border: 1px solid #f3d19e; }
+    &.role-teacher { color: #2d8f6f; background: #e6f7f0; border: 1px solid #b7e3d0; }
+    &.role-student { color: #3370ff; background: #ecf3ff; border: 1px solid #b9d0ff; }
+    &.role-default { color: #909399; background: #f4f4f5; border: 1px solid #dcdce0; }
+  }
+
+  .user-panel {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    min-width: 220px;
+    border-bottom: 1px solid #ebeef5;
+
+    .panel-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 12px;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .user-panel {
+    .panel-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .panel-name-row {
       display: flex;
       align-items: center;
-      padding: 12px 16px;
-      min-width: 220px;
-      border-bottom: 1px solid #ebeef5;
+      gap: 6px;
+    }
 
-      .panel-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-right: 12px;
-        border: 2px solid #fff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
+    .panel-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #303133;
+    }
 
-      .panel-meta {
-        flex: 1;
-        min-width: 0;
-      }
+    .panel-row {
+      font-size: 12px;
+      color: #909399;
+      margin-top: 4px;
 
-      .panel-name-row {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .panel-name {
-        font-size: 15px;
-        font-weight: 600;
-        color: #303133;
-      }
-
-      .panel-row {
-        font-size: 12px;
-        color: #909399;
-        margin-top: 4px;
-
-        .panel-label {
-          color: #c0c4cc;
-          margin-right: 6px;
-        }
+      .panel-label {
+        color: #c0c4cc;
+        margin-right: 6px;
       }
     }
   }
