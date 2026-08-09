@@ -131,11 +131,20 @@ public class TaskAdminController {
             @RequestParam(value = "taskType", required = false) Integer taskType,
             @RequestParam(value = "Location", required = false) String location,
             @RequestParam(value = "CreatedAt", required = false) LocalDate createdAt,
-            @RequestParam(value = "TypePhase", required = false) String typePhase) {
+            @RequestParam(value = "TypePhase", required = false) String typePhase) throws MyException {
         log.info("搜索页面{}，{}，{},{},{}", taskType, createdAt, location, typePhase, description);
+        // 非法 TypePhase 返回明确业务错误，而非 500（D-13；fromValue 对非法值抛 IllegalArgumentException）
+        TaskPhase taskPhase = null;
+        if (typePhase != null) {
+            try {
+                taskPhase = TaskPhase.fromValue(typePhase);
+            } catch (IllegalArgumentException e) {
+                throw new MyException("非法的委托阶段参数: " + typePhase);
+            }
+        }
         DraftConfig draftConfig = new DraftConfig(createdAt, description, location, pageNum, pageSize,
                 taskType,
-                TaskPhase.fromValue(typePhase));
+                taskPhase);
         PageResult<Task> taskPageResult = taskService.searchPageByAdmin(draftConfig);
         return Result.success(taskPageResult);
     }
