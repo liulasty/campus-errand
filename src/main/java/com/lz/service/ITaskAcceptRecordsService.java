@@ -15,7 +15,7 @@ import java.util.Map;
  * @date 2024/05/03
  */
 public interface ITaskAcceptRecordsService extends IService<TaskAcceptRecords> {
-    void create(AcceptDTO acceptDTO);
+    void create(AcceptDTO acceptDTO) throws MyException;
 
     TaskAcceptRecords getTaskAcceptRecordByTaskId(Long taskId) throws MyException;
     

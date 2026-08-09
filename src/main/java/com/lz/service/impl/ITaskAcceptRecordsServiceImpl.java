@@ -21,7 +21,6 @@ import com.lz.pojo.entity.Task;
 import com.lz.pojo.entity.Users;
 import com.lz.pojo.entity.TaskAcceptRecords;
 import com.lz.service.ITaskAcceptRecordsService;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -65,9 +64,8 @@ public class ITaskAcceptRecordsServiceImpl extends ServiceImpl<TaskAcceptRecords
         return users;
     }
     
-    @SneakyThrows
     @Override
-    public void create(AcceptDTO acceptDTO) {
+    public void create(AcceptDTO acceptDTO) throws MyException {
         // 空 body / 缺字段兜底（防止 task.getStatus() NPE）
         if (acceptDTO == null || acceptDTO.getTask() == null || acceptDTO.getUser() == null) {
             throw new MyException("任务ID和用户ID不能为空");

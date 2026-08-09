@@ -12,6 +12,7 @@ import com.lz.pojo.dto.TaskPageDTO;
 import com.lz.pojo.entity.DelegateAuditRecords;
 import com.lz.pojo.entity.DelegationCategories;
 import com.lz.pojo.entity.Task;
+import com.lz.pojo.entity.Users;
 import com.lz.pojo.entity.UsersInfo;
 import com.lz.pojo.result.NameAndDescription;
 import com.lz.pojo.result.PageResult;
@@ -26,6 +27,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -142,16 +144,16 @@ public class TaskController {
     @DeleteMapping(value = "/deleteTaskDraft/{id}")
     @ApiOperation("删除委托草稿")
     public Result<String> deleteTaskDraft(@PathVariable("id") Long id) throws MyException {
-        try {
-            Task byId = taskService.getById(id);
-            if (byId == null) {
-                throw new MyException(MessageConstants.DATA_VALIDATION_ERROR);
-            }
-            taskService.removeById(id);
-            return Result.success(MessageConstants.TASK_UPDATE_SUCCESS);
-        } catch (Exception e) {
-            throw new MyException(MessageConstants.UNEXPECTED_EXCEPTION);
+        Task byId = taskService.getById(id);
+        if (byId == null) {
+            throw new MyException(MessageConstants.DATA_VALIDATION_ERROR);
         }
+        Users current = getCurrentUser();
+        if (current == null || !current.getUserId().equals(byId.getOwnerId())) {
+            throw new MyException("无权删除该委托草稿");
+        }
+        taskService.removeById(id);
+        return Result.success(MessageConstants.TASK_UPDATE_SUCCESS);
     }
 
 
@@ -159,11 +161,24 @@ public class TaskController {
     @ApiOperation("删除委托")
     public Result<String> deleteTask(@RequestBody(required = false) Map<String, Long> body) throws MyException {
         Long taskId = body == null ? null : body.get("taskId");
-        if (taskId == null || taskService.getById(taskId) == null) {
+        Task byId = taskId == null ? null : taskService.getById(taskId);
+        if (byId == null) {
             throw new MyException(MessageConstants.DATA_VALIDATION_ERROR);
+        }
+        Users current = getCurrentUser();
+        if (current == null || !current.getUserId().equals(byId.getOwnerId())) {
+            throw new MyException("无权删除该委托");
         }
         taskService.removeById(taskId);
         return Result.success(MessageConstants.TASK_DELETE_SUCCESS);
+    }
+
+    /**
+     * 获取当前登录用户（D-12 越权删除校验）
+     */
+    private Users getCurrentUser() {
+        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usersService.getByUsername(name);
     }
 
     /**

@@ -951,8 +951,14 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
     public void updateToCompleted(UpdateTaskToCompletedDTO dto) throws MyException {
         realNameAuthenticationService.ensureCurrentUserL1();
         Users users = getCurrentAdmin();
+        if (dto == null || dto.getTaskId() == null) {
+            throw new MyException("任务ID不能为空");
+        }
 
         Task task = getById(dto.getTaskId());
+        if (task == null) {
+            throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
         if (!task.getStatus().equals(TaskStatus.ACCEPTED) ||
                 !task.getOwnerId().equals(users.getUserId()) ||
                 task.getReceiverId() == null) {

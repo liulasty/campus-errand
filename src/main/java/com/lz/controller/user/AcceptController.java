@@ -77,7 +77,7 @@ public class AcceptController {
      * @return 后端统一返回结果
      */
     @PostMapping
-    public Result<?> accept(@Validated @RequestBody AcceptDTO acceptDTO) {
+    public Result<?> accept(@Validated @RequestBody AcceptDTO acceptDTO) throws MyException {
         log.info("接收委托留言 {}", acceptDTO);
         realNameAuthenticationService.ensureCurrentUserL1();
         taskAcceptRecordsService.create(acceptDTO);
