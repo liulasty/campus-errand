@@ -11,8 +11,10 @@ import com.lz.pojo.result.Result;
 import com.lz.service.IReviewsService;
 import com.lz.utils.excelutil.EasyExcelUtil;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -44,22 +46,20 @@ public class ReviewsController {
 
     @GetMapping("/exportExcel")
     @NoReturnHandle
-    public void exportExcel(HttpServletResponse response) throws MyException {
+    public void exportExcel(HttpServletResponse response) {
         log.info("开始导出excel");
 
         List<Reviews> reviewsList = reviewsService.exportExcel();
-
-        // 检查返回的列表是否为空或null，并处理其中的null元素
-        if (reviewsList == null) {
-            throw new MyException(MessageConstants.REVIEWS_EXPORT_FAIL);
-        }
         reviewsList.replaceAll(review -> review == null ? new Reviews() : review);
-
-        if (reviewsList.isEmpty()) {
-            throw new MyException(MessageConstants.REVIEWS_EXPORT_FAIL);
-        }
         EasyExcelUtil.exportExcel(response, "评论信息", "评论信息", "评论信息", reviewsList, Reviews.class);
         log.info("导出Excel成功");
+    }
+
+    @PostMapping("/clear")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @ApiOperation("清空全部评价（测试支撑，仅管理员）")
+    public Result<Integer> clearAll() {
+        return Result.success(reviewsService.clearAll());
     }
 
     // 可选：保存到服务器磁盘的方法，路径应来自配置

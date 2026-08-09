@@ -1,47 +1,33 @@
 <template>
     <div class="dashboard-container" v-loading="loading">
-        <!-- Row1: 核心指标区 -->
-        <el-row :gutter="20">
-            <el-col v-for="item in metricCards" :key="item.name" :xs="24" :sm="12" :md="8">
-                <div class="dashboard-metric-card">
-                    <div class="dashboard-metric-icon" :style="{ background: item.color }">
-                        <i :class="`el-icon-${item.icon}`"></i>
-                    </div>
-                    <div class="dashboard-metric-detail">
-                        <p class="dashboard-metric-value">{{ item.value }}</p>
-                        <p class="dashboard-metric-name">{{ item.name }}</p>
-                    </div>
+        <!-- Hero: 核心指标 + 公告单行滚动 + 快捷入口（按身份） -->
+        <div class="dashboard-hero">
+            <div class="dashboard-hero-seg dashboard-hero-metrics">
+                <div v-for="item in metricCards" :key="item.name" class="dashboard-hero-metric">
+                    <p class="dashboard-hero-metric-value">{{ item.value }}</p>
+                    <p class="dashboard-hero-metric-name">{{ item.name }}</p>
                 </div>
-            </el-col>
-        </el-row>
+            </div>
+            <div class="dashboard-hero-divider"></div>
+            <div class="dashboard-hero-seg dashboard-hero-announcement">
+                <i class="el-icon-bell dashboard-hero-announcement-icon"></i>
+                <div class="dashboard-hero-marquee">
+                    <span class="dashboard-hero-marquee-text" :class="{ 'is-scrolling': announcements.length }">{{ announcementMarquee }}</span>
+                </div>
+            </div>
+            <div class="dashboard-hero-divider"></div>
+            <div class="dashboard-hero-seg dashboard-hero-actions">
+                <div v-for="action in quickActions" :key="action.path" class="dashboard-hero-action" @click="$router.push(action.path)">
+                    <i :class="`el-icon-${action.icon}`" :style="{ background: action.color }"></i>
+                    <span>{{ action.label }}</span>
+                </div>
+            </div>
+        </div>
 
-        <!-- Row2: 公告+最新委托 | 热门委托统计 -->
+        <!-- Row1: 最新委托 | 热门柱状图 -->
         <el-row :gutter="20" class="dashboard-row">
-            <el-col :xs="24" :md="10">
+            <el-col :xs="24" :md="12">
                 <div class="dashboard-card">
-                    <div class="dashboard-card-header">
-                        <span class="dashboard-card-title"><i class="el-icon-bell"></i> 系统公告</span>
-                    </div>
-                    <div class="dashboard-announcement-carousel">
-                        <el-carousel v-if="announcements.length" height="280px" direction="vertical" :autoplay="true" :interval="5000">
-                            <el-carousel-item v-for="item in announcements" :key="item.announcementId">
-                                <div class="dashboard-announcement-content">
-                                    <h3 class="dashboard-announcement-title">
-                                        <el-tag v-if="item.isPinned" type="danger" size="mini" effect="dark">置顶</el-tag>
-                                        {{ item.title }}
-                                    </h3>
-                                    <p class="dashboard-announcement-desc">{{ item.content }}</p>
-                                    <div class="dashboard-announcement-meta">
-                                        <span class="dashboard-time"><i class="el-icon-time"></i> {{ item.publishTime | dateTime }}</span>
-                                    </div>
-                                </div>
-                            </el-carousel-item>
-                        </el-carousel>
-                        <el-empty v-else description="暂无公告" />
-                    </div>
-                </div>
-
-                <div class="dashboard-card dashboard-row">
                     <div class="dashboard-card-header">
                         <span class="dashboard-card-title"><i class="el-icon-tickets"></i> 最新委托</span>
                         <el-button type="text" @click="$router.push(taskMorePath)">更多</el-button>
@@ -62,8 +48,7 @@
                     <el-empty v-else description="暂无最新委托" />
                 </div>
             </el-col>
-
-            <el-col :xs="24" :md="14">
+            <el-col :xs="24" :md="12">
                 <div class="dashboard-card dashboard-chart-card">
                     <div class="dashboard-card-header">
                         <span class="dashboard-card-title"><i class="el-icon-s-data"></i> 热门委托统计</span>
@@ -74,9 +59,9 @@
             </el-col>
         </el-row>
 
-        <!-- Row3: 底层四宫格 -->
+        <!-- Row2: 新增趋势 | 状态占比 | 接单排行 -->
         <el-row :gutter="20" class="dashboard-row">
-            <el-col :xs="24" :md="12">
+            <el-col :xs="24" :md="8">
                 <div class="dashboard-card dashboard-chart-card">
                     <div class="dashboard-card-header">
                         <span class="dashboard-card-title"><i class="el-icon-data-line"></i> 新增委托趋势</span>
@@ -84,7 +69,7 @@
                     <div ref="chartTrend" class="dashboard-chart dashboard-chart-line"></div>
                 </div>
             </el-col>
-            <el-col :xs="24" :md="12">
+            <el-col :xs="24" :md="8">
                 <div class="dashboard-card dashboard-chart-card">
                     <div class="dashboard-card-header">
                         <span class="dashboard-card-title"><i class="el-icon-pie-chart"></i> 委托状态占比</span>
@@ -93,7 +78,7 @@
                     <div v-else ref="chartPie" class="dashboard-chart dashboard-chart-pie"></div>
                 </div>
             </el-col>
-            <el-col :xs="24" :md="12">
+            <el-col :xs="24" :md="8">
                 <div class="dashboard-card">
                     <div class="dashboard-card-header">
                         <span class="dashboard-card-title"><i class="el-icon-trophy"></i> 接单达人排行（Top 5）</span>
@@ -110,17 +95,52 @@
                     <el-empty v-else description="暂无排行数据" />
                 </div>
             </el-col>
+        </el-row>
+
+        <!-- Row3: 与我相关 | 接单记录 -->
+        <el-row :gutter="20" class="dashboard-row">
             <el-col :xs="24" :md="12">
                 <div class="dashboard-card">
                     <div class="dashboard-card-header">
-                        <span class="dashboard-card-title"><i class="el-icon-operation"></i> 快捷操作</span>
+                        <span class="dashboard-card-title"><i class="el-icon-user"></i> 与我相关的委托</span>
+                        <el-button type="text" @click="$router.push(taskMorePath)">更多</el-button>
                     </div>
-                    <div class="dashboard-quick-actions">
-                        <div v-for="action in quickActions" :key="action.path" class="dashboard-quick-action" @click="$router.push(action.path)">
-                            <i :class="`el-icon-${action.icon}`" :style="{ background: action.color }"></i>
-                            <span>{{ action.label }}</span>
-                        </div>
+                    <el-table v-if="relatedTasks.length" :data="relatedTasks" size="small">
+                        <el-table-column prop="description" label="内容" show-overflow-tooltip />
+                        <el-table-column prop="status" label="状态" width="110">
+                            <template slot-scope="scope">
+                                <el-tag size="mini" type="info">{{ scope.row.status }}</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="startTime" label="发布时间" width="150">
+                            <template slot-scope="scope">
+                                <span class="dashboard-time">{{ scope.row.startTime | dateTime }}</span>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <el-empty v-else description="暂无相关委托" />
+                </div>
+            </el-col>
+            <el-col :xs="24" :md="12">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <span class="dashboard-card-title"><i class="el-icon-document"></i> 我的接单记录</span>
                     </div>
+                    <el-table v-if="acceptRecords.length" :data="acceptRecords" size="small">
+                        <el-table-column prop="taskId" label="任务ID" width="80" />
+                        <el-table-column prop="status" label="接单状态" width="100">
+                            <template slot-scope="scope">
+                                <el-tag size="mini" type="info">{{ scope.row.status }}</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="acceptTime" label="接单时间" width="150">
+                            <template slot-scope="scope">
+                                <span class="dashboard-time">{{ scope.row.acceptTime | dateTime }}</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="str" label="留言" show-overflow-tooltip />
+                    </el-table>
+                    <el-empty v-else description="暂无接单记录" />
                 </div>
             </el-col>
         </el-row>
@@ -154,13 +174,16 @@
                 announcements: [],
                 latestTasks: [],
                 hotCategories: {},
+                stats: null,
+                relatedTasks: [],
+                acceptRecords: [],
                 metricCards: [
-                    { name: '今日已接受', value: 0, icon: 'check', color: '#2ec7c9' },
-                    { name: '本周已接受', value: 0, icon: 'star-on', color: '#409EFF' },
-                    { name: '本月已接受', value: 0, icon: 's-goods', color: '#67C23A' },
-                    { name: '今日已发布', value: 0, icon: 'upload2', color: '#ffb980' },
-                    { name: '本周已发布', value: 0, icon: 'time', color: '#E6A23C' },
-                    { name: '本月已发布', value: 0, icon: 'document', color: '#F56C6C' }
+                    { name: '今日已接受', value: 0 },
+                    { name: '本周已接受', value: 0 },
+                    { name: '本月已接受', value: 0 },
+                    { name: '今日已发布', value: 0 },
+                    { name: '本周已发布', value: 0 },
+                    { name: '本月已发布', value: 0 }
                 ],
                 ranking: []
             };
@@ -175,6 +198,11 @@
             },
             taskMorePath() {
                 return this.userType === 'ADMIN' ? '/publishedList' : '/viewOnGoingList';
+            },
+            announcementMarquee() {
+                if (!this.announcements || !this.announcements.length) return '暂无公告';
+                const latest = this.announcements[0];
+                return (latest.title ? latest.title + '：' : '') + (latest.content || '');
             }
         },
         created() {
@@ -197,19 +225,22 @@
         methods: {
             initUserType() {
                 let userType = '';
+                let userId = '';
                 try {
                     const taskUser = JSON.parse(localStorage.getItem('TaskUser') || '{}');
                     userType = taskUser.userType || '';
+                    userId = taskUser.userId || '';
                 } catch (e) {
                     userType = '';
                 }
                 this.userType = userType;
+                this.currentUserId = userId;
                 this.quickActions = userType === 'ADMIN' ? ADMIN_ACTIONS : USER_ACTIONS;
             },
             async loadData() {
                 this.loading = true;
                 this.loadingStats = true;
-                const results = await Promise.allSettled([getData(2), getDashboardStats()]);
+                const results = await Promise.allSettled([getData(this.currentUserId), getDashboardStats()]);
                 const [quick, stats] = results;
                 if (quick.status === 'fulfilled' && quick.value && quick.value.data) {
                     this.applyQuickData(quick.value.data);
@@ -228,8 +259,12 @@
                 const { code, data } = payload;
                 if (code !== SUCCESS_CODE || !data) return;
                 this.announcements = data.systemAnnouncements || [];
-                this.latestTasks = data.newestTask || [];
+                // 驾驶舱 widget 只展示最新 5 条，全量列表由「更多」跳转全列表页
+                this.latestTasks = (data.newestTask || []).slice(0, 5);
                 this.hotCategories = data.hotTaskCategory || {};
+                // 个人相关卡片：与本人关联的委托 / 本人接单记录（前 5 条）
+                this.relatedTasks = (data.tasksWithUser || []).slice(0, 5);
+                this.acceptRecords = (data.taskAcceptRecordsWithUser || []).slice(0, 5);
                 const transactionStats = data.transactionStats || {};
                 this.metricCards.forEach(card => {
                     if (transactionStats[card.name] !== undefined) {
@@ -355,15 +390,15 @@
         min-height: 100%;
 
         .dashboard-row {
-            margin-top: 20px;
+            margin-top: 12px;
         }
 
         .dashboard-card {
             background: #fff;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            padding: 16px 18px;
-            margin-bottom: 20px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
             transition: box-shadow 0.3s;
 
             &:hover {
@@ -375,7 +410,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
         }
 
         .dashboard-card-title {
@@ -391,89 +426,147 @@
             }
         }
 
-        // 指标卡
-        .dashboard-metric-card {
+        // Hero：指标 + 公告 + 快捷入口
+        .dashboard-hero {
             display: flex;
             align-items: center;
             background: #fff;
             border-radius: 10px;
-            padding: 20px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            margin-bottom: 20px;
-            transition: transform 0.3s, box-shadow 0.3s;
+            padding: 14px 18px;
+            margin-bottom: 12px;
 
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            .dashboard-hero-seg {
+                display: flex;
+                align-items: center;
+            }
 
-                .dashboard-metric-value {
-                    transform: scale(1.05);
+            .dashboard-hero-metrics {
+                flex: 1.7;
+                flex-wrap: wrap;
+                gap: 4px 6px;
+
+                .dashboard-hero-metric {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    padding: 0 8px;
+
+                    .dashboard-hero-metric-value {
+                        font-size: 18px;
+                        font-weight: 700;
+                        color: #303133;
+                        line-height: 22px;
+                        margin: 0;
+                    }
+
+                    .dashboard-hero-metric-name {
+                        font-size: 11px;
+                        color: #909399;
+                        margin: 2px 0 0;
+                        white-space: nowrap;
+                    }
                 }
             }
 
-            .dashboard-metric-icon {
-                width: 60px;
-                height: 60px;
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #fff;
-                font-size: 28px;
+            .dashboard-hero-divider {
+                width: 1px;
+                height: 38px;
+                background: #ebeef5;
+                margin: 0 16px;
                 flex-shrink: 0;
             }
 
-            .dashboard-metric-detail {
-                margin-left: 14px;
+            .dashboard-hero-announcement {
+                flex: 1;
+                min-width: 0;
 
-                .dashboard-metric-value {
-                    font-size: 26px;
-                    font-weight: 700;
-                    color: #303133;
-                    line-height: 32px;
-                    margin: 0;
-                    transition: transform 0.3s;
+                .dashboard-hero-announcement-icon {
+                    margin-right: 6px;
+                    color: #409EFF;
+                    flex-shrink: 0;
                 }
 
-                .dashboard-metric-name {
+                .dashboard-hero-marquee {
+                    overflow: hidden;
+                    white-space: nowrap;
+                    flex: 1;
+                    min-width: 0;
+
+                    .dashboard-hero-marquee-text {
+                        display: inline-block;
+                        font-size: 13px;
+                        color: #606266;
+
+                        &.is-scrolling {
+                            padding-left: 100%;
+                            animation: dashboard-marquee 20s linear infinite;
+                        }
+                    }
+
+                    &:hover .dashboard-hero-marquee-text.is-scrolling {
+                        animation-play-state: paused;
+                    }
+                }
+            }
+
+            .dashboard-hero-actions {
+                flex-shrink: 0;
+                gap: 8px;
+
+                .dashboard-hero-action {
+                    display: flex;
+                    align-items: center;
+                    padding: 6px 10px;
+                    border: 1px solid #ebeef5;
+                    border-radius: 6px;
+                    cursor: pointer;
                     font-size: 13px;
-                    color: #909399;
-                    margin: 2px 0 0;
+                    color: #303133;
+                    transition: all 0.2s;
+
+                    i {
+                        width: 22px;
+                        height: 22px;
+                        border-radius: 6px;
+                        color: #fff;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 12px;
+                        margin-right: 5px;
+                        flex-shrink: 0;
+                    }
+
+                    &:hover {
+                        border-color: #409EFF;
+                        color: #409EFF;
+                    }
                 }
             }
         }
 
-        // 公告
-        .dashboard-announcement-carousel {
-            .dashboard-announcement-content {
-                padding: 0 4px;
+        @keyframes dashboard-marquee {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
 
-                .dashboard-announcement-title {
-                    font-size: 15px;
-                    color: #303133;
-                    margin: 0 0 10px;
-                    display: flex;
-                    align-items: center;
+        @media (max-width: 991px) {
+            .dashboard-hero {
+                flex-wrap: wrap;
+                gap: 10px;
 
-                    .el-tag {
-                        margin-right: 8px;
-                    }
+                .dashboard-hero-divider {
+                    display: none;
                 }
 
-                .dashboard-announcement-desc {
-                    font-size: 13px;
-                    color: #606266;
-                    line-height: 1.6;
-                    max-height: 220px;
-                    overflow-y: auto;
-                    margin: 0 0 12px;
-                }
-
-                .dashboard-announcement-meta {
-                    color: #909399;
-                    font-size: 12px;
-                    border-top: 1px solid #ebeef5;
-                    padding-top: 10px;
+                .dashboard-hero-actions {
+                    width: 100%;
+                    justify-content: center;
                 }
             }
         }
@@ -485,13 +578,13 @@
 
         // 图表
         .dashboard-chart-bar {
-            height: 320px;
+            height: 240px;
             width: 100%;
         }
 
         .dashboard-chart-line,
         .dashboard-chart-pie {
-            height: 260px;
+            height: 210px;
             width: 100%;
         }
 
@@ -499,50 +592,9 @@
             .dashboard-chart-bar,
             .dashboard-chart-line,
             .dashboard-chart-pie {
-                height: 230px;
+                height: 180px;
             }
         }
 
-        // 快捷操作
-        .dashboard-quick-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-
-            .dashboard-quick-action {
-                flex: 1;
-                min-width: 120px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 18px 12px;
-                border: 1px solid #ebeef5;
-                border-radius: 8px;
-                cursor: pointer;
-                color: #303133;
-                font-size: 14px;
-                transition: all 0.3s;
-
-                i {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 8px;
-                    color: #fff;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 16px;
-                    margin-right: 8px;
-                    flex-shrink: 0;
-                }
-
-                &:hover {
-                    border-color: #409EFF;
-                    color: #409EFF;
-                    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
-                    transform: translateY(-2px);
-                }
-            }
-        }
     }
 </style>

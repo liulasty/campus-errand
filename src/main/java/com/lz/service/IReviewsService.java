@@ -21,4 +21,7 @@ public interface IReviewsService extends IService<Reviews> {
     void save(ReviewsDTO reviewsDTO) throws MyException;
 
     List<Reviews> exportExcel();
+
+    /** 清空全部评价（测试支撑，仅管理员调用），返回删除行数 */
+    int clearAll();
 }

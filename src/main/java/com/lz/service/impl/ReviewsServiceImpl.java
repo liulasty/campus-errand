@@ -94,11 +94,12 @@ public class ReviewsServiceImpl extends ServiceImpl<ReviewsMapper, Reviews> impl
 
     @Override
     public List<Reviews> exportExcel() {
-        List<Reviews> reviews = reviewsMapper.selectList(null);
-        if (!reviews.isEmpty()) {
-            return reviews;
-        }
-        return null;
+        return reviewsMapper.selectList(null);
+    }
+
+    @Override
+    public int clearAll() {
+        return reviewsMapper.delete(null);
     }
 
     public Users getCurrentAdmin() {

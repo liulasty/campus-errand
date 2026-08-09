@@ -231,8 +231,6 @@ public class EasyExcelUtil {
         int total = data.size();
         if(total > MAX_EXPORT_EXCEL) {
             throw new ExcelException("导出数据超过最大限制");
-        }else if(total == 0){
-            throw new ExcelException("导出数据为空");
         }
     }
 
