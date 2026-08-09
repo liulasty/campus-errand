@@ -16,7 +16,7 @@
 - 登录态已具备：`localStorage.TaskUser` 含 `userId`、`userType`（角色：ADMIN/STUDENT/TEACHER）、`Authorization`（实名状态中文描述）。
 - 姓名 + 信用分：头部 `mounted` 调现有 `GET /user/getUserInfo/{userId}`（`UsersController.getUserInfo`，返回完整 `Users` 含 `username` / `creditScore`）。
   - **注意**：`web/src/api/index.js` 现有 `getUserInfo` 指向 `/userInfo/{id}`（实名信息接口），不可复用，需新增一个封装（如 `fetchUserBasicInfo(id)` → `GET /user/getUserInfo/{id}`）。
-- 角色 → 中文徽章映射（前端本地常量）：`ADMIN→管理员`、`STUDENT→学生`、`TEACHER→教师`；徽章配色：管理员=金色/红、教师=绿色、学生=蓝色。
+- 角色 → 中文徽章映射：**注意 `users.Role` 枚举仅 `USER`/`ADMIN`**（非 TEACHER/STUDENT）；学生/教师区分存于 `usersinfo.UserRole`（小写 `student`/`teacher`/`other`，仅已实名用户有该行）。故徽章逻辑：`role===ADMIN → 管理员`；否则按 `usersinfo.userRole` 映射 `student→学生`/`teacher→教师`，无记录则兜底 `普通用户`。徽章配色：管理员=金色/红、教师=绿色、学生=蓝色、兜底=灰。`usersinfo.UserRole` 通过现有前端 `getUserInfo`（`/userInfo/{id}`，UsersinfoController）获取，非实名/管理员无记录时静默降级（复用已导出的 `getUserInfo`，不新增接口）。
 - 附带修复：当前头像刷新后丢失（`mounted` 读取 `localStorage.avatarSrc` 的代码被注释）。改为初始化时读取 `localStorage.getItem('avatarSrc') || ''`，让上传头像跨刷新保持。
 
 ## 一、头部头像区（CommonHeader.vue）
@@ -41,7 +41,7 @@
 
 ## 数据流
 
-`CommonHeader.mounted` → 读 `TaskUser.userId/userType/Authorization` → `fetchUserBasicInfo(userId)` → 填充 `userProfile`（姓名/信用分）→ 模板渲染头像列 + 下拉信息面板；「修改头像」→ 打开 `avatarShowVue` 对话框 → 裁剪 → 上传 → store + localStorage 更新 → 关闭时 `handleDialogClose` 回读 store 刷新头像。
+`CommonHeader.mounted` → 读 `TaskUser.userId/userType/Authorization` → `fetchUserBasicInfo(userId)` 填充 `userProfile`（姓名/信用分）→ 再调现有 `getUserInfo(userId)`（`/userInfo/{id}`）取 `usersinfo.userRole`（student/teacher）充实身份徽章（非实名/管理员无记录则跳过）→ 模板渲染头像列 + 下拉信息面板；「修改头像」→ 打开 `avatarShowVue` 对话框 → 裁剪 → 上传 → store + localStorage 更新 → 关闭时 `handleDialogClose` 回读 store 刷新头像。
 
 ## 验收
 
