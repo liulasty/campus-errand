@@ -1,26 +1,62 @@
 <template>
-  <div class="avatarShow">
-    <img :src="imageSrc" class="avatarSrc" alt="展示的图片" />
-    <label for="uploadBtn" class="customBtn" style="margin: 20px;">
-      <el-button id="uploadBtn1" type="primary" @click="handleUpload">上传图片</el-button>
-    </label>
-    <div class="imageUploadItem">
-      <p>请选择图片文件：只允许上传图片文件，支持格式包括 JPG、PNG、GIF 等常见图片格式。</p>
-      <p>图片大小限制：上传的图片文件大小不得超过 5MB。</p>
-      <p>图片清晰度：请确保上传的图片清晰，避免模糊或失真的情况。</p>
-      <p>建议尺寸：建议使用正方形或接近正方形的图片，以获得最佳效果。</p>
+  <div class="avatar-show">
+    <div class="cropper-area">
+      <vue-cropper
+        v-if="cropImg"
+        ref="cropper"
+        class="cropper"
+        :img="cropImg"
+        :output-type="'jpeg'"
+        :auto-crop="true"
+        :fixed="true"
+        :fixed-number="[1, 1]"
+        :center-box="true"
+        :info="false"
+        :can-move="true"
+        :can-move-box="true"
+        :can-scale="true"
+        :auto-crop-width="240"
+        :auto-crop-height="240"
+        @real-time="onRealTime"
+      />
+      <el-empty v-else description="请选择一张图片" />
+      <div v-if="cropImg" class="crop-tools">
+        <el-button size="mini" @click="rotateLeft">左转</el-button>
+        <el-button size="mini" @click="rotateRight">右转</el-button>
+        <el-button size="mini" @click="zoomIn">放大</el-button>
+        <el-button size="mini" @click="zoomOut">缩小</el-button>
+      </div>
     </div>
-    <input type="file" id="uploadBtn" @change="uploadImage" accept="image/*" style="display: none;">
 
+    <div class="side-area">
+      <div class="preview-wrap">
+        <div class="preview-circle" :style="previewStyle"></div>
+        <p class="preview-label">头像预览</p>
+      </div>
+      <div class="actions">
+        <el-button type="primary" @click="handleUpload">{{ cropImg ? '重新选择' : '选择图片' }}</el-button>
+        <el-button type="success" :disabled="!cropImg || uploading" :loading="uploading" @click="confirmUpload">
+          确认上传
+        </el-button>
+      </div>
+      <div class="tips">
+        <p>支持 JPG / PNG / GIF 格式，大小不超过 5MB。</p>
+        <p>拖动、缩放或旋转图片，裁剪框外区域将被裁掉。</p>
+      </div>
+    </div>
+
+    <input ref="fileInput" type="file" accept="image/*" style="display: none;" @change="onFileChange" />
   </div>
 </template>
 
 <script>
+import { VueCropper } from 'vue-cropper';
+import { uploadAvatar } from '@/api';
+import { SUCCESS_CODE } from '@/constants/http';
 
-
-import { uploadAvatar } from '@/api'
 export default {
   name: 'avatarShow',
+  components: { VueCropper },
   props: {
     initialSrc: {
       type: String,
@@ -29,179 +65,184 @@ export default {
   },
   data() {
     return {
-      imageSrc: this.initialSrc, // 初始展示的图片,
-      isUpload: 1,
-      imgInfo: {
-        size: 0,
-        type: '',
-        width: 0,
-        height: 0,
-        proportion: 1,
-      },
+      imageSrc: this.initialSrc,
+      cropImg: '',
+      previewUrl: '',
+      uploading: false,
     };
   },
+  computed: {
+    previewStyle() {
+      const url = this.previewUrl || this.imageSrc;
+      return {
+        backgroundImage: url ? `url(${url})` : 'none',
+      };
+    },
+  },
   methods: {
-    validateFileSize(file) {
-      const maxSizeInMB = 5;
-      const fileSizeInMB = file.size / (1024 * 1024);
-      this.imgInfo.size = fileSizeInMB;
-      if (fileSizeInMB > maxSizeInMB) {
-        this.$message.error('图片大小不能超过5MB');
-        this.isUpload = 0;
-        return false;
-      }
-
-      return true;
-    },
-
-    validateFileType(file) {
-      const allowedExtensions = /\.(jpg|jpeg|png|gif)$/i;
-      // 使用正则表达式的测试方法来检查文件扩展名
-      if (!allowedExtensions.test(file.name)) {
-        this.$message.error('只允许上传JPG、PNG、GIF格式的图片');
-        this.isUpload = 0;
-        return false;
-      } else {
-        this.imgInfo.type = true;
-      }
-
-      return true;
-    },
-
-    async validateImageDimensions(file) {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      try {
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-
-        const width = img.width;
-        const height = img.height;
-        this.imgInfo.width = width;
-        this.imgInfo.height = height;
-        this.imgInfo.proportion = width / height;
-        if (width / height > 1.5 || width / height < 0.66) {
-          this.$message.error('建议使用正方形或接近正方形的图片' + this.imgInfo.proportion);
-          this.isUpload = 0;
-          return false;
-        }
-
-        return true;
-      } catch (error) {
-        console.error('图片加载失败:', error);
-        this.$message.error('图片加载失败，请检查网络或图片格式');
-        this.isUpload = 0;
-        return false;
-      }
-    },
-    async uploadImage(event) {
-      const file = event.target.files[0];
-
-      // 判断图片是否符合要求
-      if (!file) {
-        console.log("图片是否符合要求", this.isUpload);
-        return;
-      }
-      // 图片限制验证
-      try {
-        if (!(await this.validateFileSize(file))) throw new Error('文件大小不符合要求');
-        if (!(await this.validateFileType(file))) throw new Error('文件类型不符合要求');
-        if (!(await this.validateImageDimensions(file))) throw new Error('图片尺寸不符合要求');
-      } catch (error) {
-        console.log(error.message);
-        return;
-      }
-
-      console.log(this.imgInfo);
-      if (this.isUpload == 1) {
-        uploadAvatar(file).then((result) => {
-          if (result.data.code != 0) {
-            this.$notify({
-              title: '修改结果',
-              message: result.data.msg,
-              type: 'success'
-            });
-            this.imageSrc = "http://" + result.data.data;
-            // 在组件中调用 mutations 中的方法
-            this.$store.commit('updatedAvatarSrc', this.imageSrc);
-            console.log("上传头像后", this.$store.state.userInfo);
-          } else {
-            this.$notify.error({
-              title: '修改失败',
-              message: result.data.msg
-            });
-          }
-        })
-      }
-
+    onRealTime(data) {
+      // vue-cropper 实时裁剪事件，payload.data.url 为裁剪结果 base64
+      this.previewUrl = data.url || '';
     },
     handleUpload() {
-      const uploadBtn = document.getElementById('uploadBtn');
-      uploadBtn.click();
+      this.$refs.fileInput.click();
     },
-
+    async onFileChange(event) {
+      const file = event.target.files[0];
+      event.target.value = ''; // 允许连续选择同一文件
+      if (!file) return;
+      if (!this.validateFileType(file)) return;
+      if (!this.validateFileSize(file)) return;
+      const dataUrl = await this.fileToDataUrl(file);
+      this.cropImg = dataUrl;
+    },
+    fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    },
+    validateFileType(file) {
+      if (!/\.(jpg|jpeg|png|gif)$/i.test(file.name)) {
+        this.$message.error('只允许上传JPG、PNG、GIF格式的图片');
+        return false;
+      }
+      return true;
+    },
+    validateFileSize(file) {
+      if (file.size / (1024 * 1024) > 5) {
+        this.$message.error('图片大小不能超过5MB');
+        return false;
+      }
+      return true;
+    },
+    rotateLeft() {
+      this.$refs.cropper.rotateLeft();
+    },
+    rotateRight() {
+      this.$refs.cropper.rotateRight();
+    },
+    zoomIn() {
+      this.$refs.cropper.changeScale(0.1);
+    },
+    zoomOut() {
+      this.$refs.cropper.changeScale(-0.1);
+    },
+    confirmUpload() {
+      if (!this.$refs.cropper) return;
+      this.$refs.cropper.getCropBlob((blob) => {
+        if (!blob) {
+          this.$message.error('裁剪失败，请重试');
+          return;
+        }
+        const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+        this.uploading = true;
+        uploadAvatar(file)
+          .then((result) => {
+            if (result.data && result.data.code === SUCCESS_CODE && result.data.data) {
+              const url = 'http://' + result.data.data;
+              this.imageSrc = url;
+              this.$store.commit('updatedAvatarSrc', url);
+              this.$message.success('头像修改成功');
+            } else {
+              this.$message.error((result.data && result.data.msg) || '上传失败');
+            }
+          })
+          .catch(() => {
+            this.$message.error('网络错误，上传失败');
+          })
+          .finally(() => {
+            this.uploading = false;
+          });
+      });
+    },
   },
-
-
 };
-
 </script>
 
 <style lang="less" scoped>
-* {
-  position: relative;
-
+.avatar-show {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
-.avatarShow {
-  height: 400px;
-}
+.cropper-area {
+  flex: 1;
+  min-width: 260px;
 
-.avatarSrc {
-  height: 400px;
-  width: 400px;
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.customBtn {
-  margin-top: 20px;
-  font-weight: bold;
-  border-radius: 8px;
-  transition: all 0.2s ease-in-out;
-  float: right;
-  top: 300px;
-}
-
-.customBtn:hover {
-  background-color: rgba(0, 128, 255, 0.1);
-}
-
-.imageUploadItem {
-  position: relative;
-  top: -420px;
-  width: 318px;
-  right: -414px;
-  background-color: #333;
-  color: #fff;
-  padding: 1rem;
-  border-radius: 8px;
-  opacity: 0.9;
-  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2);
-
-  & p {
-    margin-bottom: 0.5rem;
-    line-height: 1.5;
-    font-size: 0.9rem;
-    color: #aaa;
+  .cropper {
+    width: 300px;
+    height: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f5f7fa;
+    border: 1px solid #ebeef5;
   }
 
-  &:hover {
-    opacity: 1;
-    cursor: pointer;
+  .crop-tools {
+    margin-top: 12px;
+    text-align: center;
+  }
+}
+
+.side-area {
+  width: 220px;
+
+  .preview-wrap {
+    text-align: center;
+
+    .preview-circle {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      border: 3px solid #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    }
+
+    .preview-label {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #909399;
+    }
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .tips {
+    margin-top: 16px;
+    padding: 10px 12px;
+    background: #f5f7fa;
+    border-radius: 6px;
+
+    p {
+      margin-bottom: 4px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #909399;
+    }
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .avatar-show {
+    flex-direction: column;
+  }
+
+  .side-area {
+    width: 100%;
   }
 }
 </style>
