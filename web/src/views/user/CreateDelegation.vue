@@ -32,6 +32,7 @@
     import { getTaskCategoriesUser } from '@/api/user';
 
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
+    import { AUTH_STATUS } from '@/constants/enums'
 
     export default {
         components: {
@@ -39,6 +40,7 @@
         },
         data() {
             return {
+                AUTH_STATUS,
                 tabPanes: [
                     { label: '我的行程', icon: 'el-icon-date', DelegationType: "我的行程" },
                     { label: '消息中心' },
@@ -126,7 +128,7 @@
                     if (data.data.code === 1) {
                         console.log("用户信息", data.data.data);
                         this.userInfo = data.data.data;
-                        if (this.userInfo.authStatus != "认证通过") {
+                        if (this.userInfo.authStatus != AUTH_STATUS.AUTHENTICATED) {
                             this.$message({
                                 message: "请先完成认证",
                                 type: 'error'

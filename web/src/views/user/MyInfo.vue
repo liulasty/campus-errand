@@ -3,7 +3,7 @@
     <el-card v-if="code !== 4 && code !== 0" shadow="hover" style="margin-bottom: 10px;">
       <el-alert v-if="code === 3" :title="'认证被驳回：' + (rejectReason || '材料不符')"
         type="error" :closable="false" show-icon />
-      <el-alert v-else :title="authState === '认证中' ? '审核中，请等待管理员审核' : '完成 L1 实名认证后可发布委托、接单、打卡'"
+      <el-alert v-else :title="authState === AUTH_STATUS.AUTHENTICATING ? '审核中，请等待管理员审核' : '完成 L1 实名认证后可发布委托、接单、打卡'"
         type="warning" :closable="false" show-icon />
     </el-card>
 
@@ -126,11 +126,13 @@ import {
 import ImageUploader from '@/components/ImageUploader.vue'
 import {executeConfirmedRequest} from '@/utils/globalConfirmAction'
 import {SUCCESS_CODE} from '@/constants/http'
+import {AUTH_STATUS} from '@/constants/enums'
 
 export default {
   components: {ImageUploader},
   data() {
     return {
+      AUTH_STATUS,
       userId: 0,
       code: 0,
       msg: '未认证',
@@ -198,11 +200,11 @@ export default {
         if (code === SUCCESS_CODE) {
           var info = data;
           this.rejectReason = info.rejectReason || '';
-          if (info.authStatus && info.authStatus === '认证中') {
+          if (info.authStatus && info.authStatus === AUTH_STATUS.AUTHENTICATING) {
 
             this.updateButton(2)
 
-          } else if (info.authStatus && info.authStatus === '认证通过') {
+          } else if (info.authStatus && info.authStatus === AUTH_STATUS.AUTHENTICATED) {
             this.updateButton(4)
             this.infoForm = info
           } else {

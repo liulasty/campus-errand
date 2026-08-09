@@ -111,16 +111,16 @@
                     </el-table-column>
                     <el-table-column label="认证" width="230">
                         <template slot-scope="scope">
-                            <div v-show="scope.row.authStatus == '认证中'">
+                            <div v-show="scope.row.authStatus == AUTH_STATUS.AUTHENTICATING">
                                 <el-button type="primary" size="small"
                                     @click="reviewAndCertificationInformation(scope.row.userId)">审核认证信息</el-button>
                             </div>
-                            <div v-show="scope.row.authStatus == '认证失败'">
+                            <div v-show="scope.row.authStatus == AUTH_STATUS.AUTHENTICATION_FAILED">
                                 <el-button type="primary" size="small" disabled>认证失败</el-button>
                                 <el-button type="primary" size="small"
                                     @click="deleteRecords(scope.row.userId)">删除认证记录</el-button>
                             </div>
-                            <div v-show="scope.row.authStatus == '认证通过'">
+                            <div v-show="scope.row.authStatus == AUTH_STATUS.AUTHENTICATED">
                                 <el-button type="primary" size="small"
                                     @click="viewCertificationInformation(scope.row.userId)">查看认证信息</el-button>
                             </div>
@@ -176,7 +176,7 @@
                             <span>{{ form.certifieTime }}</span>
                         </el-form-item>
                         <el-form-item :label-width="formLabelWidth">
-                            <div v-show="form.authStatus == '认证中'">
+                            <div v-show="form.authStatus == AUTH_STATUS.AUTHENTICATING">
                                 <div style="margin-bottom: 10px;">
                                     <span class="el-form-item__label" style="width: 80px;">驳回原因</span>
                                     <el-radio-group v-model="rejectReason">
@@ -193,7 +193,7 @@
                                 <el-button type="primary" @click="approvedCard()" size="medium">通 过 认
                                     证</el-button>
                             </div>
-                            <div v-show="form.authStatus == '认证通过'">
+                            <div v-show="form.authStatus == AUTH_STATUS.AUTHENTICATED">
                                 <el-button type="warning" @click="cancelUserAuthentication(form.userId)"
                                     size="medium">取消该用户认证</el-button>
                             </div>
@@ -215,10 +215,12 @@
 <script>
     import { getUserInfo, getUserList, confirmToPassTheReview, refuseToPassReview, deleteCertificationRecords, cancelUserInfoAuthentication, adminActivation, deleteAccounts, handleEnableAdmin, handleDisableAdmin, exportUserList } from '@/api';
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
+    import { AUTH_STATUS } from '@/constants/enums'
 
     export default {
         data() {
             return {
+                AUTH_STATUS,
                 hide_on_single_page: true,
                 userInfoConfig: {
                     username: "",

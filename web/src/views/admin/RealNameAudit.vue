@@ -59,7 +59,7 @@
                 </el-table-column>
                 <el-table-column label="操作" width="180" align="center">
                     <template slot-scope="scope">
-                        <template v-if="scope.row.authStatus === '认证中'">
+                        <template v-if="scope.row.authStatus === AUTH_STATUS.AUTHENTICATING">
                             <el-button type="primary" size="small" icon="el-icon-check" @click="approve(scope.row)">通过</el-button>
                             <el-button type="danger" size="small" icon="el-icon-close" @click="reject(scope.row)">驳回</el-button>
                         </template>
@@ -83,10 +83,12 @@
 <script>
     import { getUserList, confirmToPassTheReview, refuseToPassReview } from '@/api/'
     import { SUCCESS_CODE } from '@/constants/http'
+    import { AUTH_STATUS } from '@/constants/enums'
     export default {
         name: 'RealNameAudit',
         data() {
             return {
+                AUTH_STATUS,
                 activeTab: 'AUTHENTICATING',
                 records: [],
                 total: 0,
@@ -181,10 +183,10 @@
             },
             statusMeta(status) {
                 const map = {
-                    '认证中': { text: '待审核', cls: 'rna-status-pending' },
-                    '认证通过': { text: '已通过', cls: 'rna-status-ok' },
-                    '认证失败': { text: '已驳回', cls: 'rna-status-fail' },
-                    '未认证': { text: '未认证', cls: 'rna-status-unauth' }
+                    [AUTH_STATUS.AUTHENTICATING]: { text: '待审核', cls: 'rna-status-pending' },
+                    [AUTH_STATUS.AUTHENTICATED]: { text: '已通过', cls: 'rna-status-ok' },
+                    [AUTH_STATUS.AUTHENTICATION_FAILED]: { text: '已驳回', cls: 'rna-status-fail' },
+                    [AUTH_STATUS.UNAUTHORIZED]: { text: '未认证', cls: 'rna-status-unauth' }
                 }
                 return map[status] || { text: status || '—', cls: '' }
             },
