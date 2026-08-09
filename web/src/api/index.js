@@ -90,6 +90,11 @@ export const getUserInfo = (id) => {
     return http.get('/userInfo/' + id)
 }
 
+// 获取用户基础资料（UsersController：/user/getUserInfo/{id}，含 username/creditScore；区别于上面的 /userInfo 实名信息接口）
+export const fetchUserBasicInfo = (id) => {
+    return http.get('/user/getUserInfo/' + id)
+}
+
 export const uploadImg = (file) => {
     const formData = new FormData();
     formData.append('file', file);
