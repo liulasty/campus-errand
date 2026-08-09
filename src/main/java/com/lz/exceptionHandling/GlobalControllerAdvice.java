@@ -16,9 +16,11 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import com.lz.Exception.InvalidTokenException;
 import com.lz.Exception.MyException;
@@ -106,6 +108,20 @@ public class GlobalControllerAdvice {
     public Result<?> httpMessageNotReadableException(HttpMessageNotReadableException e) {
         log.error("请求体缺失或格式错误: {}", e.getMessage());
         return Result.error(ErrorCode.PARAM_ERROR, "请求体缺失或格式错误");
+    }
+
+    // multipart 必填 part 缺失（如 /img/upload、/img/uploadAvatar 缺 file），返回明确 400 而非兜底 500（D-15）
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public Result<?> missingServletRequestPartException(MissingServletRequestPartException e) {
+        log.error("缺少 multipart 文件参数: {}", e.getMessage());
+        return Result.error(ErrorCode.PARAM_ERROR, "缺少文件参数");
+    }
+
+    // 普通必填请求参数缺失（如 query 参数），同样返回明确 400
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public Result<?> missingServletRequestParameterException(MissingServletRequestParameterException e) {
+        log.error("缺少请求参数: {}", e.getMessage());
+        return Result.error(ErrorCode.PARAM_ERROR, "缺少参数: " + e.getParameterName());
     }
 
     @ExceptionHandler(MyException.class)
