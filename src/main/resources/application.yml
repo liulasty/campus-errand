@@ -25,8 +25,6 @@ mybatis-plus:
 
   
 
-#logging:
-#  config: src/main/resources/custom-logback.xml
 logging:
   # 设置日志组
   group:
@@ -43,16 +41,20 @@ logging:
     org.springframework.data.convert.CustomConversions: ERROR
     org.springframework.data.mongodb: info
     ebank: info
-#    org.springframework.amqp: DEBUG
+  charset:
+    console: UTF-8
+    file: UTF-8
   pattern:
-    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-6level %logger{36} - %msg%n"
-#    console: "%d %clr(%5p) --- [%16t] %clr(%-40.40c){cyan} : %m %n "
-#  file:
-#    name: server.log
-#  logback:
-#    rollingpolicy:
-#      max-file-size: 4KB
-#      file-name-pattern: server.%d{yyyy-MM-dd}.%i.log
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS, Asia/Shanghai} [%thread] %-6level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS, Asia/Shanghai} [%thread] %-6level %logger{36} - %msg%n"
+  file:
+    name: logs/server.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: logs/server.%d{yyyy-MM-dd}.%i.log
+      max-file-size: 100MB
+      max-history: 30
+      total-size-cap: 10GB
 
 # 已完成委托自动评价（演示时调小 delay-hours 可快速触发）
 app:
