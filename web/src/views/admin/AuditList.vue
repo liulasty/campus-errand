@@ -105,11 +105,13 @@
     } from "@/api/";
 
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
+    import { TASK_PHASE } from '@/constants/enums'
 
     export default {
         name: "Delegateauditrecords",
         data() {
             return {
+                TASK_PHASE,
                 // 遮罩层
                 loading: true,
                 // 选中数组
@@ -198,7 +200,7 @@
             /** 查询存储委托信息记录列表 */
             getList() {
                 this.loading = true;
-                this.queryParams.TypePhase = this.activeTab === 'DRAFT' ? "EDITING_AND_AUDITING" : "PUBLISHING_AND_EXECUTION";
+                this.queryParams.TypePhase = this.activeTab === 'DRAFT' ? TASK_PHASE.EDITING_AND_AUDITING : TASK_PHASE.PUBLISHING_AND_EXECUTION;
                 listDelegateRecords(this.queryParams).then((response) => {
                     console.log("查询委托信息记录列表", response);
                     this.delegateRecordsList = response.data.data.records.map((record) => {

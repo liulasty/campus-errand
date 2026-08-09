@@ -100,11 +100,13 @@
     import { listDelegateRecords, delDelegate, getDelegateByTaskID, getTaskCategories, FallbackDraft, allowPublish, notAllowed } from "@/api/";
 
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
+    import { TASK_STATUS } from '@/constants/enums'
 
     export default {
         name: "Delegateauditrecords",
         data() {
             return {
+                TASK_STATUS,
                 // 遮罩层
                 loading: true,
                 // 选中数组
@@ -165,25 +167,25 @@
                 },
                 //相对应操作
                 operations: {
-                    "草稿": {
+                    [TASK_STATUS.DRAFT]: {
                         index: 0,
                         title: "删除",
                         type: "danger",
                         click: "delete"
                     },
-                    "审核中": {
+                    [TASK_STATUS.AUDITING]: {
                         index: 1,
                         title: ["允许发布", "不允许发布"],
                         type: ["primary", "danger"],
                         click: ["allowPublish", "notAllowed"]
                     },
-                    "审核未通过": {
+                    [TASK_STATUS.AUDIT_FAILED]: {
                         index: 2,
                         title: ["退为草稿", "删除此委托"],
                         type: ["primary", "danger"],
                         click: ["Fallback", "delete"]
                     },
-                    "等待发布": {
+                    [TASK_STATUS.PENDING_RELEASE]: {
                         index: 3,
                         title: ["退为草稿", "删除此委托"],
                         type: ["primary", "danger"],
