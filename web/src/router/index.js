@@ -48,42 +48,192 @@ const routes = [
                     default: Home
                 }
             },
-            { path: '/home', name: 'home', component: Home },
-            { path: '/createDelegation', name: 'createDelegation', component: CreateDelegation },
-            { path: '/myInfo', name: 'myInfo', component: MyInfo },
+            // 共享首页（两级角色可见）
+            {
+                path: '/home',
+                name: 'home',
+                component: Home,
+                meta: { title: '数据驾驶舱', icon: 'data-line', roles: ['ADMIN', 'USER'] }
+            },
+            // 用户工作台（仅 USER）
+            {
+                path: '/workbench',
+                meta: { title: '工作台', icon: 's-home', roles: ['USER'] },
+                children: [
+                    {
+                        path: '/viewOnGoingList',
+                        name: 'viewOnGoingList',
+                        component: ViewOnGoingList,
+                        meta: { title: '委托大厅', icon: 'search' }
+                    },
+                    {
+                        path: '/myTasks',
+                        meta: { title: '我的委托', icon: 's-order' },
+                        children: [
+                            {
+                                path: '/createDelegation',
+                                name: 'createDelegation',
+                                component: CreateDelegation,
+                                meta: { title: '发布委托', icon: 'edit-outline' }
+                            },
+                            {
+                                path: '/myDelegationPublishList',
+                                name: 'myDelegationPublishList',
+                                component: MyDelegationPublishList,
+                                meta: { title: '我发布的订单', icon: 'document-add' }
+                            },
+                            {
+                                path: '/myDelegationAcceptList',
+                                name: 'myDelegationAcceptList',
+                                component: MyDelegationAcceptList,
+                                meta: { title: '我承接的订单', icon: 'document-checked' }
+                            }
+                        ]
+                    },
+                    {
+                        path: '/messageCenter',
+                        name: 'messageCenter',
+                        component: MessageCenter,
+                        meta: { title: '消息中心', icon: 'bell' }
+                    },
+                    {
+                        path: '/profile',
+                        meta: { title: '个人中心', icon: 'user' },
+                        children: [
+                            {
+                                path: '/myInfo',
+                                name: 'myInfo',
+                                component: MyInfo,
+                                meta: { title: '基础信息', icon: 'user-solid' }
+                            },
+                            {
+                                path: '/creditProfile',
+                                name: 'creditProfile',
+                                component: CreditProfile,
+                                meta: { title: '信用档案', icon: 'medal' }
+                            }
+                        ]
+                    },
+                    // 详情页：不进菜单，但属于 USER 域（继承工作台 USER 角色，防 ADMIN 绕过）
+                    {
+                        path: '/myDelegationProgress',
+                        name: 'myDelegationProgress',
+                        component: MyDelegationProgress
+                    }
+                ]
+            },
+            // 平台管理中心（仅 ADMIN）
+            {
+                path: '/adminPanel',
+                meta: { title: '平台管理中心', icon: 's-tools', roles: ['ADMIN'] },
+                children: [
+                    {
+                        path: '/delegationAdmin',
+                        meta: { title: '委托管理', icon: 's-order' },
+                        children: [
+                            {
+                                path: '/publishedList',
+                                name: 'publishedList',
+                                component: PublishedList,
+                                meta: { title: '全部委托', icon: 'tickets' }
+                            },
+                            {
+                                path: '/auditList',
+                                name: 'auditList',
+                                component: AuditList,
+                                meta: { title: '委托审核', icon: 's-check' }
+                            },
+                            {
+                                path: '/expireDelegationList',
+                                name: 'expireDelegationList',
+                                component: ExpireDelegationList,
+                                meta: { title: '未完成委托', icon: 'warning-outline' }
+                            },
+                            {
+                                path: '/delegationUpdateRecords',
+                                name: 'delegationUpdateRecords',
+                                component: DelegationUpdateRecords,
+                                meta: { title: '履约记录查询', icon: 's-flag' }
+                            }
+                        ]
+                    },
+                    {
+                        path: '/userAdmin',
+                        meta: { title: '用户管理', icon: 'user' },
+                        children: [
+                            {
+                                path: '/userList',
+                                name: 'userList',
+                                component: UserList,
+                                meta: { title: '用户列表', icon: 'user' }
+                            },
+                            {
+                                path: '/admin/realNameAudit',
+                                name: 'realNameAudit',
+                                component: RealNameAudit,
+                                meta: { title: '实名审核', icon: 'postcard' }
+                            }
+                        ]
+                    },
+                    {
+                        path: '/bulletinAdmin',
+                        meta: { title: '平台公告', icon: 'chat-dot-round' },
+                        children: [
+                            {
+                                path: '/systemBulletinList',
+                                name: 'systemBulletinList',
+                                component: SystemBulletinList,
+                                meta: { title: '公告管理', icon: 'chat-dot-round' }
+                            }
+                        ]
+                    },
+                    {
+                        path: '/noticeAdmin',
+                        meta: { title: '消息管理', icon: 'bell' },
+                        children: [
+                            {
+                                path: '/notificationReadStatus',
+                                name: 'notificationReadStatus',
+                                component: NotificationReadStatus,
+                                meta: { title: '消息管理', icon: 's-comment' }
+                            }
+                        ]
+                    },
+                    {
+                        path: '/systemConfig',
+                        meta: { title: '系统配置', icon: 'setting' },
+                        children: [
+                            {
+                                path: '/delegationType',
+                                name: 'delegationType',
+                                component: DelegationType,
+                                meta: { title: '委托分类配置', icon: 'menu' }
+                            },
+                            {
+                                path: '/sensitiveWord',
+                                name: 'sensitiveWord',
+                                component: SensitiveWordConfig,
+                                meta: { title: '敏感词管控', icon: 'lock' }
+                            }
+                        ]
+                    }
+                ]
+            },
+            // 未接入菜单的遗留路由（不进菜单，保持原可访问性；无角色限制）
+            { path: '/draftList', name: 'draftList', component: DraftList },
+            { path: '/systemNoticeList', name: 'systemNoticeList', component: SystemNoticeList },
+            { path: '/notifications', name: 'notifications', component: Notifications },
             { path: '/page1', name: 'page1', component: pageOne },
             { path: '/page2', name: 'page2', component: pageTwo },
-            { path: '/page3', name: 'page3', component: pageThree },
-            { path: '/userList', name: 'userList', component: UserList },
-            { path: '/admin/realNameAudit', name: 'realNameAudit', component: RealNameAudit },
-            { path: '/draftList', name: 'draftList', component: DraftList },
-            { path: '/auditList', name: 'auditList', component: AuditList },
-            { path: '/publishedList', name: 'publishedList', component: PublishedList },
-            { path: '/delegationUpdateRecords', name: 'delegationUpdateRecords', component: DelegationUpdateRecords },
-            { path: '/systemBulletinList', name: 'systemBulletinList', component: SystemBulletinList },
-            { path: '/systemNoticeList', name: 'systemNoticeList', component: SystemNoticeList },
-            { path: '/delegationType', name: 'delegationType', component: DelegationType },
-            { path: '/viewOnGoingList', name: 'viewOnGoingList', component: ViewOnGoingList },
-            { path: '/myDelegationPublishList', name: 'myDelegationPublishList', component: MyDelegationPublishList },
-            { path: '/myDelegationAcceptList', name: 'myDelegationAcceptList', component: MyDelegationAcceptList },
-            { path: '/expireDelegationList', name: 'expireDelegationList', component: ExpireDelegationList },
-            { path: '/notifications', name: 'notifications', component: Notifications },
-            { path: '/notificationReadStatus', name: 'notificationReadStatus', component: NotificationReadStatus },
-            { path: '/messageCenter', name: 'messageCenter', component: MessageCenter },
-            { path: '/myDelegationProgress', name: 'myDelegationProgress', component: MyDelegationProgress },
-            { path: '/creditProfile', name: 'creditProfile', component: CreditProfile },
-            { path: '/sensitiveWord', name: 'sensitiveWord', component: SensitiveWordConfig },
-
+            { path: '/page3', name: 'page3', component: pageThree }
         ]
     },
     // 默认页面
     {
         path: '/',
         name: 'landing',
-        component: Landing,
-    },
-
-
+        component: Landing
+    }
 ]
 
 
@@ -106,32 +256,43 @@ const router = new VueRouter({
     base: '/campus_entrustment/'
 })
 
-// 添加全局前置导航守卫
+// 读取当前登录用户角色（刷新后 vuex 为空，以 localStorage 为准）
+function getUserType() {
+    try {
+        const taskUser = JSON.parse(localStorage.getItem('TaskUser') || '{}')
+        return taskUser.userType || ''
+    } catch (e) {
+        return ''
+    }
+}
+
+// 添加全局前置导航守卫：token + 角色
 router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('jwtToken');
     const LOGIN_PATH = '/login';
-    const REGISTER_PATH = '/register'; // 假设有注册页面路由，虽然 routes 里没显式看到单独的 register path，但可能有
     const LANDING_PATH = '/';
-    
-    // 公开路径，不需要登录即可访问
-    const publicPaths = [LOGIN_PATH, REGISTER_PATH, LANDING_PATH];
+    const publicPaths = [LOGIN_PATH, LANDING_PATH];
 
     if (token) {
-        // 如果用户已登录
-        if (to.path === LOGIN_PATH || to.path === REGISTER_PATH) {
-            // 如果尝试访问登录或注册页，重定向到主页
+        // 已登录用户访问登录页 → 回首页
+        if (to.path === LOGIN_PATH) {
+            next('/home');
+            return;
+        }
+        // 角色校验：目标路由链中存在角色要求且当前角色不满足 → 回首页
+        const userType = getUserType();
+        const hasRoleRestriction = to.matched.some(r => r.meta && r.meta.roles);
+        const isAllowed = to.matched.some(r => r.meta && r.meta.roles && r.meta.roles.includes(userType));
+        if (hasRoleRestriction && !isAllowed) {
             next('/home');
         } else {
-            // 访问其他页面，放行
             next();
         }
     } else {
-        // 如果用户未登录
+        // 未登录
         if (publicPaths.includes(to.path)) {
-            // 访问公开页面，放行
             next();
         } else {
-            // 访问受保护页面，重定向到登录页
             next(LOGIN_PATH);
         }
     }
