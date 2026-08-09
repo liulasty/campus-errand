@@ -55,31 +55,32 @@ ADMIN 账号（majiaqi）登录后，前端菜单同时展示「工作台」与�
 
 ### 1. `web/src/router/index.js`
 
-- 路由改为嵌套结构：`/main` 下保留 `/home`（共享首页，`meta.roles: ['ADMIN','USER']`），新增「工作台」「平台管理中心」两个分组路由（无组件，仅结构，含 `meta:{title,icon,roles}`）。
-- 叶子路由挂到对应分组下，路径（绝对路径 `/xxx`）保持不变，每个叶子加 `meta:{title,icon}`（`roles` 继承自分组）。
+- **路由保持 `/main` 扁平子路由**（与重构前一致，所有叶子直接挂 `/main` 下，避免 vue-router 3 嵌套渲染空白问题）。每个菜单叶子加 `meta:{title, icon, roles, menu:{group, submenu}}`；`/home` 为共享首页（`roles:['ADMIN','USER']`，`menu.group: null` 作顶层独立项）。
+- `/myDelegationProgress` 详情页：`meta:{roles:['USER']}`（不进菜单，防 ADMIN 绕过）。
+- 遗留路由 `/draftList`、`/systemNoticeList`、`/notifications`、`/page1/2/3`：不进菜单、无角色限制，保持原可访问性。
 - `beforeEach` 守卫增加角色校验：
   - 从 `localStorage.getItem('TaskUser')` 解析 `userType`（刷新后 vuex 可能为空）。
   - `to.matched` 中存在 `meta.roles` 且不含当前角色 → `next('/home')`。
 
 ### 2. 新增 `web/src/router/menu.js`
 
-- `buildMenu(userType)`：递归遍历路由配置，按角色过滤，输出 el-menu 结构（顶层独立项 / 分组 / 子分组 / 叶子）。
+- 定义 `MENU_GROUPS`（工作台/USER、平台管理中心/ADMIN）与 `MENU_SUBMENUS`（我的委托/个人中心/委托管理/用户管理/平台公告/消息管理/系统配置）常量。
+- `buildMenu(routes, userType)`：过滤 `/main` 下带 `meta.menu` 的叶子 → 按角色过滤 → 组装 el-menu 结构（顶层独立项 / 分组 / 子分组 / 叶子）。
 
 ### 3. `web/src/components/CommonAside.vue`
 
-- 删除硬编码 `menuData`，`data()` 中改为由 `buildMenu(userType)` 生成。
+- 删除硬编码 `menuData`，`data()` 中改为由 `buildMenu(this.$router.options.routes, userType)` 生成。
 - 模板支持顶层独立菜单项（数据驾驶舱）——当前模板只有分组（el-submenu），需增加顶层无 children 项的渲染分支。
 - 保留 `activeIndex` / `initAside` / `updateMenuState` / 折叠逻辑（基于生成的 menuData 递归取路径）。
 
 ## 关键实现细节
 
 1. **角色来源**：路由守卫与菜单均以 `localStorage.TaskUser.userType` 为准；页面刷新后 vuex store 为空，不能仅依赖 store。CommonAside `mounted` 已通过 `setUserInfo()` 从 localStorage 恢复 vuex。
-2. **meta 继承**：分组路由设 `meta.roles`，叶子路由继承；叶子各自设 `title`/`icon`。
-3. **嵌套渲染**：分组路由无 `component`，vue-router 3 回退到最近有组件的祖先（`/main`）的 `<router-view>` 渲染叶子；分组记录仅参与匹配与 meta 继承，不产生 UI 组件。
-4. **守卫角色链**：`to.matched` 含整条匹配链（`/main` → 分组 → 叶子），用 `to.matched.some(r => r.meta.roles && r.meta.roles.includes(userType))` 判定。
-5. **登录跳转**：维持 `Login.vue` 的 `router.replace('/home')`。
-6. **叶子路径不变**：所有绝对路径保持不变，`$router.push('/xxx')` 与面包屑/标签页引用不受影响。
-7. **测试页**：`/page1`、`/page2`、`/page3` 保留，无 `meta.roles`（任何已登录用户可访问，不进菜单）。
+2. **扁平路由（关键约束）**：叶子路由必须保持 `/main` 直接子路由。vue-router 3 的 `<router-view>` 按 `matched[depth]` 位置取组件，若中间插入无 `component` 的分组记录，`depth` 处取到空组件导致页面空白（回归事故根因）。菜单分组因此由 `meta.menu.group/submenu` 承载，而非路由嵌套。
+3. **守卫角色判定**：`to.matched.some(r => r.meta && r.meta.roles && r.meta.roles.includes(userType))`；因路由扁平，每个叶子自带 `meta.roles`。
+4. **登录跳转**：维持 `Login.vue` 的 `router.replace('/home')`。
+5. **叶子路径不变**：所有绝对路径保持不变，`$router.push('/xxx')` 与面包屑/标签页引用不受影响。
+6. **测试页**：`/page1`、`/page2`、`/page3` 保留，无 `meta.roles`（任何已登录用户可访问，不进菜单）。
 
 ## 不做的事
 
