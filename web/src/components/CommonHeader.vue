@@ -153,7 +153,7 @@
         // users.Role 仅 USER/ADMIN，学生/教师来自 usersinfo.UserRole（小写 student/teacher，仅已实名用户存在）
         try {
           const r = await getUserInfo(userId);
-          if (r.data && r.data.code === SUCCESS_CODE && r.data.data && r.data.data.userRole) {
+          if (r.data && r.data.code === SUCCESS_CODE && r.data.data && r.data.data.userRole && this.userProfile) {
             this.userProfile.userRole = r.data.data.userRole;
           }
         } catch (e) {
@@ -213,7 +213,8 @@
         tags: state => state.tab.tabsList
       }),
       roleInfo() {
-        const role = this.$store.state.userInfo.userType || '';
+        const role = this.$store.state.userInfo.userType ||
+          (JSON.parse(localStorage.getItem('TaskUser') || '{}')).userType || '';
         if (role === 'ADMIN') {
           return { label: '管理员', cls: 'role-admin' };
         }
