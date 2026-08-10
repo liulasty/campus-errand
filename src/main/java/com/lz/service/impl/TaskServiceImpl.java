@@ -205,7 +205,13 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
                 taskPageDTO.getPageSize());
 
         QueryWrapper<Task> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("status", TaskStatus.AUDITING);
+        // 2.1 修复：status 参数生效；缺省保持 AUDITING（审核队列默认，兼容既有调用）
+        TaskStatus status = taskPageDTO.getStatus();
+        if (status != null) {
+            queryWrapper.eq("status", status);
+        } else {
+            queryWrapper.eq("status", TaskStatus.AUDITING);
+        }
         if (taskPageDTO.getDescription() != null && !"".equals(taskPageDTO.getDescription())) {
             queryWrapper.like("description", taskPageDTO.getDescription());
         }
@@ -802,8 +808,16 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
 
         // Double check if task is expired before confirming
         Task taskCheck = taskMapper.selectById(taskId);
-        if (taskCheck != null && taskCheck.getEndTime() != null && taskCheck.getEndTime().before(new Date())) {
+        if (taskCheck == null) {
+            throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
+        if (taskCheck.getEndTime() != null && taskCheck.getEndTime().before(new Date())) {
             throw new MyException(MessageConstants.TASK_EXPIRED_CANNOT_CONFIRM);
+        }
+        // D-17 越权校验：仅发布者本人可确认接收人
+        Users current = getCurrentAdmin();
+        if (current == null || !current.getUserId().equals(taskCheck.getOwnerId())) {
+            throw new MyException(MessageConstants.USER_INFO_ERROR);
         }
 
         List<TaskAcceptRecords> list = taskAcceptRecordsMapper
@@ -849,14 +863,15 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         notificationsService.addTaskConfirmTheRecipient(getCurrentAdmin().getUserId(),
                 MessageConstants.TASK_ACCEPTANCE_PROCESSED_SUCCESS,
                 NotificationsType.TASK,
-                "您的编号为" + acceptRecords + "委托接收记录已被处理，处理的结果是" + MessageConstants.TASK_ACCEPT_SUCCESS,
+                "您的编号为" + acceptRecords.getAcceptRecordId() + "的委托接收记录已被处理，处理的结果是"
+                        + MessageConstants.TASK_ACCEPT_SUCCESS,
                 task.getTaskId());
         NotList.forEach(record -> {
             try {
                 notificationsService.addTaskAcceptanceSelected(record.getAccepterId(),
                         MessageConstants.TASK_ACCEPTANCE_PROCESSED_FAILED,
                         NotificationsType.TASK,
-                        "您的编号为" + acceptRecords + "委托接收记录已被处理，处理的结果是"
+                        "您的编号为" + record.getAcceptRecordId() + "的委托接收记录已被处理，处理的结果是"
                                 + MessageConstants.TASK_ACCEPTANCE_PROCESSED_FAILED,
                         task.getTaskId());
             } catch (MyException e) {
@@ -1048,8 +1063,13 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
     @Override
     public void deleteCancelTask(Long id) throws MyException {
         Task task = getById(id);
-        if (task.getStatus() != TaskStatus.CANCELLED) {
+        if (task == null || task.getStatus() != TaskStatus.CANCELLED) {
             throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
+        // D-17 越权校验：仅发布者本人可删除已取消委托
+        Users current = getCurrentAdmin();
+        if (current == null || !current.getUserId().equals(task.getOwnerId())) {
+            throw new MyException(MessageConstants.USER_INFO_ERROR);
         }
 
         List<TaskAcceptRecords> taskAcceptRecords = taskAcceptRecordsMapper.getTaskAcceptRecordsByTaskId(id);

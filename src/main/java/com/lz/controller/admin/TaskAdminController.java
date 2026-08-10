@@ -209,13 +209,12 @@ public class TaskAdminController {
                 .updateType(TaskUpdateType.RESULT)
                 .updateDescription(MessageConstants.TASK_DRAFT_DELETE_SUCCESS).build();
         taskUpdatesService.save(taskupdates);
-        // todo 通知用户
-        Long id = notificationsService.addTaskDeleteNotification(users.getUserId(),
+        // D-19：删除通知归属发布者 owner，read_status 投递给 owner 并正确关联 taskId
+        Long id = notificationsService.addTaskDeleteNotification(task.getOwnerId(),
                 "您的委托已被删除");
-        // log.info("管理员删除委托成功{}", acceptRecordId);
         notificationReadStatusService.addTaskNotification(id,
-                task.getOwnerId(),
-                users.getUserId());
+                task.getTaskId(),
+                task.getOwnerId());
         log.info("管理员删除委托成功{}", taskID);
         return Result.success(MessageConstants.TASK_DELETE_SUCCESS);
     }

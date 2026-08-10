@@ -35,7 +35,7 @@ public interface INotificationReadStatusService extends IService<NotificationRea
 
     void delNotification(Long id);
 
-    void addTaskConfirmTheRecipient(int NotificationId, Long taskId, Long userId,
+    void addTaskConfirmTheRecipient(Long NotificationId, Long taskId, Long userId,
                                     Date date);
 
 

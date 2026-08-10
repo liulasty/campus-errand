@@ -4,15 +4,18 @@ package com.lz.controller;
 import com.lz.Exception.MyException;
 import com.lz.pojo.constants.MessageConstants;
 import com.lz.pojo.dto.UserInfoDTO;
+import com.lz.pojo.entity.Users;
 import com.lz.pojo.entity.UsersInfo;
 import com.lz.pojo.result.Result;
 import com.lz.service.ITaskService;
 import com.lz.service.IUsersInfoService;
 import com.lz.service.IUsersService;
 import com.lz.pojo.Enum.AuthenticationStatus;
+import com.lz.utils.IdentityMaskUtils;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -54,8 +57,21 @@ public class UsersinfoController {
             log.error("用户信息不存在");
             return Result.error("用户信息不存在");
         }
+        // D-16 凭证脱敏：非本人查看他人实名资料时 identityNo 掩码（前4+掩码+末2）；本人查回明文（TC-018 契约）
+        Users current = getCurrentUser();
+        if (current == null || !current.getUserId().equals(usersInfo.getUserId())) {
+            usersInfo.setIdentityNo(IdentityMaskUtils.mask(usersInfo.getIdentityNo()));
+        }
 
         return Result.success(usersInfo);
+    }
+
+    /**
+     * 获取当前登录用户
+     */
+    private Users getCurrentUser() {
+        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usersService.getByUsername(name);
     }
 
     /**

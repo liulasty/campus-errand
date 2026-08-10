@@ -166,9 +166,9 @@ public class NotificationReadStatusServiceImpl extends ServiceImpl<NotificationR
     }
 
     @Override
-    public void addTaskConfirmTheRecipient(int NotificationId, Long taskId, Long userId, Date date) {
+    public void addTaskConfirmTheRecipient(Long NotificationId, Long taskId, Long userId, Date date) {
         NotificationReadStatus notificationReadStatus = NotificationReadStatus.builder()
-                .notificationId((long) NotificationId)
+                .notificationId(NotificationId)
                 .taskId(taskId)
                 .userId(userId)
                 .sendTime(date)

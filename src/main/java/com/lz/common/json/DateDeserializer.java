@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 import java.io.IOException;
-import java.text.ParseException;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -25,12 +25,26 @@ import java.util.Date;
  */
 public  class DateDeserializer extends JsonDeserializer<Date> {
 
+    /**
+     * 解析优先级：datetime 在前、date-only 在最后，且必须整串匹配。
+     * 避免旧实现先按 "yyyy-MM-dd" lenient 前缀解析，把 "2026-08-10T23:59:59Z" 吞成
+     * "2026-08-10 00:00:00"（时间丢失 → EndTime 截断到本地 00:00，end=当天即过期）。
+     */
+    private static final String[] DATETIME_PATTERNS = {
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd"
+    };
+
     @Override
     public Date deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
         String dateString = jsonParser.getText();
         if (dateString == null || dateString.trim().isEmpty()) {
             return null;
         }
+        dateString = dateString.trim();
 
         // 1. 尝试解析为时间戳 (Long)
         try {
@@ -40,20 +54,15 @@ public  class DateDeserializer extends JsonDeserializer<Date> {
             // 忽略，继续尝试其他格式
         }
 
-        // 2. 尝试解析 yyyy-MM-dd
-        try {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            return simpleDateFormat.parse(dateString);
-        } catch (ParseException e) {
-            // 忽略，继续尝试其他格式
+        // 2. 按完整串匹配解析（datetime 优先于 date）
+        for (String pattern : DATETIME_PATTERNS) {
+            SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+            ParsePosition pos = new ParsePosition(0);
+            Date parsed = sdf.parse(dateString, pos);
+            if (parsed != null && pos.getIndex() == dateString.length()) {
+                return parsed;
+            }
         }
-
-        // 3. 尝试解析 yyyy-MM-dd HH:mm:ss
-        try {
-            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            return dateTimeFormat.parse(dateString);
-        } catch (ParseException e) {
-            throw new IOException("Failed to deserialize Date: " + dateString, e);
-        }
+        throw new IOException("Failed to deserialize Date: " + dateString);
     }
 }

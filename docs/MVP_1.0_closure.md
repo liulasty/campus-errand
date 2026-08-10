@@ -69,6 +69,22 @@
 | 19 | Redis / RabbitMQ 未装 | 消息通知、缓存功能不可用；`TaskOverDue` 发 RabbitMQ 通知会失败 |
 | 20 | 消息通知整体降级 | 自动推进/审核等系统通知依赖 RabbitMQ，未装则静默失败 |
 
+### 契约修复（2026-08-10 状态机用例触发，D-18 已修）
+
+| 项 | 说明 |
+| :--- | :--- |
+| EndTime 截断到本地 00:00 | 根因：自定义 `DateDeserializer` 先按 lenient `yyyy-MM-dd` 前缀解析，`2026-08-10T23:59:59Z` 只吃掉日期、时间丢失。已改为 datetime 格式优先 + `ParsePosition` 整串匹配，时间分量保留。 |
+| 过去 end 放行 | `confirmTask` 现校验 end 须晚于当前时间，过去/当天-已过 end → code=0「截止时间必须晚于当前时间」；任务保持 PENDING_RELEASE。 |
+| 过期不可接单契约 | 原靠「发布过去 end」构造已不可行（发布被拦截）；DSL 无 SQL 写步骤。该契约改为时间依赖延后（同 T16/E02）。 |
+| 附带发现 | `DateSerializer` 仍按 `yyyy-MM-dd` 输出（响应展示日期粒度，未改）；前端 `el-date-picker` 发送中文日期字符串 `yyyy年MM月dd日HH:mm:ss` 与反序列化格式不匹配，为既有潜在问题（非验收路径），建议后续核查。 |
+
+### 验收补修（2026-08-10，2.1/2.2）
+
+| 项 | 说明 |
+| :--- | :--- |
+| `/task/searchPage` status 参数生效 | 原实现硬编码 `status=AUDITING` 忽略 `TaskPageDTO.status`。已修为 status 参数生效，缺省保持 AUDITING（审核队列默认，兼容 TC-014）。注意：大厅检索是 `/user/task/page`，本接口为审核/通用分页。 |
+| 发布留痕 PUBLISHED | `confirmTask` 发布成功现写 `taskupdates.UpdateType=PUBLISHED`（与 CREATED/AUDITING 对齐）。管理员放行 `allowPublish`（→PENDING_RELEASE）写 `delegate_audit_records`，非 taskupdates。受影响用例：TC-041 计数 2→3、TC-036 补 PUBLISHED 断言。 |
+
 ## 四、废弃路由清单（组件保留，仅移出菜单）
 
 | 路由 | 原页面 | 处置 |

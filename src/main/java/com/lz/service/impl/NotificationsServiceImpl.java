@@ -210,7 +210,9 @@ public class NotificationsServiceImpl extends ServiceImpl<NotificationsMapper, N
         if (insert == 0) {
             throw new MyException(MessageConstants.ADD_MESSAGE_FAILURE);
         }
-        notificationReadStatusService.addTaskConfirmTheRecipient(insert,
+        // D-19 关联修复：NotificationID 用 MyBatis 回填的自增 ID，而非 insert() 返回值（行数=1），
+        // 否则 read_status 错误关联到 ID=1 的通知，接收人列表查不到本通知
+        notificationReadStatusService.addTaskConfirmTheRecipient(notifications.getNotificationId(),
                 taskId,
                 userId,
                 new Date(System.currentTimeMillis()));
@@ -230,7 +232,9 @@ public class NotificationsServiceImpl extends ServiceImpl<NotificationsMapper, N
         if (insert == 0) {
             throw new MyException(MessageConstants.ADD_MESSAGE_FAILURE);
         }
-        notificationReadStatusService.addTaskConfirmTheRecipient(insert,
+        // D-19 关联修复：NotificationID 用 MyBatis 回填的自增 ID，而非 insert() 返回值（行数=1），
+        // 否则 read_status 错误关联到 ID=1 的通知，接收人列表查不到本通知
+        notificationReadStatusService.addTaskConfirmTheRecipient(notifications.getNotificationId(),
                 taskId,
                 userId,
                 new Date(System.currentTimeMillis()));
@@ -243,22 +247,14 @@ public class NotificationsServiceImpl extends ServiceImpl<NotificationsMapper, N
 
     @Override
     public void sendTaskNotification(String title, String updateDescription, Long taskId, Long ownerId) {
+        // D-19：notifications.UserID 列语义为「接收通知的用户ID」，ownerId 即接收人；
+        // 不再覆盖为当前管理员（修复撤回/超时通知归属错位，与 T9 确认接收人路径一致）
         Notifications notifications = Notifications.builder().title(title)
                 .message(updateDescription)
                 .notificationTime(new Date(System.currentTimeMillis()))
                 .notificationType(NotificationsType.TASK)
-                .userId(ownerId) // 这里记录的是发送者ID，通常应该是系统管理员ID或触发者ID，但在当前逻辑中，sendTaskNotification 的 ownerId
-                                 // 参数被用作接收通知的用户ID。
-                                 // 然而，根据数据库设计，Notifications 表的 UserID 字段含义是 "发送通知的用户ID"。
-                                 // 真正的接收关系是在 NotificationReadStatus 表中建立的。
+                .userId(ownerId)
                 .build();
-        // 获取当前管理员或系统用户作为发送者
-        try {
-            Users admin = getCurrentAdmin();
-            notifications.setUserId(admin != null ? admin.getUserId() : 1L); // 默认管理员ID为1
-        } catch (Exception e) {
-            notifications.setUserId(1L); // 无法获取当前用户时，默认为系统管理员
-        }
 
         notificationsMapper.insert(notifications);
 

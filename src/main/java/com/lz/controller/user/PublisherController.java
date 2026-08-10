@@ -24,20 +24,29 @@ import com.lz.pojo.Enum.AcceptStatus;
 import com.lz.pojo.Enum.AuthenticationStatus;
 import com.lz.service.RealNameAuthenticationService;
 import com.lz.pojo.Enum.TaskStatus;
+import com.lz.pojo.Enum.TaskUpdateType;
 import com.lz.pojo.constants.MessageConstants;
 import com.lz.pojo.dto.PublishDTO;
 import com.lz.pojo.dto.UpdateTaskToCompletedDTO;
 import com.lz.pojo.entity.Task;
 import com.lz.pojo.entity.TaskAcceptRecords;
+import com.lz.pojo.entity.TaskUpdates;
+import com.lz.pojo.entity.Users;
 import com.lz.pojo.entity.UsersInfo;
 import com.lz.pojo.result.PageResult;
 import com.lz.pojo.result.Result;
 import com.lz.pojo.vo.TaskAndUserInfoVO;
 import com.lz.service.ITaskAcceptRecordsService;
 import com.lz.service.ITaskService;
+import com.lz.service.ITaskUpdatesService;
 import com.lz.service.IUsersInfoService;
+import com.lz.service.IUsersService;
+import com.lz.utils.IdentityMaskUtils;
 
 import io.swagger.annotations.Api;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.Date;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,13 +65,27 @@ public class PublisherController {
     private IUsersInfoService usersInfoService;
 
     @Autowired
+    private IUsersService usersService;
+
+    @Autowired
     private ITaskService taskService;
+
+    @Autowired
+    private ITaskUpdatesService taskUpdatesService;
 
     @Autowired
     private ITaskAcceptRecordsService taskAcceptRecordsService;
 
     @Autowired
     private RealNameAuthenticationService realNameAuthenticationService;
+
+    /**
+     * 获取当前登录用户
+     */
+    private Users getCurrentUser() {
+        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usersService.getByUsername(name);
+    }
 
     @GetMapping("/{id}")
     public Result<?> getPublisher(@PathVariable("id") Long id) throws MyException {
@@ -71,6 +94,14 @@ public class PublisherController {
             throw new MyException(MessageConstants.USER_AUTHENTICATION_INFO_NOT_EXIST);
         }
         realNameAuthenticationService.ensureL1(id);
+        // D-16 同源泄漏：发布者公开资料仅保留非敏感字段，identityNo 掩码，其余个人字段剔除
+        usersInfo.setIdentityNo(IdentityMaskUtils.mask(usersInfo.getIdentityNo()));
+        usersInfo.setPhoneNumber(null);
+        usersInfo.setQqNumber(null);
+        usersInfo.setRoleImgSrc("");
+        usersInfo.setCertifieTime(null);
+        usersInfo.setCertifiedTime(null);
+        usersInfo.setRejectReason(null);
 
         return Result.success(usersInfo);
     }
@@ -89,6 +120,13 @@ public class PublisherController {
     public Result<String> confirmTask(@PathVariable("id") Long id,
             @RequestBody PublishDTO data) throws MyException {
         realNameAuthenticationService.ensureCurrentUserL1();
+        // D-18 契约修复：截止时间必须为未来，拒绝过去 end（防发布即过期/当天不可接单）
+        if (data == null || data.getEnd() == null) {
+            throw new MyException("截止时间不能为空");
+        }
+        if (!data.getEnd().after(new Date())) {
+            throw new MyException("截止时间必须晚于当前时间");
+        }
         try {
             Task byId = taskService.getById(id);
             if (byId == null) {
@@ -99,6 +137,10 @@ public class PublisherController {
                 log.error("任务状态异常");
                 return Result.error(MessageConstants.UNEXPECTED_EXCEPTION);
             }
+            Users current = getCurrentUser();
+            if (current == null || !current.getUserId().equals(byId.getOwnerId())) {
+                throw new MyException(MessageConstants.USER_INFO_ERROR);
+            }
             taskService.updateById(
                     Task.builder()
                             .taskId(id)
@@ -106,6 +148,14 @@ public class PublisherController {
                             .endTime(data.getEnd())
                             .status(TaskStatus.ONGOING)
                             .build());
+            // 2.2 发布留痕：PUBLISHED（与 CREATED/AUDITING 等状态变更留痕对齐）
+            taskUpdatesService.save(TaskUpdates.builder()
+                    .taskId(id)
+                    .userId(current.getUserId())
+                    .updateType(TaskUpdateType.PUBLISHED)
+                    .updateDescription(MessageConstants.TASK_PUBLISH_SUCCESS)
+                    .updateTime(new Date())
+                    .build());
             log.info("发布委托成功");
             return Result.success(MessageConstants.TASK_PUBLISH_SUCCESS);
         } catch (Exception e) {

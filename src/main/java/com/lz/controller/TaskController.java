@@ -246,6 +246,10 @@ public class TaskController {
             if (byId.getStatus() != TaskStatus.ONGOING) {
                 return Result.error(MessageConstants.UNEXPECTED_EXCEPTION);
             }
+            Users current = getCurrentUser();
+            if (current == null || !current.getUserId().equals(byId.getOwnerId())) {
+                throw new MyException(MessageConstants.USER_INFO_ERROR);
+            }
             taskService.updateById(Task.builder().taskId(id).status(TaskStatus.DRAFT).build());
             return Result.success(MessageConstants.TASK_CANCEL_SUCCESS);
         } catch (Exception e) {
