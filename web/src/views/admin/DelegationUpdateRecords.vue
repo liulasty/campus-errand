@@ -85,7 +85,7 @@
                     {{form.updateDescription}}
                 </el-form-item>
                 <el-form-item label="审核完成时间" prop="ReviewTime">
-                    {{form.updateTime}}
+                    {{ form.updateTime | dateTime }}
                 </el-form-item>
             </el-form>
         </el-dialog>

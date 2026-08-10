@@ -43,8 +43,12 @@
         <el-table v-loading="loading" :data="viewOnGoingList" :row-style="{ height: '50px' }">
             <el-table-column label="委托类型" align="center" prop="type" />
             <el-table-column label="委托描述" align="center" prop="description" show-overflow-tooltip />
-            <el-table-column label="委托发布时间" align="center" prop="startTime" />
-            <el-table-column label="委托截止时间" align="center" prop="endTime" />
+            <el-table-column label="委托发布时间" align="center" width="160">
+                <template slot-scope="scope">{{ scope.row.startTime | dateTime }}</template>
+            </el-table-column>
+            <el-table-column label="委托截止时间" align="center" width="160">
+                <template slot-scope="scope">{{ scope.row.endTime | dateTime }}</template>
+            </el-table-column>
             <el-table-column label="委托任务地点" align="center" prop="location" />
             <el-table-column label="委托状态" align="center" prop="status" width="180" />
             <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -91,14 +95,14 @@
                         <i class="el-icon-tickets"></i>
                         委托发布时间
                     </template>
-                    <el-tag size="small">{{form.task.startTime}}</el-tag>
+                    <el-tag size="small">{{ form.task.startTime | dateTime }}</el-tag>
                 </el-descriptions-item>
                 <el-descriptions-item>
                     <template slot="label">
                         <i class="el-icon-office-building"></i>
                         委托截止时间
                     </template>
-                    <el-tag size="small">{{form.task.endTime}}</el-tag>
+                    <el-tag size="small">{{ form.task.endTime | dateTime }}</el-tag>
                 </el-descriptions-item>
                 <el-descriptions-item>
                     <template slot="label">
@@ -130,7 +134,7 @@
                                 </el-descriptions-item>
                                 <el-descriptions-item label="接收时间" labelStyle="width: 200px"
                                     :contentStyle="{'text-align': 'left'}">
-                                    {{ record.taskAcceptRecords.acceptTime}}
+                                    {{ record.taskAcceptRecords.acceptTime | dateTime }}
                                 </el-descriptions-item>
                                 <el-descriptions-item label="留言者完成委托情况" labelStyle="width: 100px">
                                     <el-tooltip class="item" effect="dark" :content="record.entrustedCompletionStatus"
@@ -161,7 +165,7 @@
                         <el-timeline-item
                             v-for="(activity, index) in taskUpdates"
                             :key="index"
-                            :timestamp="activity.updateTime"
+                            :timestamp="activity.updateTime | dateTime"
                             :color="nodeMeta(activity.updateType) ? nodeMeta(activity.updateType).color : '#c0c4cc'">
                             <template v-if="nodeMeta(activity.updateType)">
                                 <div class="node-activity">

@@ -50,7 +50,7 @@
                 <span class="role-tag" :class="roleInfo.cls">{{ roleInfo.label }}</span>
               </div>
               <div class="panel-row"><span class="panel-label">用户ID</span>{{ userId || '--' }}</div>
-              <div class="panel-row"><span class="panel-label">实名状态</span>{{ authDesc || '未认证' }}</div>
+              <div class="panel-row"><span class="panel-label">实名状态</span>{{ authDesc }}</div>
               <div class="panel-row"><span class="panel-label">信用分</span>{{ creditDisplay }}</div>
             </div>
           </div>
@@ -151,8 +151,12 @@
         // users.Role 仅 USER/ADMIN，学生/教师来自 usersinfo.UserRole（小写 student/teacher，仅已实名用户存在）
         try {
           const r = await getUserInfo(userId);
-          if (r.data && r.data.code === SUCCESS_CODE && r.data.data && r.data.data.userRole && this.userProfile) {
-            this.userProfile.userRole = r.data.data.userRole;
+          if (r.data && r.data.code === SUCCESS_CODE && r.data.data && this.userProfile) {
+            if (r.data.data.userRole) {
+              this.userProfile.userRole = r.data.data.userRole;
+            }
+            // 实名状态实时取自 usersinfo.authStatus（TaskUser.Authorization 为登录快照，认证后不同步）
+            this.userProfile.authStatus = r.data.data.authStatus || '';
           }
         } catch (e) {
           // 非实名/管理员无 usersinfo 记录，userRole 保持为空
@@ -231,11 +235,10 @@
         return (c !== null && c !== undefined) ? String(c) : '--';
       },
       authDesc() {
-        try {
-          return (JSON.parse(localStorage.getItem('TaskUser') || '{}')).Authorization || '';
-        } catch (e) {
-          return '';
-        }
+        // 管理员无 L1 实名概念
+        if (this.roleInfo.label === '管理员') return '—'
+        // 实名状态实时取自 usersinfo.authStatus，而非登录快照 TaskUser.Authorization
+        return (this.userProfile && this.userProfile.authStatus) || '未认证'
       },
     },
     mounted() {

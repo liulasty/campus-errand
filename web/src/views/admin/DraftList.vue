@@ -72,7 +72,7 @@
                     {{ form.description }}
                 </el-form-item>
                 <el-form-item label="委托创建时间" prop="createdAt">
-                    {{ form.createdAt }}
+                    {{ form.createdAt | dateTime }}
                 </el-form-item>
                 <el-form-item label="委托类型" prop="type">
                     {{ form.type }}

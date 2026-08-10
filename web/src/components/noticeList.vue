@@ -27,7 +27,7 @@
         <el-dialog width="480px" title="通知详情" :visible.sync="innerVisible" append-to-body>
             <div class="notice-detail">
                 <h2 class="notice-title">{{ notice.title }}</h2>
-                <div class="notice-meta">发送时间：{{ notice.date }}</div>
+                <div class="notice-meta">发送时间：{{ notice.date | dateTime }}</div>
                 <div class="notice-content">{{ notice.description }}</div>
             </div>
         </el-dialog>

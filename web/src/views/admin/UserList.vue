@@ -75,14 +75,14 @@
                 </el-table-column>
 
                 <el-table-column label="注册日期" width="180">
-                    <template slot-scope="scope">{{ scope.row.createTime }}</template>
+                    <template slot-scope="scope">{{ scope.row.createTime | dateTime }}</template>
                 </el-table-column>
                 <el-table-column prop="isActive" label="是否激活" width="70">
                 </el-table-column>
                 <el-table-column label="激活日期" width="180">
                     <template slot-scope="scope">
                         <div v-if="scope.row.isActive == '已激活'">
-                            {{ scope.row.activeTime }}
+                            {{ scope.row.activeTime | dateTime }}
                         </div>
                         <div v-else>
                             <el-button size="small" @click="auxiliaryActivation(scope.row.userId)">辅助激活</el-button>
@@ -173,7 +173,7 @@
                         </el-form-item>
 
                         <el-form-item label="认证时间" :label-width="formLabelWidth">
-                            <span>{{ form.certifieTime }}</span>
+                            <span>{{ form.certifieTime | dateTime }}</span>
                         </el-form-item>
                         <el-form-item :label-width="formLabelWidth">
                             <div v-show="form.authStatus == AUTH_STATUS.AUTHENTICATING">

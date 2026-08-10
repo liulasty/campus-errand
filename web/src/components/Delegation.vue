@@ -236,7 +236,7 @@
                     </div>
                      <div class="info-item">
                         <span class="label">审核时间：</span>
-                        <span class="value">{{ this.reason.reviewTime }}</span>
+                        <span class="value">{{ this.reason.reviewTime | dateTime }}</span>
                     </div>
                 </div>
             </div>

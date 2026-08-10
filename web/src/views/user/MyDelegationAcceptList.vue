@@ -41,7 +41,9 @@
             <el-table-column label="委托接收记录编号" align="center" prop="id" />
             <el-table-column label="委托类型" align="center" prop="type" />
             <el-table-column label="委托描述" align="center" prop="description" show-overflow-tooltip />
-            <el-table-column label="委托留言时间" align="center" prop="acceptTime" />
+            <el-table-column label="委托留言时间" align="center" width="160">
+                <template slot-scope="scope">{{ scope.row.acceptTime | dateTime }}</template>
+            </el-table-column>
             <el-table-column label="委托留言" align="center" prop="str" />
             <el-table-column label="委托任务地点" align="center" prop="location" />
             <el-table-column label="委托状态" align="center" prop="taskStatus" width="180" />
@@ -93,7 +95,7 @@
                         {{form.task.type}}
                     </el-form-item>
                     <el-form-item label="委托截止时间" prop="userRole">
-                        {{form.task.endTime}}
+                        {{ form.task.endTime | dateTime }}
                     </el-form-item>
                     <el-form-item label="委托金额" prop="money">
                         {{form.task.money}} 元
