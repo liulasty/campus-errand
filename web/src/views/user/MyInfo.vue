@@ -127,6 +127,7 @@ import ImageUploader from '@/components/ImageUploader.vue'
 import {executeConfirmedRequest} from '@/utils/globalConfirmAction'
 import {SUCCESS_CODE} from '@/constants/http'
 import {AUTH_STATUS} from '@/constants/enums'
+import { formatDateTime } from '@/utils/dateFormat'
 
 export default {
   components: {ImageUploader},
@@ -229,10 +230,7 @@ export default {
       this.dialogUserInfo = true;
     },
     formatDate(date) {
-      if (!date) return ''
-      const d = new Date(Number(date))
-      const pad = n => (n < 10 ? '0' + n : n)
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+      return formatDateTime(date, false, '')
     },
     async submitAnApplication() {
       if (!this.infoAddForm.name) { this.$message.warning('请填写姓名'); return }

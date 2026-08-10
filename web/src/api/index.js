@@ -385,6 +385,11 @@ export const markNotificationRead = (id) => {
     return http.put('/notifications/read/' + id)
 }
 
+// ===== 委托评价（大厅「赞/差」）=====
+export const addReview = (data) => {
+    return http.post('/reviews/addReviews', data)
+}
+
 // ===== 信用档案 =====
 export const getCreditProfile = () => {
     return http.get('/credit')

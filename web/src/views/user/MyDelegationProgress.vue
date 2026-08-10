@@ -50,6 +50,7 @@
 import { getTaskAndPublishUserInfoByTaskId } from '@/api/user.js'
     import { TASK_NODE_TYPES, getNodeMeta } from '@/utils/taskNode.js'
     import { SUCCESS_CODE } from '@/constants/http'
+    import { formatDateTime } from '@/utils/dateFormat'
     export default {
         name: 'MyDelegationProgress',
         data() {
@@ -111,10 +112,7 @@ import { getTaskAndPublishUserInfoByTaskId } from '@/api/user.js'
                 return record ? (record.location || '已打卡') : '未打卡'
             },
             formatDate(date) {
-                if (!date) return ''
-                const d = new Date(date)
-                const pad = n => (n < 10 ? '0' + n : n)
-                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+                return formatDateTime(date, false, '')
             }
         }
     }
