@@ -182,7 +182,6 @@ public class EasyExcelUtil {
      * @param response  HttpServletResponse
      * @param fileName  导出的文件名（无需后缀）
      * @param sheetName Sheet 名称
-     * @param title     标题
      * @param data      导出的数据列表
      * @param clazz     数据模型类
      * @param <T>       模型类型
@@ -190,7 +189,6 @@ public class EasyExcelUtil {
     public static <T> void exportExcel(HttpServletResponse response,
                                        String fileName,
                                        String sheetName,
-                                       String title,
                                        List<T> data,
                                        Class<T> clazz) {
         extracted(response, fileName, sheetName, data, clazz);
@@ -204,14 +202,7 @@ public class EasyExcelUtil {
             // 创建 WriteSheet
             WriteSheet writeSheet = EasyExcel.writerSheet(sheetName).build();
 
-            // 创建 WriteTable 用于设置标题
-            WriteTable writeTable = new WriteTable();
-            writeTable.setHead(Collections.singletonList(Collections.singletonList(title))); // 设置标题
-
-            // 先写入标题
-            excelWriter.write(Collections.emptyList(), writeSheet, writeTable);
-
-            // 再写入数据
+            // 写入数据
             excelWriter.write(data, writeSheet);
 
             // 关闭 ExcelWriter

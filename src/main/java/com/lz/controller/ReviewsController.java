@@ -51,7 +51,7 @@ public class ReviewsController {
 
         List<Reviews> reviewsList = reviewsService.exportExcel();
         reviewsList.replaceAll(review -> review == null ? new Reviews() : review);
-        EasyExcelUtil.exportExcel(response, "评论信息", "评论信息", "评论信息", reviewsList, Reviews.class);
+        EasyExcelUtil.exportExcel(response, "评论信息", "评论信息", reviewsList, Reviews.class);
         log.info("导出Excel成功");
     }
 

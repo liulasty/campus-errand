@@ -128,6 +128,7 @@ import {executeConfirmedRequest} from '@/utils/globalConfirmAction'
 import {SUCCESS_CODE} from '@/constants/http'
 import {AUTH_STATUS} from '@/constants/enums'
 import { formatDateTime } from '@/utils/dateFormat'
+import { saveAs } from 'file-saver'
 
 export default {
   components: {ImageUploader},

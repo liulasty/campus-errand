@@ -225,7 +225,7 @@ public class UsersController {
                 .isEnabled(u.getIsEnabled())
                 .createTime(u.getCreateTime())
                 .build()).collect(Collectors.toList());
-        EasyExcelUtil.exportExcel(response, "用户列表", "用户列表", "用户列表", rows, UserExportVO.class);
+        EasyExcelUtil.exportExcel(response, "用户列表", "用户列表", rows, UserExportVO.class);
     }
 
     /**
