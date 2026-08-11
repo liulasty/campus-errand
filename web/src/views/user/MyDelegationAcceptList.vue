@@ -60,56 +60,133 @@
             :current-page=queryParams.pageNum :page-sizes="[5, 7, 10, 15]" :page-size=queryParams.pageSize
             layout="total, sizes, prev, pager, next, jumper" :total="total" />
 
-        <!-- 添加或修改存储委托信息审核记录对话框 -->
-        <el-dialog :title="title" :visible.sync="open" width="550px" append-to-body>
-            <el-form ref="form" :model="form" label-width="110px">
-                <el-form-item label="发布者信息" prop="usersInfo">
-                    <el-form-item label="发布者名字" prop="name">
-                        {{form.usersInfo.name}}
-                    </el-form-item>
-                    <el-form-item label="发布者QQ" prop="qqNumber">
-                        {{form.usersInfo.qqNumber}}
-                    </el-form-item>
-                    <el-form-item label="发布者电话" prop="phoneNumber">
-                        {{form.usersInfo.phoneNumber}}
-                    </el-form-item>
-                    <el-form-item label="发布者身份" prop="userRole">
-                        {{form.usersInfo.userRole}}
-                    </el-form-item>
-                    <el-form-item label="发布者学号" prop="identityNo">
-                        {{form.usersInfo.identityNo}}
-                    </el-form-item>
-                    <el-form-item label="发布者实名" prop="authLevel">
-                        <el-tag v-if="form.usersInfo.authLevel >= 1" type="success" size="mini">L1 已实名</el-tag>
-                        <el-tag v-else type="info" size="mini">未实名</el-tag>
-                    </el-form-item>
-                </el-form-item>
-                <el-form-item label="委托内容" prop="task">
-                    <el-form-item label="委托任务内容" prop="name">
-                        {{form.task.description}}
-                    </el-form-item>
-                    <el-form-item label="委托任务地点" prop="qqNumber">
-                        {{form.task.location}}
-                    </el-form-item>
-                    <el-form-item label="委托类型" prop="phoneNumber">
-                        {{form.task.type}}
-                    </el-form-item>
-                    <el-form-item label="委托截止时间" prop="userRole">
-                        {{ form.task.endTime | dateTime }}
-                    </el-form-item>
-                    <el-form-item label="委托金额" prop="money">
-                        {{form.task.money}} 元
-                    </el-form-item>
-                </el-form-item>
-                <el-form-item label="留言" prop="delegationStr">
-                    {{ form.acceptMessage}}
-                </el-form-item>
-            </el-form>
-            <el-card v-show="form.task.status === TASK_STATUS.ACCEPTED" class="box-card node-card" style="margin-top: 10px;">
-                <div slot="header" class="clearfix">
-                    <span>履约打卡</span>
-                    <el-button style="float: right; padding: 3px 0" type="text" icon="el-icon-view"
-                        @click="viewProgress">进度详情</el-button>
+        <!-- 委托详情对话框 -->
+        <el-dialog :visible.sync="open" top="4vh" width="940px" :close-on-click-modal="false"
+            custom-class="ce-detail-dialog">
+            <div slot="title" class="ce-detail-header">
+                <div class="ce-detail-header-left">
+                    <span class="ce-detail-title-mark"></span>
+                    <span class="ce-detail-title">委托详情</span>
+                </div>
+                <div class="ce-detail-header-right">
+                    <span class="ce-detail-no">#{{ form.task.taskId }}</span>
+                    <el-tag :type="statusTagType" effect="dark" size="small">{{ form.task.status }}</el-tag>
+                </div>
+            </div>
+
+            <!-- 发布者委托统计 -->
+            <div class="ce-stat-row">
+                <div class="ce-stat-item">
+                    <div class="ce-stat-icon is-published"><i class="el-icon-document"></i></div>
+                    <div class="ce-stat-meta">
+                        <div class="ce-stat-num">{{ form.taskPublishedTotal || 0 }}</div>
+                        <div class="ce-stat-label">累计发布</div>
+                    </div>
+                </div>
+                <div class="ce-stat-item">
+                    <div class="ce-stat-icon is-accepted"><i class="el-icon-circle-check"></i></div>
+                    <div class="ce-stat-meta">
+                        <div class="ce-stat-num">{{ form.taskAcceptedTotal || 0 }}</div>
+                        <div class="ce-stat-label">已完成</div>
+                    </div>
+                </div>
+                <div class="ce-stat-item">
+                    <div class="ce-stat-icon is-overdue"><i class="el-icon-time"></i></div>
+                    <div class="ce-stat-meta">
+                        <div class="ce-stat-num">{{ form.taskOverdueTotal || 0 }}</div>
+                        <div class="ce-stat-label">已过期</div>
+                    </div>
+                </div>
+                <div class="ce-stat-item">
+                    <div class="ce-stat-icon is-canceled"><i class="el-icon-close-notification"></i></div>
+                    <div class="ce-stat-meta">
+                        <div class="ce-stat-num">{{ form.taskCanceledTotal || 0 }}</div>
+                        <div class="ce-stat-label">已取消</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 委托信息 -->
+            <div class="ce-section">
+                <div class="ce-section-title">
+                    <i class="el-icon-tickets"></i><span>委托信息</span>
+                </div>
+                <div class="ce-info-grid">
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">委托类型</span>
+                        <span class="ce-info-value">{{ form.task.type }}</span>
+                    </div>
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">任务地点</span>
+                        <span class="ce-info-value"><i class="el-icon-location-outline ce-info-ico"></i>{{ form.task.location }}</span>
+                    </div>
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">发布时间</span>
+                        <span class="ce-info-value">{{ form.task.startTime | dateTime }}</span>
+                    </div>
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">截止时间</span>
+                        <span class="ce-info-value">{{ form.task.endTime | dateTime }}</span>
+                    </div>
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">委托金额</span>
+                        <span class="ce-info-value" :class="{ 'is-negotiable': form.task.money == null }">{{ moneyText(form.task.money) }}</span>
+                    </div>
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">任务编号</span>
+                        <span class="ce-info-value">{{ form.task.taskId }}</span>
+                    </div>
+                </div>
+                <div class="ce-desc">
+                    <span class="ce-info-label">委托内容</span>
+                    <span class="ce-desc-text">{{ form.task.description }}</span>
+                </div>
+            </div>
+
+            <!-- 发布者信息 -->
+            <div class="ce-section">
+                <div class="ce-section-title">
+                    <i class="el-icon-user"></i><span>发布者信息</span>
+                </div>
+                <div class="ce-publisher">
+                    <div class="ce-applicant-avatar" :class="avatarClass(form.usersInfo.userRoleEn)">{{ avatarText(form.usersInfo.name) }}</div>
+                    <div class="ce-publisher-main">
+                        <div class="ce-publisher-top">
+                            <span class="ce-publisher-name">{{ form.usersInfo.name }}</span>
+                            <el-tag v-if="form.usersInfo.authLevel >= 1" type="success" size="mini">L1 已实名</el-tag>
+                            <el-tag v-else type="info" size="mini">未实名</el-tag>
+                            <span class="ce-publisher-role">{{ form.usersInfo.userRole }}</span>
+                        </div>
+                        <div class="ce-publisher-meta">
+                            <span class="ce-applicant-stat"><i class="el-icon-postcard"></i>{{ form.usersInfo.identityNo }}</span>
+                            <span v-if="form.usersInfo.phoneNumber" class="ce-applicant-stat"><i class="el-icon-phone"></i>{{ form.usersInfo.phoneNumber }}</span>
+                            <span v-if="form.usersInfo.qqNumber" class="ce-applicant-stat"><i class="el-icon-chat-dot-round"></i>{{ form.usersInfo.qqNumber }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 我的申请 -->
+            <div class="ce-section">
+                <div class="ce-section-title">
+                    <i class="el-icon-edit-outline"></i><span>我的申请</span>
+                    <el-tag :type="acceptStatusTagType" size="mini" class="ce-section-count">{{ form.acceptRecord.status || '—' }}</el-tag>
+                </div>
+                <div class="ce-apply-box">
+                    <div class="ce-apply-msg"><i class="el-icon-chat-dot-square"></i>{{ form.acceptRecord.str || '（无留言）' }}</div>
+                    <div class="ce-apply-times">
+                        <span class="ce-applicant-stat"><i class="el-icon-time"></i>申请时间 {{ form.acceptRecord.acceptTime | dateTime }}</span>
+                        <span v-if="form.acceptRecord.adoptTime" class="ce-applicant-stat"><i class="el-icon-circle-check"></i>采纳时间 {{ form.acceptRecord.adoptTime | dateTime }}</span>
+                        <span class="ce-applicant-stat"><i class="el-icon-postcard"></i>申请编号 {{ form.acceptRecord.acceptRecordId }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 履约打卡 -->
+            <div v-if="form.task.status === TASK_STATUS.ACCEPTED" class="ce-section">
+                <div class="ce-section-title">
+                    <i class="el-icon-location"></i><span>履约打卡</span>
+                    <el-button type="text" size="mini" class="ce-progress-link" @click="viewProgress">进度详情 →</el-button>
                 </div>
                 <div class="node-buttons">
                     <el-button
@@ -122,17 +199,16 @@
                         {{ node.label }}
                     </el-button>
                 </div>
-            </el-card>
+            </div>
+
             <div slot="footer" class="dialog-footer">
                 <div v-if="Array.isArray(operation.title)">
-                    <!-- 多个按钮的情况 -->
                     <el-button v-for="(item, index) in operation.title" :type="operation.type[index]" :key="index"
                         @click="handleButtonClick(operation.click[index])">
                         {{ item }}
                     </el-button>
                 </div>
                 <div v-else>
-                    <!-- 单个按钮的情况 -->
                     <el-button :type="operation.type" @click="handleButtonClick(operation.click)">{{ operation.title
                         }}</el-button>
                 </div>
@@ -170,7 +246,7 @@
 <script>
     import { getTaskCategories, addTaskNodeUpdate, uploadImg, listDelegateUpdateRecords } from '@/api/'
     import { TASK_NODE_TYPES, MOCK_LOCATION, getNodeMeta } from '@/utils/taskNode.js'
-    import { acceptDelegationList, queryTheEntrustmentDetailsByEntrustmentNumber, acceptCommission, cancelAcceptorByAcceptor, getTaskAcceptById } from '@/api/user.js'
+    import { acceptDelegationList, acceptCommission, cancelAcceptorByAcceptor, getTaskAndPublishUserInfoByTaskId } from '@/api/user.js'
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction.js'
     import { ACCEPT_STATUS, TASK_STATUS } from '@/constants/enums'
     export default {
@@ -202,8 +278,6 @@
                 total: 0,
                 // 存储委托记录表格数据
                 viewOnGoingList: [],
-                // 弹出层标题
-                title: "",
                 // 是否显示弹出层
                 open: false,
                 // 查询参数
@@ -294,7 +368,7 @@
                         name: "",
                     },
                     task: {},
-                    acceptMessage: "",
+                    acceptRecord: {},
                 },
             };
         },
@@ -305,6 +379,23 @@
         },
         mounted() {
             this.handleQuery();
+        },
+        computed: {
+            statusTagType() {
+                const map = {
+                    [TASK_STATUS.ONGOING]: 'success',
+                    [TASK_STATUS.ACCEPTED]: 'warning',
+                    [TASK_STATUS.COMPLETED]: 'success',
+                    [TASK_STATUS.EXPIRED]: 'info',
+                    [TASK_STATUS.CANCELLED]: 'danger',
+                    [TASK_STATUS.UNFINISHED]: 'danger',
+                    [TASK_STATUS.DRAFT]: 'info'
+                }
+                return map[this.form.task.status] || 'info'
+            },
+            acceptStatusTagType() {
+                return this.acceptStatusTagTypeOf(this.form.acceptRecord.status)
+            }
         },
         methods: {
             /** 获取委托类型操作 */
@@ -370,32 +461,26 @@
             handleView(row) {
                 console.log(row);
                 this.delegationStr = ""
-                getTaskAcceptById(row.taskId).then(response => {
+                getTaskAndPublishUserInfoByTaskId(row.taskId).then(response => {
                     if (response.data.code === 1) {
-                        console.log("接收记录详情", response.data.data);
-                        this.form.acceptMessage = response.data.data.str;
-                        queryTheEntrustmentDetailsByEntrustmentNumber(row.taskId).then(response => {
-                            if (response.data.code === 1) {
-                                this.form.task = response.data.data.task;
-                                this.form.usersInfo = response.data.data.usersInfo;
-                                this.form.usersInfo.userRole = this.identity[this.form.usersInfo.userRole];
-                                this.form.task.type = this.taskType[`${this.form.task.taskType}`];
-                                this.operation = this.operations[`${row.status}`];
-                                this.form.id = row.id;
-                                console.log("委托接收记录详情", this.form);
-                                if (this.form.task.status === TASK_STATUS.ACCEPTED) {
-                                    this.loadTaskUpdates(this.form.task.taskId);
-                                }
-                                this.open = true;
-                            } else {
-                                this.$message(
-                                    {
-                                        message: response.data.msg,
-                                        type: 'error'
-                                    }
-                                )
-                            }
-                        });
+                        const data = response.data.data;
+                        this.form.task = data.task;
+                        this.form.usersInfo = data.usersInfo;
+                        this.form.acceptRecord = data.taskAcceptRecords || {};
+                        this.form.id = (data.taskAcceptRecords && data.taskAcceptRecords.acceptRecordId) || row.id;
+                        this.form.taskPublishedTotal = data.taskPublishedTotal;
+                        this.form.taskAcceptedTotal = data.taskAcceptedTotal;
+                        this.form.taskOverdueTotal = data.taskOverdueTotal;
+                        this.form.taskCanceledTotal = data.taskCanceledTotal;
+                        this.form.usersInfo.userRoleEn = data.usersInfo.userRole;
+                        this.form.usersInfo.userRole = this.identity[data.usersInfo.userRole];
+                        this.form.task.type = this.taskType[`${this.form.task.taskType}`];
+                        this.operation = this.operations[`${row.status}`];
+                        console.log("委托接收记录详情", this.form);
+                        if (this.form.task.status === TASK_STATUS.ACCEPTED) {
+                            this.loadTaskUpdates(this.form.task.taskId);
+                        }
+                        this.open = true;
                     } else {
                         this.$message(
                             {
@@ -403,11 +488,34 @@
                                 type: 'error'
                             }
                         )
-                        return;
                     }
                 })
 
 
+            },
+            moneyText(money) {
+                if (money === null || money === undefined) return '面议'
+                if (Number(money) === 0) return '免费'
+                return '¥ ' + Number(money).toFixed(2)
+            },
+            avatarText(name) {
+                return name ? String(name).charAt(0) : '?'
+            },
+            avatarClass(userType) {
+                if (userType === 'student') return 'is-student'
+                if (userType === 'teacher') return 'is-teacher'
+                return 'is-admin'
+            },
+            identityTagType(userType) {
+                if (userType === 'student') return 'success'
+                if (userType === 'teacher') return 'warning'
+                return 'info'
+            },
+            acceptStatusTagTypeOf(status) {
+                if (status === ACCEPT_STATUS.PENDING) return 'warning'
+                if (status === ACCEPT_STATUS.CHECKED) return 'success'
+                if (status === ACCEPT_STATUS.EXPIRED) return 'danger'
+                return 'info'
             },
             handleSizeChange(val) {
                 console.log(`每页 ${val} 条`);
@@ -581,4 +689,79 @@
         display: block;
         margin-bottom: 4px;
     }
+
+    /* ===== 发布者信息卡片 ===== */
+    .ce-publisher {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .ce-publisher-main {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ce-publisher-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .ce-publisher-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--ce-text);
+    }
+
+    .ce-publisher-role {
+        font-size: 12px;
+        color: var(--ce-text-2);
+        margin-left: auto;
+    }
+
+    .ce-publisher-meta {
+        display: flex;
+        gap: 16px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* ===== 我的申请 ===== */
+    .ce-apply-box {
+        background: #fafcfc;
+        border: 1px solid var(--ce-border);
+        border-radius: var(--ce-radius);
+        padding: 12px 14px;
+    }
+
+    .ce-apply-msg {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        font-size: 14px;
+        color: var(--ce-text);
+        line-height: 1.6;
+        word-break: break-all;
+    }
+
+    .ce-apply-msg i {
+        color: var(--ce-primary);
+        margin-top: 3px;
+    }
+
+    .ce-apply-times {
+        display: flex;
+        gap: 18px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    /* ===== 履约打卡 ===== */
+    .ce-progress-link {
+        margin-left: auto;
+        color: var(--ce-primary);
+    }
+
 </style>

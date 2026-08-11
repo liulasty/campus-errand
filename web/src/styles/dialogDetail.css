@@ -1,0 +1,329 @@
+/* ============================================================
+ * 委托详情弹窗共享样式（发布者 / 接收者 查看详情共用）
+ * 依赖 theme.less 的 --ce-* 变量；类名以 ce- 前缀避免污染全局
+ * ============================================================ */
+
+.ce-detail-dialog .el-dialog__body {
+    padding: 6px 24px 14px;
+    max-height: 74vh;
+    overflow-y: auto;
+}
+
+/* ---------- 标题栏 ---------- */
+.ce-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 8px;
+}
+
+.ce-detail-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ce-detail-title-mark {
+    width: 4px;
+    height: 18px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--ce-primary), var(--ce-accent));
+}
+
+.ce-detail-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ce-text);
+}
+
+.ce-detail-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ce-detail-no {
+    font-size: 12px;
+    color: var(--ce-text-2);
+    background: #f3f5f7;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-family: 'Consolas', 'Menlo', monospace;
+}
+
+/* ---------- 统计条 ---------- */
+.ce-stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 14px 0 18px;
+}
+
+.ce-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid var(--ce-border);
+    border-radius: var(--ce-radius);
+    box-shadow: var(--ce-shadow);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.ce-stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ce-shadow-md);
+}
+
+.ce-stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.ce-stat-icon.is-published { background: linear-gradient(135deg, #0e7c66, #34a88a); }
+.ce-stat-icon.is-accepted { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.ce-stat-icon.is-overdue { background: linear-gradient(135deg, #94a3b8, #cbd5e1); }
+.ce-stat-icon.is-canceled { background: linear-gradient(135deg, #d64545, #ef7a6a); }
+
+.ce-stat-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.ce-stat-num {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--ce-text);
+    font-family: 'Consolas', 'Menlo', monospace;
+}
+
+.ce-stat-label {
+    font-size: 12px;
+    color: var(--ce-text-2);
+    margin-top: 2px;
+}
+
+/* ---------- 分区卡片 ---------- */
+.ce-section {
+    background: #fff;
+    border: 1px solid var(--ce-border);
+    border-radius: var(--ce-radius);
+    box-shadow: var(--ce-shadow);
+    padding: 14px 18px 16px;
+    margin-bottom: 14px;
+}
+
+.ce-section-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ce-text);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    border-bottom: 1px dashed var(--ce-border);
+}
+
+.ce-section-title i {
+    color: var(--ce-primary);
+    font-size: 16px;
+}
+
+.ce-section-count {
+    margin-left: 2px;
+}
+
+/* ---------- 信息网格 ---------- */
+.ce-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px 24px;
+}
+
+.ce-info-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.ce-info-label {
+    font-size: 12px;
+    color: var(--ce-text-2);
+    flex-shrink: 0;
+    min-width: 46px;
+}
+
+.ce-info-value {
+    font-size: 14px;
+    color: var(--ce-text);
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.ce-info-value.is-negotiable {
+    color: var(--ce-accent);
+    font-weight: 600;
+}
+
+.ce-info-ico {
+    color: var(--ce-primary);
+    margin-right: 2px;
+}
+
+.ce-desc {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--ce-border);
+}
+
+.ce-desc .ce-info-label {
+    min-width: 46px;
+}
+
+.ce-desc-text {
+    font-size: 14px;
+    color: var(--ce-text);
+    line-height: 1.6;
+    word-break: break-all;
+}
+
+/* ---------- 申请者 / 接单卡片 ---------- */
+.ce-applicant {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid var(--ce-border);
+    border-radius: var(--ce-radius);
+    margin-bottom: 10px;
+    background: #fafcfc;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.ce-applicant:hover {
+    border-color: #bfe0d8;
+    box-shadow: var(--ce-shadow);
+}
+
+.ce-applicant-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.ce-applicant-avatar.is-student { background: linear-gradient(135deg, #0e7c66, #2ba585); }
+.ce-applicant-avatar.is-teacher { background: linear-gradient(135deg, #f59e0b, #f8b53a); }
+.ce-applicant-avatar.is-admin { background: linear-gradient(135deg, #5b6472, #7c8798); }
+
+.ce-applicant-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.ce-applicant-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ce-applicant-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ce-text);
+}
+
+.ce-applicant-time {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--ce-text-2);
+}
+
+.ce-applicant-msg {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #4b5563;
+    background: #fff;
+    border: 1px solid var(--ce-border);
+    border-left: 3px solid var(--ce-primary);
+    border-radius: 6px;
+    padding: 7px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    word-break: break-all;
+}
+
+.ce-applicant-msg i {
+    color: var(--ce-primary);
+    flex-shrink: 0;
+}
+
+.ce-applicant-foot {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.ce-applicant-stat {
+    font-size: 12px;
+    color: var(--ce-text-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ce-applicant-stat i {
+    color: var(--ce-accent);
+}
+
+.ce-applicant-action {
+    flex-shrink: 0;
+}
+
+/* ---------- 空状态 ---------- */
+.ce-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 28px 0;
+    color: var(--ce-text-2);
+    font-size: 13px;
+}
+
+.ce-empty i {
+    font-size: 34px;
+    color: #cbd5e1;
+}
+
+/* ---------- 时间线 / 评价 ---------- */
+.ce-timeline-wrap {
+    padding-left: 4px;
+}
+
+.ce-rate-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}

@@ -244,6 +244,15 @@ public class PublisherController {
      */
     @GetMapping("/getTask/{id}")
     public Result<?> getTask(@PathVariable("id") Long id) throws MyException {
+        Task byId = taskService.getById(id);
+        if (byId == null) {
+            throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
+        // 信息安全：发布者详情含全部申请者，仅发布者本人可查看
+        Users current = getCurrentUser();
+        if (current == null || !current.getUserId().equals(byId.getOwnerId())) {
+            throw new MyException(MessageConstants.USER_INFO_ERROR);
+        }
         TaskAndUserInfoVO taskAndUserInfo = taskService.publisherSearchTaskAndPublisherInfo(id);
 
         return Result.success(taskAndUserInfo);

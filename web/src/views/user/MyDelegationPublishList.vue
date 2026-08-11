@@ -64,107 +64,136 @@
             layout="total, sizes, prev, pager, next, jumper" :total="total" />
 
         <!-- 处理接收委托信息审核框 -->
-        <el-dialog :title="title" :visible.sync="open" top="10px" width="750px">
-            <div>
-
+        <el-dialog :visible.sync="open" top="4vh" width="940px" :close-on-click-modal="false"
+            custom-class="ce-detail-dialog">
+            <div slot="title" class="ce-detail-header">
+                <div class="ce-detail-header-left">
+                    <span class="ce-detail-title-mark"></span>
+                    <span class="ce-detail-title">委托详情</span>
+                </div>
+                <div class="ce-detail-header-right">
+                    <span class="ce-detail-no">#{{ form.task.taskId }}</span>
+                    <el-tag :type="statusTagType" effect="dark" size="small">{{ form.task.status }}</el-tag>
+                </div>
             </div>
-            <el-descriptions class="margin-top" title="委托内容" :column="3" border>
-                <el-descriptions-item>
-                    <template slot="label">
-                        <i class="el-icon-user"></i>
-                        委托任务内容
-                    </template>
-                    {{form.task.description}}
-                </el-descriptions-item>
-                <el-descriptions-item>
-                    <template slot="label">
-                        <i class="el-icon-mobile-phone"></i>
-                        委托任务地点
-                    </template>
-                    {{form.task.location}}
-                </el-descriptions-item>
-                <el-descriptions-item>
-                    <template slot="label">
-                        <i class="el-icon-location-outline"></i>
-                        委托类型
-                    </template>
-                    {{form.task.type}}
-                </el-descriptions-item>
-                <el-descriptions-item>
-                    <template slot="label">
-                        <i class="el-icon-tickets"></i>
-                        委托发布时间
-                    </template>
-                    <el-tag size="small">{{ form.task.startTime | dateTime }}</el-tag>
-                </el-descriptions-item>
-                <el-descriptions-item>
-                    <template slot="label">
-                        <i class="el-icon-office-building"></i>
-                        委托截止时间
-                    </template>
-                    <el-tag size="small">{{ form.task.endTime | dateTime }}</el-tag>
-                </el-descriptions-item>
-                <el-descriptions-item>
-                    <template slot="label">
-                        <i class="el-icon-money"></i>
-                        委托金额
-                    </template>
-                    {{form.task.money}} 元
-                </el-descriptions-item>
-            </el-descriptions>
-            <el-card v-show="form.task.status === TASK_STATUS.ONGOING" class="box-card" style="margin-top: 10px;">
-                <div style="height: 250px;" v-show="form.taskAcceptRecordsStatus">
-                    <div slot="header" class="clearfix" style="margin-bottom: 5px;">
-                        <span>该委托接收情况</span>
-                        <!-- <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button> -->
+
+            <!-- 发布者委托统计 -->
+            <div class="ce-stat-row">
+                <div class="ce-stat-item">
+                    <div class="ce-stat-icon is-published"><i class="el-icon-document"></i></div>
+                    <div class="ce-stat-meta">
+                        <div class="ce-stat-num">{{ form.taskPublishedTotal || 0 }}</div>
+                        <div class="ce-stat-label">累计发布</div>
                     </div>
-                    <ul class="infinite-list" style="height: 250px;overflow:auto;margin-bottom: 15px; ">
-                        <li v-for="record in form.taskAcceptRecords" class="infinite-list-item">
-                            <el-descriptions :column="6" direction="vertical" border>
-                                <el-descriptions-item label="用户" labelStyle="width: 100px">
-                                    {{record.userName}}
-                                </el-descriptions-item>
-
-
-                                <el-descriptions-item label="身份" labelStyle="width: 100px">
-                                    <el-tag size="small">{{record.userType}}</el-tag>
-                                </el-descriptions-item>
-                                <el-descriptions-item label="留言" labelStyle="width: 150px">
-                                    {{record.taskAcceptRecords.str}}</el-tag>
-                                </el-descriptions-item>
-                                <el-descriptions-item label="接收时间" labelStyle="width: 200px"
-                                    :contentStyle="{'text-align': 'left'}">
-                                    {{ record.taskAcceptRecords.acceptTime | dateTime }}
-                                </el-descriptions-item>
-                                <el-descriptions-item label="留言者完成委托情况" labelStyle="width: 100px">
-                                    <el-tooltip class="item" effect="dark" :content="record.entrustedCompletionStatus"
-                                        placement="top">
-                                        <el-button type="info">查看</el-button>
-                                    </el-tooltip>
-                                </el-descriptions-item>
-                                <el-descriptions-item label="操作" labelStyle="width: 100px"
-                                    :contentStyle="{'text-align': 'left'}">
-                                    <el-button type="primary" size="small"
-                                        @click="handleAccept(record.taskAcceptRecords.id)">采取</el-button>
-                                </el-descriptions-item>
-                            </el-descriptions>
-                        </li>
-                    </ul>
                 </div>
-                <div style="height: 250px;" v-show="!form.taskAcceptRecordsStatus">
-                    <loadingVue text="该为委托目前无人接收"></loadingVue>
+                <div class="ce-stat-item">
+                    <div class="ce-stat-icon is-accepted"><i class="el-icon-circle-check"></i></div>
+                    <div class="ce-stat-meta">
+                        <div class="ce-stat-num">{{ form.taskAcceptedTotal || 0 }}</div>
+                        <div class="ce-stat-label">已完成</div>
+                    </div>
                 </div>
-            </el-card>
+                <div class="ce-stat-item">
+                    <div class="ce-stat-icon is-overdue"><i class="el-icon-time"></i></div>
+                    <div class="ce-stat-meta">
+                        <div class="ce-stat-num">{{ form.taskOverdueTotal || 0 }}</div>
+                        <div class="ce-stat-label">已过期</div>
+                    </div>
+                </div>
+                <div class="ce-stat-item">
+                    <div class="ce-stat-icon is-canceled"><i class="el-icon-close-notification"></i></div>
+                    <div class="ce-stat-meta">
+                        <div class="ce-stat-num">{{ form.taskCanceledTotal || 0 }}</div>
+                        <div class="ce-stat-label">已取消</div>
+                    </div>
+                </div>
+            </div>
 
-            <el-card v-show="form.task.status === TASK_STATUS.ACCEPTED || form.task.status === TASK_STATUS.COMPLETED" class="box-card" style="margin-top: 10px;">
-                <div slot="header" class="clearfix">
-                    <span>任务动态</span>
+            <!-- 委托信息 -->
+            <div class="ce-section">
+                <div class="ce-section-title">
+                    <i class="el-icon-tickets"></i><span>委托信息</span>
                 </div>
-                <div style="max-height: 200px; overflow-y: auto;">
-                    <el-timeline>
-                        <el-timeline-item
-                            v-for="(activity, index) in taskUpdates"
-                            :key="index"
+                <div class="ce-info-grid">
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">委托类型</span>
+                        <span class="ce-info-value">{{ form.task.type }}</span>
+                    </div>
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">任务地点</span>
+                        <span class="ce-info-value"><i class="el-icon-location-outline ce-info-ico"></i>{{ form.task.location }}</span>
+                    </div>
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">发布时间</span>
+                        <span class="ce-info-value">{{ form.task.startTime | dateTime }}</span>
+                    </div>
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">截止时间</span>
+                        <span class="ce-info-value">{{ form.task.endTime | dateTime }}</span>
+                    </div>
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">委托金额</span>
+                        <span class="ce-info-value" :class="{ 'is-negotiable': form.task.money == null }">{{ moneyText(form.task.money) }}</span>
+                    </div>
+                    <div class="ce-info-item">
+                        <span class="ce-info-label">任务编号</span>
+                        <span class="ce-info-value">{{ form.task.taskId }}</span>
+                    </div>
+                </div>
+                <div class="ce-desc">
+                    <span class="ce-info-label">委托内容</span>
+                    <span class="ce-desc-text">{{ form.task.description }}</span>
+                </div>
+            </div>
+
+            <!-- 接单情况（发布中） -->
+            <div v-if="form.task.status === TASK_STATUS.ONGOING" class="ce-section">
+                <div class="ce-section-title">
+                    <i class="el-icon-user"></i><span>接单情况</span>
+                    <el-tag size="mini" type="info" class="ce-section-count">{{ form.taskAcceptRecords.length }}</el-tag>
+                </div>
+                <template v-if="form.taskAcceptRecords.length">
+                    <div v-for="record in form.taskAcceptRecords" :key="record.taskAcceptRecords.acceptRecordId"
+                        class="ce-applicant">
+                        <div class="ce-applicant-avatar" :class="avatarClass(record.userType)">{{ avatarText(record.userName) }}</div>
+                        <div class="ce-applicant-body">
+                            <div class="ce-applicant-top">
+                                <span class="ce-applicant-name">{{ record.userName }}</span>
+                                <el-tag size="mini" :type="identityTagType(record.userType)">{{ identity[record.userType] || record.userType }}</el-tag>
+                                <span class="ce-applicant-time">{{ record.taskAcceptRecords.acceptTime | dateTime }}</span>
+                            </div>
+                            <div class="ce-applicant-msg">
+                                <i class="el-icon-chat-dot-square"></i>
+                                {{ record.taskAcceptRecords.str || '（无留言）' }}
+                            </div>
+                            <div class="ce-applicant-foot">
+                                <span class="ce-applicant-stat"><i class="el-icon-medal"></i>已完成 {{ record.taskAccomplishCount }} 次</span>
+                                <span class="ce-applicant-stat"><i class="el-icon-star-on"></i>评分 {{ record.taskAccomplishGrade }}</span>
+                            </div>
+                        </div>
+                        <div class="ce-applicant-action">
+                            <el-button v-if="record.taskAcceptRecords.status === ACCEPT_STATUS.PENDING" type="primary" size="small"
+                                @click="handleAccept(record.taskAcceptRecords.acceptRecordId)">
+                                采取
+                            </el-button>
+                            <el-tag v-else size="small">{{ record.taskAcceptRecords.status }}</el-tag>
+                        </div>
+                    </div>
+                </template>
+                <div v-else class="ce-empty">
+                    <i class="el-icon-s-custom"></i><span>该委托目前无人接收</span>
+                </div>
+            </div>
+
+            <!-- 任务动态 -->
+            <div v-if="form.task.status === TASK_STATUS.ACCEPTED || form.task.status === TASK_STATUS.COMPLETED"
+                class="ce-section">
+                <div class="ce-section-title">
+                    <i class="el-icon-data-line"></i><span>任务动态</span>
+                </div>
+                <div class="ce-timeline-wrap">
+                    <el-timeline v-if="taskUpdates.length">
+                        <el-timeline-item v-for="(activity, index) in taskUpdates" :key="index"
                             :timestamp="activity.updateTime | dateTime"
                             :color="nodeMeta(activity.updateType) ? nodeMeta(activity.updateType).color : '#c0c4cc'">
                             <template v-if="nodeMeta(activity.updateType)">
@@ -186,43 +215,33 @@
                             </template>
                         </el-timeline-item>
                     </el-timeline>
-                    <div v-if="taskUpdates.length === 0" style="text-align: center; color: #909399;">暂无动态</div>
+                    <div v-else class="ce-empty">
+                        <i class="el-icon-info"></i><span>暂无动态</span>
+                    </div>
                 </div>
-            </el-card>
+            </div>
 
-            <el-card v-show="form.task.status === TASK_STATUS.ACCEPTED" class="box-card" style="margin-top: 10px;">
-
-                <div slot="header" class="clearfix" style="margin-bottom: 5px;">
-                    <el-rate v-model="taskRateValue" show-text text-color="#ff9900">
-                    </el-rate>
+            <!-- 完成评价 -->
+            <div v-if="form.task.status === TASK_STATUS.ACCEPTED || form.task.status === TASK_STATUS.COMPLETED"
+                class="ce-section">
+                <div class="ce-section-title">
+                    <i class="el-icon-star-on"></i><span>完成评价</span>
+                </div>
+                <div class="ce-rate-box">
+                    <el-rate v-model="taskRateValue" show-text text-color="#f59e0b"></el-rate>
                     <el-input type="textarea" :autosize="{ minRows: 2, maxRows: 6}" placeholder="请输入完成委托评价"
-                        v-model="completeTheEntrustedEvaluation">
-                    </el-input>
+                        v-model="completeTheEntrustedEvaluation"></el-input>
                 </div>
-
-            </el-card>
-            <el-card v-show="form.task.status === TASK_STATUS.COMPLETED" class="box-card" style="margin-top: 10px;">
-
-                <div slot="header" class="clearfix" style="margin-bottom: 5px;">
-                    <el-rate v-model="taskRateValue" show-text text-color="#ff9900">
-                    </el-rate>
-                    <el-input type="textarea" :autosize="{ minRows: 2, maxRows: 6}" placeholder="请输入完成委托评价"
-                        v-model="completeTheEntrustedEvaluation">
-                    </el-input>
-                </div>
-
-            </el-card>
+            </div>
 
             <div slot="footer" class="dialog-footer">
                 <div v-if="Array.isArray(operation.title)">
-                    <!-- 多个按钮的情况 -->
                     <el-button v-for="(item, index) in operation.title" :type="operation.type[index]" :key="index"
                         @click="handleButtonClick(operation.click[index])">
                         {{ item }}
                     </el-button>
                 </div>
                 <div v-else>
-                    <!-- 单个按钮的情况 -->
                     <el-button :type="operation.type" @click="handleButtonClick(operation.click)">{{ operation.title
                         }}</el-button>
                 </div>
@@ -238,16 +257,13 @@
         cancelPublishUser, updateDelegationCompleted
     } from '@/api/user.js'
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction.js'
-    import loadingVue from '@/components/Loading.vue'
-    import { TASK_STATUS } from '@/constants/enums'
+    import { TASK_STATUS, ACCEPT_STATUS } from '@/constants/enums'
     export default {
-        components: {
-            loadingVue
-        },
         data() {
 
             return {
                 TASK_STATUS,
+                ACCEPT_STATUS,
                 taskUpdates: [],
                 //委托描述
                 descriptions: "",
@@ -262,8 +278,6 @@
                 total: 0,
                 // 存储委托记录表格数据
                 viewOnGoingList: [],
-                // 弹出层标题
-                title: "",
                 // 是否显示弹出层
                 open: false,
                 // 查询参数
@@ -377,6 +391,20 @@
         mounted() {
             this.handleQuery();
         },
+        computed: {
+            statusTagType() {
+                const map = {
+                    [TASK_STATUS.ONGOING]: 'success',
+                    [TASK_STATUS.ACCEPTED]: 'warning',
+                    [TASK_STATUS.COMPLETED]: 'success',
+                    [TASK_STATUS.EXPIRED]: 'info',
+                    [TASK_STATUS.CANCELLED]: 'danger',
+                    [TASK_STATUS.UNFINISHED]: 'danger',
+                    [TASK_STATUS.DRAFT]: 'info'
+                }
+                return map[this.form.task.status] || 'info'
+            }
+        },
         methods: {
             /** 获取委托类型操作 */
             handleType() {
@@ -464,7 +492,6 @@
                             this.getTaskUpdates(this.form.task.taskId);
                         }
                         
-                        this.getDelegationAcceptListLength();
                         this.open = true;
                     } else {
                         this.$message(
@@ -492,16 +519,6 @@
             nodeMeta(updateType) {
                 return getNodeMeta(updateType);
             },
-            getDelegationAcceptListLength() {
-
-                if (this.form.taskAcceptRecords.length <= 0) {
-
-                    this.form.taskAcceptRecordsStatus = false;
-                } else {
-                    console.log("该委托接收记录数", this.form.taskAcceptRecords.length, this.form.taskAcceptRecords.length === 0);
-                    this.form.taskAcceptRecordsStatus = true;
-                }
-            },
             handleSizeChange(val) {
                 console.log(`每页 ${val} 条`);
                 this.queryParams.pageSize = val
@@ -527,6 +544,24 @@
                 this[actionName]()
                 // this[actionName]() 或者 this.$emit(actionName)
                 // 具体实现取决于您的项目需求和上下文
+            },
+            moneyText(money) {
+                if (money === null || money === undefined) return '面议'
+                if (Number(money) === 0) return '免费'
+                return '¥ ' + Number(money).toFixed(2)
+            },
+            avatarText(name) {
+                return name ? String(name).charAt(0) : '?'
+            },
+            avatarClass(userType) {
+                if (userType === 'student') return 'is-student'
+                if (userType === 'teacher') return 'is-teacher'
+                return 'is-admin'
+            },
+            identityTagType(userType) {
+                if (userType === 'student') return 'success'
+                if (userType === 'teacher') return 'warning'
+                return 'info'
             },
             handleAccept(id) {
                 executeConfirmedRequest(confirmTheRecipient, id, "是否将此委托托付给该接收者", "确认接受委托者", "确认成功,等待接收者完成委托任务", "确认失败");
@@ -624,7 +659,4 @@
         border: 1px solid #ebeef5;
     }
 
-    /* .el-dialog__body {
-        padding: 10px 30px;
-    } */
 </style>

@@ -627,41 +627,47 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         List<TaskAcceptRecords> records = taskAcceptRecordsMapper
                 .selectList(new QueryWrapper<TaskAcceptRecords>().eq("taskId", id));
 
+        TaskAndUserInfoVO result;
         if (records.size() == 0) {
-            return new TaskAndUserInfoVO(task, usersInfo);
-        }
-        ArrayList<TaskAcceptRecordVO> list = new ArrayList<>();
-        for (TaskAcceptRecords record : records) {
-            UsersInfo info = usersInfoMapper.selectById(record.getAccepterId());
-            log.info("发布者信息 {}", info);
-            if (info == null) {
-                throw new MyException(MessageConstants.USER_INFO_ERROR);
+            result = new TaskAndUserInfoVO(task, usersInfo);
+        } else {
+            ArrayList<TaskAcceptRecordVO> list = new ArrayList<>();
+            for (TaskAcceptRecords record : records) {
+                UsersInfo info = usersInfoMapper.selectById(record.getAccepterId());
+                log.info("发布者信息 {}", info);
+                if (info == null) {
+                    throw new MyException(MessageConstants.USER_INFO_ERROR);
+                }
+                List<Reviews> reviewsList = reviewsMapper.selectList(new QueryWrapper<Reviews>().eq(
+                        "AcceptorID", info.getUserId()));
+                long sum = 0;
+                TaskAcceptRecordVO vo = null;
+                if (reviewsList.size() != 0) {
+                    sum = reviewsList.stream()
+                            .mapToLong(Reviews::getRating)
+                            .sum();
+                    vo = new TaskAcceptRecordVO(record,
+                            info.getUserId(),
+                            info.getName(),
+                            info.getUserRole(), sum / reviewsList.size(), sum);
+
+                } else {
+
+                    vo = new TaskAcceptRecordVO(record,
+                            info.getUserId(),
+                            info.getName(),
+                            info.getUserRole(), 0L, 0L);
+                }
+
+                list.add(vo);
             }
-            List<Reviews> reviewsList = reviewsMapper.selectList(new QueryWrapper<Reviews>().eq(
-                    "AcceptorID", info.getUserId()));
-            long sum = 0;
-            TaskAcceptRecordVO vo = null;
-            if (reviewsList.size() != 0) {
-                sum = reviewsList.stream()
-                        .mapToLong(Reviews::getRating)
-                        .sum();
-                vo = new TaskAcceptRecordVO(record,
-                        info.getUserId(),
-                        info.getName(),
-                        info.getUserRole(), sum / reviewsList.size(), sum);
-
-            } else {
-
-                vo = new TaskAcceptRecordVO(record,
-                        info.getUserId(),
-                        info.getName(),
-                        info.getUserRole(), 0L, 0L);
-            }
-
-            list.add(vo);
+            result = new TaskAndUserInfoVO(task, usersInfo, list);
         }
-
-        return new TaskAndUserInfoVO(task, usersInfo, list);
+        result.setTaskPublishedTotal(taskMapper.getPublishedTotal(task.getOwnerId()));
+        result.setTaskAcceptedTotal(taskMapper.getAcceptedTotal(task.getOwnerId()));
+        result.setTaskOverdueTotal(taskMapper.getOverdueTotal(task.getOwnerId()));
+        result.setTaskCanceledTotal(taskMapper.getCanceledTotal(task.getOwnerId()));
+        return result;
     }
 
     /**
