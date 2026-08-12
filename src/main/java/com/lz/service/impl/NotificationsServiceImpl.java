@@ -183,7 +183,7 @@ public class NotificationsServiceImpl extends ServiceImpl<NotificationsMapper, N
     public NoticeVO getInfoById(Long id) {
         if (id != null) {
             NoticeVO noticeVO = notificationsMapper.getInfoById(id);
-            if (!noticeVO.getIsRead()) {
+            if (noticeVO != null && !noticeVO.getIsRead()) {
                 NotificationReadStatus notificationReadStatus = new NotificationReadStatus();
                 notificationReadStatus.setId(id);
                 notificationReadStatus.setIsRead(true);
