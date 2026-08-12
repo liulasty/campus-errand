@@ -1,4 +1,4 @@
-package com.lz.controller;
+package com.lz.controller.file;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,23 +28,16 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 
-/*
- * Created with IntelliJ IDEA.
- * @Author: lz
- * @Date: 2024/04/14/23:36
- * @Description: 图片上传/删除（七牛云对象存储）
- */
-
 /**
- * @author lz
+ * 文件/图片接口（七牛云对象存储）
  */
 @RestController
-@RequestMapping("/img")
+@RequestMapping("/files")
 @Slf4j
-@Api(tags = "上传图片")
+@Api(tags = "文件接口")
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
         RequestMethod.DELETE })
-public class ImgController {
+public class FileController {
 
     private static final List<String> ALLOWED_EXT = Arrays.asList(".jpg", ".jpeg", ".png", ".gif");
     private static final long MAX_SIZE = 5 * 1024 * 1024;
@@ -63,12 +56,8 @@ public class ImgController {
 
     /**
      * 通用图片上传
-     *
-     * @param file 文件
-     *
-     * @return {@code Result<String>} 返回访问路径（域名/目录/key）
      */
-    @PostMapping("/upload")
+    @PostMapping("/images")
     @ApiOperation("通用图片上传")
     public Result<String> uploadImage(@RequestParam("file") MultipartFile file) {
         return upload(file, "photos");
@@ -76,12 +65,8 @@ public class ImgController {
 
     /**
      * 头像上传
-     *
-     * @param file 文件
-     *
-     * @return {@code Result<String>} 返回访问路径（域名/目录/key）
      */
-    @PostMapping("/uploadAvatar")
+    @PostMapping("/images/avatar")
     @ApiOperation("头像上传")
     public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file) {
         return upload(file, "avatar");
@@ -89,13 +74,8 @@ public class ImgController {
 
     /**
      * 删除图片
-     *
-     * @param filePath        文件 key 或 域名/文件 key（query 参数）
-     * @param deleteImagesUrl 兼容前端 ossUrl 字段
-     *
-     * @return {@code Result<String>}
      */
-    @DeleteMapping("/delete")
+    @DeleteMapping("/images")
     @ApiOperation("删除图片")
     public Result<String> deleteImage(
             @RequestParam(value = "filePath", required = false) String filePath,
