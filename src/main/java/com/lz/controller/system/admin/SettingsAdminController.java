@@ -1,4 +1,4 @@
-package com.lz.controller;
+package com.lz.controller.system.admin;
 
 import java.util.List;
 
@@ -20,20 +20,15 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * <p>
- * 存储系统管理员相关设置 前端控制器
- * </p>
- *
- * @author lz
- * @since 2024-04-04
+ * 系统设置管理接口（管理员）
  */
 @RestController
-@RequestMapping("/adminsettings")
-@Api(tags = "存储系统管理员相关设置相关接口")
+@RequestMapping("/admin/settings")
+@Api(tags = "系统设置管理接口")
 @Slf4j
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
         RequestMethod.DELETE })
-public class AdminsettingsController {
+public class SettingsAdminController {
 
     @Autowired
     private IAdminsettingsService adminsettingsService;
@@ -41,7 +36,7 @@ public class AdminsettingsController {
     /**
      * @return {@code Result}
      */
-    @GetMapping("")
+    @GetMapping
     @ApiOperation("获取系统管理员相关设置列表")
     public Result<?> getAdminsettingsList() {
         List<AdminSettings> adminSettingsList = adminsettingsService.list();
@@ -56,7 +51,7 @@ public class AdminsettingsController {
         return Result.success();
     }
 
-    @GetMapping("/enable")
+    @GetMapping("/current")
     @ApiOperation("查询状态")
     public Result<AdminSettings> enable() {
 
@@ -64,7 +59,7 @@ public class AdminsettingsController {
         return Result.success(adminSettings);
     }
 
-    @PutMapping("/update")
+    @PutMapping
     @ApiOperation("更新状态")
     public Result<String> update() {
         log.info("更新分类");
@@ -78,5 +73,4 @@ public class AdminsettingsController {
         }
         return Result.success();
     }
-
 }

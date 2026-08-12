@@ -1,4 +1,4 @@
-package com.lz.controller;
+package com.lz.controller.system.admin;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lz.Exception.MyException;
@@ -17,17 +17,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 敏感词配置（发布委托拦截）
- *
- * @author lz
+ * 敏感词配置接口（管理员：CRUD）
  */
 @RestController
-@RequestMapping("/sensitive")
+@RequestMapping("/admin/sensitive-words")
 @Slf4j
-@Api(tags = "敏感词配置")
+@Api(tags = "敏感词配置接口")
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
         RequestMethod.DELETE })
-public class SensitiveWordController {
+public class SensitiveWordAdminController {
 
     @Autowired
     private SensitiveWordMapper sensitiveWordMapper;
@@ -35,7 +33,7 @@ public class SensitiveWordController {
     @Autowired
     private SensitiveWordService sensitiveWordService;
 
-    @GetMapping("/words")
+    @GetMapping
     @ApiOperation("敏感词列表")
     public Result<?> list() {
         List<SensitiveWord> list = sensitiveWordMapper.selectList(
@@ -43,7 +41,7 @@ public class SensitiveWordController {
         return Result.success(list);
     }
 
-    @PostMapping("/words")
+    @PostMapping
     @ApiOperation("新增敏感词")
     public Result<?> add(@RequestBody Map<String, String> body) throws MyException {
         String word = body.get("word");
@@ -65,18 +63,11 @@ public class SensitiveWordController {
         return Result.success("添加成功");
     }
 
-    @DeleteMapping("/words/{id}")
+    @DeleteMapping("/{id}")
     @ApiOperation("删除敏感词")
     public Result<?> delete(@PathVariable("id") Long id) {
         sensitiveWordMapper.deleteById(id);
         sensitiveWordService.refresh();
         return Result.success("删除成功");
-    }
-
-    @PostMapping("/check")
-    @ApiOperation("校验文本中的敏感词")
-    public Result<?> check(@RequestBody Map<String, String> body) {
-        List<String> hit = sensitiveWordService.check(body.get("text"));
-        return Result.success(hit);
     }
 }
