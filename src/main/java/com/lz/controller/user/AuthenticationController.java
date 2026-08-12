@@ -1,16 +1,14 @@
-package com.lz.controller;
-
+package com.lz.controller.user;
 
 import com.lz.Exception.MyException;
+import com.lz.pojo.Enum.AuthenticationStatus;
 import com.lz.pojo.constants.MessageConstants;
 import com.lz.pojo.dto.UserInfoDTO;
 import com.lz.pojo.entity.Users;
 import com.lz.pojo.entity.UsersInfo;
 import com.lz.pojo.result.Result;
-import com.lz.service.ITaskService;
 import com.lz.service.IUsersInfoService;
 import com.lz.service.IUsersService;
-import com.lz.pojo.Enum.AuthenticationStatus;
 import com.lz.utils.IdentityMaskUtils;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
@@ -21,30 +19,22 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 
 /**
- * 
- * 存储系统用户详细信息 前端控制器
- * 
- *
- * @author lz
- * @since 2024-04-04
+ * 实名认证接口（提交/取消/本人查询）
  */
 @RestController
-@RequestMapping("/userInfo")
+@RequestMapping("/authentications")
 @Slf4j
-@Api(tags = "用户详细信息相关接口")
+@Api(tags = "实名认证接口")
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
-public class UsersinfoController {
+public class AuthenticationController {
     @Autowired
     private IUsersInfoService usersInfoService;
 
     @Autowired
     private IUsersService usersService;
-    
-    @Autowired
-    private ITaskService taskService;
 
     /**
-     * 查询用户信息
+     * 查询实名资料
      *
      * @param id 同上
      *
@@ -100,84 +90,16 @@ public class UsersinfoController {
                         .phoneNumber(dto.getPhone()).build();
                 usersInfoService.updateById(info);
                 return Result.success("重新认证信息已提交审核");
-            }else {
+            } else {
                 log.error("用户认证信息已存在");
                 return Result.error("用户认证信息已存在");
             }
-            
-        }else {
+        } else {
             usersInfoService.submitCertificationInformation(dto);
             log.info("用户认证信息提交成功");
             return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
         }
-        
     }
-
-
-    /**
-     * 确认通过审核
-     *
-     * @param id 同上
-     *
-     * @return {@code Result<String>}
-     *
-     * @throws MyException 我的异常
-     */
-    @PutMapping("/confirmToPassTheReview/{id}")
-    public Result<String> confirmToPassTheReview(@PathVariable Long id) throws MyException {
-        log.info("用户认证信息审核通过");
-        usersInfoService.confirmToPassTheReview(id);
-        log.info("用户认证信息审核通过成功");
-        //todo 通知用户,用户认证信息审核通过
-        return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
-    }
-
-
-    /**
-     * 拒绝通过审核
-     *
-     * @param id 同上
-     *
-     * @return {@code Result<String>}
-     *
-     * @throws MyException 我的异常
-     */
-    @PutMapping("/refuseToPassReview/{id}")
-    public Result<String> refuseToPassReview(@PathVariable Long id,
-            @RequestParam(value = "reason", required = false) String reason) throws MyException {
-        log.info("用户认证信息审核不通过");
-        usersInfoService.refuseToPassReview(id, reason);
-        log.info("用户认证信息审核不通过成功");
-        //todo 通知用户,用户认证信息审核不通过
-        return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
-    }
-
-
-    /**
-     * 删除
-     *
-     * @param id 同上
-     *
-     * @return {@code Result<String>}
-     */
-    @DeleteMapping("/{id}")
-    public Result<String> delete(@PathVariable Long id) {
-        UsersInfo usersInfo = usersInfoService.getById(id);
-        if (usersInfo == null) {
-            log.error("用户认证信息不存在");
-            return Result.error(MessageConstants.USER_AUTHENTICATION_INFO_NOT_EXIST);
-        }
-        if(taskService.getTasksWithUser(id).size() > 0){
-            log.error("用户存在委托任务，无法删除认证信息");
-            return Result.error(MessageConstants.USER_EXIST_TASK);
-        }
-        log.info("删除用户认证信息");
-        usersInfoService.removeById(id);
-        log.info("删除用户认证信息成功");
-        //todo 删除用户认证信息，通知用户
-        return Result.success(MessageConstants.USER_INFO_DELETE_SUCCESS);
-    }
-
 
     /**
      * 取消用户信息身份验证
@@ -188,7 +110,7 @@ public class UsersinfoController {
      *
      * @throws MyException 我的异常
      */
-    @PutMapping("/cancelUserInfoAuthentication/{id}")
+    @PutMapping("/{id}/cancel")
     public Result<String> cancelUserInfoAuthentication(@PathVariable Long id) throws MyException {
         UsersInfo usersInfo = usersInfoService.getById(id);
         if (usersInfo == null) {
@@ -201,10 +123,6 @@ public class UsersinfoController {
         }
 
         log.info("取消用户认证成功");
-
-        //todo 通知用户,已取消用户认证
         return Result.success(MessageConstants.USER_CANCEL_SUCCESS);
     }
-
-
 }
