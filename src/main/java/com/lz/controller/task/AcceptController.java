@@ -1,24 +1,4 @@
-package com.lz.controller.user;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-/*
- * Created with IntelliJ IDEA.
- * @Author: lz
- * @Date: 2024/05/03/13:47
- * @Description:
- */
+package com.lz.controller.task;
 
 import com.lz.Exception.MyException;
 import com.lz.pojo.Enum.AcceptStatus;
@@ -32,19 +12,21 @@ import com.lz.pojo.vo.TaskAcceptRecord;
 import com.lz.service.ITaskAcceptRecordsService;
 import com.lz.service.ITaskService;
 import com.lz.service.RealNameAuthenticationService;
-
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * @author lz
+ * 接单接口（接单/我的接单/取消）
  */
 @RestController
-@RequestMapping("/user/accept")
+@RequestMapping("/tasks/accepts")
 @Slf4j
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
         RequestMethod.DELETE })
-@Api(tags = "接收者控制器")
+@Api(tags = "接单接口")
 public class AcceptController {
     @Autowired
     private ITaskAcceptRecordsService taskAcceptRecordsService;
@@ -57,10 +39,6 @@ public class AcceptController {
 
     /**
      * 获取委托任务接收信息
-     *
-     * @param id 同上
-     *
-     * @return 结果<任务接受记录>
      */
     @GetMapping("/{id}")
     public Result<TaskAcceptRecords> getTaskAcceptRecordByTaskId(@PathVariable Long id) throws MyException {
@@ -71,10 +49,6 @@ public class AcceptController {
 
     /**
      * 添加接收委托留言
-     *
-     * @param acceptDTO 接受 DTO
-     *
-     * @return 后端统一返回结果
      */
     @PostMapping
     public Result<?> accept(@Validated @RequestBody AcceptDTO acceptDTO) throws MyException {
@@ -84,36 +58,27 @@ public class AcceptController {
         return Result.success(MessageConstants.DATA_ACCEPT_SUCCESS);
     }
 
-    @GetMapping("/page")
+    @GetMapping
     public Result<PageResult> getTaskPage(
-            @RequestParam(defaultValue = "1") int pageNum, // 默认值为1，如果请求中未提供则使用此默认值
-            @RequestParam(defaultValue = "10") int pageSize, // 默认每页大小为10
-            @RequestParam(required = false) String location, // 类型阶段参数
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String location,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Long taskType,
             @RequestParam(defaultValue = "0") Integer queryRules,
             @RequestParam(required = false) TaskStatus status) throws MyException {
-        // 这里处理业务逻辑，比如根据pageNum, pageSize, TypePhase查询数据库等
-
         PageResult<TaskAcceptRecord> taskPageResult = taskService.searchPageByAcceptor(pageNum,
                 pageSize, location, description,
                 taskType,
                 queryRules, status);
 
-        // 返回响应数据，根据实际情况调整
         return Result.success(taskPageResult);
     }
 
     /**
      * 取消接受记录
-     *
-     * @param id 同上
-     *
-     * @return 后端统一返回结果
-     *
-     * @throws MyException 我的异常
      */
-    @PutMapping("/cancel/{id}")
+    @PutMapping("/{id}/cancel")
     public Result<?> cancelAcceptRecords(@PathVariable("id") Long id) throws MyException {
         TaskAcceptRecords taskAcceptRecord = taskAcceptRecordsService.getById(id);
         if (taskAcceptRecord == null) {

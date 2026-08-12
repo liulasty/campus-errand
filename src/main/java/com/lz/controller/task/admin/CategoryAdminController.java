@@ -1,19 +1,4 @@
-package com.lz.controller;
-
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+package com.lz.controller.task.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lz.Exception.MyException;
@@ -24,25 +9,23 @@ import com.lz.pojo.result.PageResult;
 import com.lz.pojo.result.Result;
 import com.lz.service.IDelegationCategoriesService;
 import com.lz.service.ITaskService;
-
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
- * <p>
- * 用于存储委托类别常量的表 前端控制器
- * </p>
- *
- * @author lz
- * @since 2024-04-10
+ * 委托分类管理接口（管理员：列表/CRUD/启用）
  */
 @RestController
-@RequestMapping("/delegation_categories")
+@RequestMapping("/admin/categories")
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
         RequestMethod.DELETE })
 @Slf4j
-@Api(tags = "委托类别常量控制器")
-public class DelegationCategoriesController {
+@Api(tags = "委托分类管理接口")
+public class CategoryAdminController {
 
     @Autowired
     private IDelegationCategoriesService delegationCategoriesService;
@@ -50,7 +33,7 @@ public class DelegationCategoriesController {
     @Autowired
     private ITaskService taskService;
 
-    @GetMapping("/list")
+    @GetMapping
     public Result<?> list(@RequestParam(value = "pageNum", defaultValue = "1") Long pageNum,
             @RequestParam(value = "pageSize", defaultValue = "5") Long pageSize,
             @RequestParam(value = "categoryName", required = false) String categoryName,
@@ -61,7 +44,6 @@ public class DelegationCategoriesController {
                 isEnable,
                 description);
         return Result.success(pageResult);
-
     }
 
     @GetMapping("/{id}")
@@ -70,7 +52,7 @@ public class DelegationCategoriesController {
         return Result.success(delegationCategories);
     }
 
-    @PutMapping()
+    @PutMapping
     public Result<?> update(@RequestBody DelegationCategories delegationCategories) {
         delegationCategoriesService.updateById(delegationCategories);
         return Result.success(MessageConstants.TASK_CATEGORY_UPDATE_SUCCESS);
@@ -86,13 +68,13 @@ public class DelegationCategoriesController {
         return Result.success(MessageConstants.TASK_CATEGORY_DELETE_SUCCESS);
     }
 
-    @PostMapping()
+    @PostMapping
     public Result<?> save(@RequestBody DelegationCategories delegationCategories) {
         delegationCategoriesService.save(delegationCategories);
         return Result.success(MessageConstants.TASK_CATEGORY_ADD_SUCCESS);
     }
 
-    @PutMapping("/enable/{id}")
+    @PutMapping("/{id}/enable")
     public Result<?> enable(@PathVariable("id") Long id) throws MyException {
         delegationCategoriesService.enable(id);
         return Result.success(MessageConstants.TASK_CATEGORY_UPDATE_SUCCESS);

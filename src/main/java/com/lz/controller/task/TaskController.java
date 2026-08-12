@@ -1,6 +1,6 @@
-package com.lz.controller;
+package com.lz.controller.task;
 
-
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lz.Exception.MyException;
 import com.lz.pojo.Enum.TaskStatus;
 import com.lz.pojo.constants.AuditResult;
@@ -8,20 +8,22 @@ import com.lz.pojo.constants.MessageConstants;
 import com.lz.pojo.dto.AuditResultDTO;
 import com.lz.pojo.dto.TaskDTO;
 import com.lz.pojo.dto.TaskDraftDTO;
-import com.lz.pojo.dto.TaskPageDTO;
 import com.lz.pojo.entity.DelegateAuditRecords;
 import com.lz.pojo.entity.DelegationCategories;
 import com.lz.pojo.entity.Task;
 import com.lz.pojo.entity.Users;
 import com.lz.pojo.entity.UsersInfo;
-import com.lz.pojo.result.NameAndDescription;
-import com.lz.pojo.result.PageResult;
 import com.lz.pojo.result.Result;
 import com.lz.pojo.vo.AuditResultVO;
 import com.lz.pojo.vo.NewestInfoVO;
 import com.lz.pojo.vo.TaskDraftVO;
 import com.lz.pojo.vo.UserDelegateDraft;
-import com.lz.service.*;
+import com.lz.service.IDelegateAuditRecordsService;
+import com.lz.service.IDelegationCategoriesService;
+import com.lz.service.ITaskService;
+import com.lz.service.IUsersInfoService;
+import com.lz.service.IUsersService;
+import com.lz.service.RealNameAuthenticationService;
 import com.lz.utils.ValidateUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -32,21 +34,14 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-
 import java.util.List;
 import java.util.Map;
 
 /**
- * <p>
- * 存储任务相关信息 前端控制器
- * </p>
- *
- * @author lz
- * @since 2024-04-04
+ * 委托主流程接口（草稿/审核/发布/搜索/状态）
  */
 @RestController
-@RequestMapping("/task")
+@RequestMapping("/tasks")
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 @Api(tags = "委托相关接口")
 @Slf4j
@@ -62,9 +57,6 @@ public class TaskController {
     private IUsersInfoService usersInfoService;
 
     @Autowired
-    private INotificationsService notificationService;
-
-    @Autowired
     private IDelegationCategoriesService delegationCategoriesService;
 
     @Autowired
@@ -73,49 +65,43 @@ public class TaskController {
     @Autowired
     private RealNameAuthenticationService realNameAuthenticationService;
 
-
     //创建单个委托
-    @PostMapping("/addTaskDraft")
+    @PostMapping("/drafts")
     @ApiOperation("创建单个委托草稿")
     public Result<Long> createTask(@RequestBody @Validated TaskDTO taskDTO,
                                    BindingResult result) throws MyException {
         if (ValidateUtil.validate(result) != null) {
-
             return Result.error(ValidateUtil.validate(result));
         }
 
         Long taskId = taskService.createTask(taskDTO);
 
-
         return Result.success(taskId, MessageConstants.TASK_CREATE_SUCCESS);
     }
 
-
-    @PostMapping("/getTask")
-    @ApiOperation("获取任务列表")
-    public Result<List<Task>> getPendingAuditList(@RequestBody(required = false) Map<String, String> body)
+    @GetMapping
+    @ApiOperation("按状态获取任务列表")
+    public Result<List<Task>> getPendingAuditList(@RequestParam(required = false) String status)
             throws MyException {
-        TaskStatus status = TaskStatus.AUDITING;
-        if (body != null && body.get("status") != null) {
-            status = TaskStatus.fromDbValue(body.get("status"));
+        TaskStatus taskStatus = TaskStatus.AUDITING;
+        if (status != null && !status.trim().isEmpty()) {
+            taskStatus = TaskStatus.fromDbValue(status);
         }
         List<Task> taskList = taskService.list(new QueryWrapper<Task>()
-                .eq("status", status)
+                .eq("status", taskStatus)
                 .orderByDesc("CreatedAt"));
         return Result.success(taskList);
     }
 
-
-    //获取单个委托详细信息请
-    @GetMapping("/getTask/{id}")
+    //获取单个委托详细信息
+    @GetMapping("/{id}")
     @ApiOperation("获取单个委托详细信息")
     public Result<TaskDraftVO> getTaskDetail(@PathVariable("id") Long id) throws MyException {
         TaskDraftVO taskDraftVO = taskService.searchTask(id);
         return Result.success(taskDraftVO);
     }
 
-
-    @PostMapping("/updateTaskDraft")
+    @PutMapping("/drafts")
     @ApiOperation("更新委托草稿信息")
     public Result<String> updateTask(@RequestBody TaskDraftDTO taskDTO) throws MyException {
         try {
@@ -141,7 +127,7 @@ public class TaskController {
         }
     }
 
-    @DeleteMapping(value = "/deleteTaskDraft/{id}")
+    @DeleteMapping("/drafts/{id}")
     @ApiOperation("删除委托草稿")
     public Result<String> deleteTaskDraft(@PathVariable("id") Long id) throws MyException {
         Task byId = taskService.getById(id);
@@ -156,12 +142,10 @@ public class TaskController {
         return Result.success(MessageConstants.TASK_UPDATE_SUCCESS);
     }
 
-
-    @PostMapping("/deleteTask")
+    @DeleteMapping("/{id}")
     @ApiOperation("删除委托")
-    public Result<String> deleteTask(@RequestBody(required = false) Map<String, Long> body) throws MyException {
-        Long taskId = body == null ? null : body.get("taskId");
-        Task byId = taskId == null ? null : taskService.getById(taskId);
+    public Result<String> deleteTask(@PathVariable("id") Long taskId) throws MyException {
+        Task byId = taskService.getById(taskId);
         if (byId == null) {
             throw new MyException(MessageConstants.DATA_VALIDATION_ERROR);
         }
@@ -183,14 +167,8 @@ public class TaskController {
 
     /**
      * 提交审核任务
-     *
-     * @param id 同上
-     *
-     * @return 结果<字符串>
-     *
-     * @throws MyException 我的异常
      */
-    @PutMapping(value = "/auditTask/{id}")
+    @PutMapping("/drafts/{id}/submit")
     @ApiOperation("提交审核")
     public Result<String> auditTask(@PathVariable("id") Long id) throws MyException {
         realNameAuthenticationService.ensureCurrentUserL1();
@@ -200,14 +178,8 @@ public class TaskController {
 
     /**
      * 获取需要发布的委托
-     *
-     * @param id 同上
-     *
-     * @return 结果<字符串>
-     *
-     * @throws MyException 我的异常
      */
-    @GetMapping(value = "/confirmTask/{id}")
+    @GetMapping("/{id}/confirm")
     @ApiOperation("获取需要发布的委托")
     public Result<Task> confirmTask(@PathVariable("id") Long id) throws MyException {
         try {
@@ -223,19 +195,12 @@ public class TaskController {
         } catch (Exception e) {
             throw new MyException(MessageConstants.TASK_PUBLISH_FAIL);
         }
-
     }
 
     /**
      * 用户取消发布
-     *
-     * @param id 同上
-     *
-     * @return 结果<字符串>
-     *
-     * @throws MyException 我的异常
      */
-    @PutMapping(value = "/cancelTaskByUser/{id}")
+    @PutMapping("/{id}/cancel")
     @ApiOperation("用户取消发布")
     public Result<String> cancelTask(@PathVariable("id") Long id) throws MyException {
         try {
@@ -259,14 +224,8 @@ public class TaskController {
 
     /**
      * 提交审核结果
-     *
-     * @param auditResultDTO 审计结果 DTO
-     *
-     * @return 结果<字符串>
-     *
-     * @throws MyException 我的异常
      */
-    @PostMapping(value = "/auditResult")
+    @PostMapping("/audit-result")
     @ApiOperation("提交审核结果")
     public Result<String> auditResult(@RequestBody AuditResultDTO auditResultDTO) throws MyException {
         try {
@@ -279,35 +238,25 @@ public class TaskController {
             }
             taskService.updateTask(auditResultDTO);
 
-
             return Result.success(MessageConstants.DATA_AUDIT_SUCCESS);
         } catch (Exception e) {
             throw new MyException(e.getMessage());
         }
-
     }
 
     /**
      * 查询审核未通过原因
-     *
-     * @param id 同上
-     *
-     * @return 结果<审计结果 vo>
-     *
-     * @throws MyException 我的异常
      */
-    @GetMapping("/getReason/{id}")
+    @GetMapping("/{id}/audit-reason")
     @ApiOperation("获取审核未通过原因")
     public Result<AuditResultVO> getReason(@PathVariable("id") Long id) throws MyException {
         log.info("获取审核未通过原因 {}", id);
         Task byId = taskService.getById(id);
         if (byId == null) {
             throw new MyException(MessageConstants.DATABASE_ERROR);
-            
         }
         if (byId.getStatus() != TaskStatus.AUDIT_FAILED) {
             throw new MyException(MessageConstants.UNEXPECTED_EXCEPTION);
-            
         }
         DelegateAuditRecords failReason =
                 delegateAuditRecordsService.getFailReasonById(id);
@@ -322,51 +271,28 @@ public class TaskController {
                 .build();
 
         return Result.success(auditResultVO);
-
     }
 
-
-
-
     //最新发布的委托列表（简要信息）
-    @GetMapping("/getNewTask/{id}")
+    @GetMapping("/newest/{userId}")
     @ApiOperation("快速信息展示")
-    public Result<NewestInfoVO> getNewTask(@PathVariable Long id) {
+    public Result<NewestInfoVO> getNewTask(@PathVariable Long userId) {
         // 系统公告与通知
-        NewestInfoVO newestInfo = taskService.getNewestInfo(id);
+        NewestInfoVO newestInfo = taskService.getNewestInfo(userId);
 
         return Result.success(newestInfo);
     }
 
-    //分页查询
-    @PostMapping("/searchPage")
-    @ApiOperation("分页查询")
-    public Result<PageResult<Task>> searchPage(TaskPageDTO taskPageDTO) {
-        log.info("委托信息查询taskPageDTO:{}", taskPageDTO);
-        PageResult<Task> taskPageResult = taskService.searchPage(taskPageDTO);
-        return Result.success(taskPageResult);
-    }
-
-    //获取委托分类
-    @GetMapping("/getTaskCategory")
-    @ApiOperation("获取委托分类")
-    public Result<List<NameAndDescription>> getTaskCategory() throws MyException {
-        List<NameAndDescription> map =
-                delegationCategoriesService.getTaskCategory();
-        log.info("list:{}", map);
-        return Result.success(map);
-    }
-
     //获取用户委托草稿
-    @GetMapping("/getUserDelegateDraft/{userId}")
+    @GetMapping("/drafts")
     @ApiOperation("获取用户委托草稿")
-    public Result<List<UserDelegateDraft>> getUserDelegateDraft(@PathVariable Long userId) {
+    public Result<List<UserDelegateDraft>> getUserDelegateDraft(@RequestParam("userId") Long userId) {
         List<UserDelegateDraft> tasksWithUser = taskService.getUserDelegateDraft(userId);
         return Result.success(tasksWithUser);
     }
-    
+
     //获取委托状态
-    @GetMapping("/getTaskStatus/{id}")
+    @GetMapping("/{id}/status")
     @ApiOperation("获取委托状态")
     public Result<TaskStatus> getTaskStatus(@PathVariable Long id) {
         TaskStatus status = taskService.getTaskStatus(id);

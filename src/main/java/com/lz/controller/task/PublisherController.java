@@ -1,28 +1,7 @@
-package com.lz.controller.user;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-/*
- * Created with IntelliJ IDEA.
- * @Author: lz
- * @Date: 2024/04/24/15:11
- * @Description:
- */
+package com.lz.controller.task;
 
 import com.lz.Exception.MyException;
 import com.lz.pojo.Enum.AcceptStatus;
-import com.lz.pojo.Enum.AuthenticationStatus;
-import com.lz.service.RealNameAuthenticationService;
 import com.lz.pojo.Enum.TaskStatus;
 import com.lz.pojo.Enum.TaskUpdateType;
 import com.lz.pojo.constants.MessageConstants;
@@ -41,24 +20,26 @@ import com.lz.service.ITaskService;
 import com.lz.service.ITaskUpdatesService;
 import com.lz.service.IUsersInfoService;
 import com.lz.service.IUsersService;
+import com.lz.service.RealNameAuthenticationService;
 import com.lz.utils.IdentityMaskUtils;
-
 import io.swagger.annotations.Api;
-import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.util.Date;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 
 /**
- * @author lz
+ * 发布者接口（发布委托/确认接单/取消/完成/删除）
  */
 @RestController
-@RequestMapping("/user/publisher")
+@RequestMapping("/tasks/publisher")
 @Slf4j
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
         RequestMethod.DELETE })
-@Api(tags = "发布者控制器", value = "发布者控制器")
+@Api(tags = "发布者接口", value = "发布者接口")
 public class PublisherController {
 
     @Autowired
@@ -108,14 +89,8 @@ public class PublisherController {
 
     /**
      * 发布委托
-     *
-     * @param id 同上
-     *
-     * @return 结果<字符串>
-     *
-     * @throws MyException 我的异常
      */
-    @PutMapping(value = "/confirmTask/{id}")
+    @PutMapping("/tasks/{id}/publish")
     @ApiOperation("发布委托")
     public Result<String> confirmTask(@PathVariable("id") Long id,
             @RequestBody PublishDTO data) throws MyException {
@@ -162,56 +137,33 @@ public class PublisherController {
             log.error("发布委托失败");
             throw new MyException(MessageConstants.TASK_PUBLISH_FAIL);
         }
-
     }
 
     /**
-     * “获取任务”页
-     *
-     * @param pageNum     页码
-     * @param pageSize    页面大小
-     * @param location    位置
-     * @param description 描述
-     * @param taskType    任务类型
-     * @param queryRules  查询规则
-     * @param status      地位
-     *
-     * @return 后端统一返回结果
-     *
-     * @throws MyException 我的异常
+     * “获取任务”页（我的发布列表）
      */
-    @GetMapping("/page")
+    @GetMapping("/tasks")
     public Result<?> getTaskPage(
-            @RequestParam(defaultValue = "1") int pageNum, // 默认值为1，如果请求中未提供则使用此默认值
-            @RequestParam(defaultValue = "10") int pageSize, // 默认每页大小为10
-            @RequestParam(required = false) String location, // 类型阶段参数
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String location,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Long taskType,
             @RequestParam(defaultValue = "0") Integer queryRules,
             @RequestParam(required = false) TaskStatus status) throws MyException {
-        // 这里处理业务逻辑，比如根据pageNum, pageSize, TypePhase查询数据库等
-
         PageResult<Task> taskPageResult = taskService.searchPageByPublisher(pageNum,
                 pageSize, location, description,
                 taskType,
                 queryRules, status);
 
-        // 返回响应数据，根据实际情况调整
         return Result.success(taskPageResult);
     }
 
     /**
      * 确认委托接收者
-     *
-     * @param id 同上
-     *
-     * @return 后端统一返回结果
-     *
-     * @throws MyException 我的异常
      */
-    @PutMapping("/confirm/{id}")
+    @PutMapping("/accepts/{id}/confirm")
     public Result<?> confirm(@PathVariable("id") Long id) throws MyException {
-
         TaskAcceptRecords acceptRecords = taskAcceptRecordsService.getById(id);
         if (acceptRecords == null || acceptRecords.getStatus() != AcceptStatus.PENDING) {
             log.error("数据库错误");
@@ -224,10 +176,9 @@ public class PublisherController {
         }
         taskService.confirmTheRecipient(task.getTaskId(), acceptRecords);
         return Result.success(MessageConstants.TASK_UPDATE_SUCCESS);
-
     }
 
-    @PutMapping("/cancel/{id}")
+    @PutMapping("/tasks/{id}/cancel-publish")
     public Result<String> cancelPublish(@PathVariable("id") Long id) throws MyException {
         taskService.cancelPublishUser(id);
         return Result.success(MessageConstants.TASK_CANCEL_PUBLISH_SUCCESS);
@@ -235,14 +186,8 @@ public class PublisherController {
 
     /**
      * 获取委托任务详情
-     *
-     * @param id
-     *
-     * @return 后端统一返回结果
-     *
-     * @throws MyException 我的异常
      */
-    @GetMapping("/getTask/{id}")
+    @GetMapping("/tasks/{id}")
     public Result<?> getTask(@PathVariable("id") Long id) throws MyException {
         Task byId = taskService.getById(id);
         if (byId == null) {
@@ -258,7 +203,7 @@ public class PublisherController {
         return Result.success(taskAndUserInfo);
     }
 
-    @PutMapping("/completed/{id}")
+    @PutMapping("/tasks/{id}/completed")
     public Result<?> completed(@PathVariable Long id,
             @RequestBody UpdateTaskToCompletedDTO DTO) throws MyException {
         taskService.updateToCompleted(DTO);
@@ -266,10 +211,9 @@ public class PublisherController {
         return Result.success(MessageConstants.TASK_UPDATE_SUCCESS);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/tasks/{id}")
     public Result<?> deleteTask(@PathVariable("id") Long id) throws MyException {
         taskService.deleteCancelTask(id);
         return Result.success(MessageConstants.TASK_DELETE_SUCCESS);
     }
-
 }

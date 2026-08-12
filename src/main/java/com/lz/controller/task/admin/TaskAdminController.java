@@ -1,26 +1,4 @@
-package com.lz.controller.admin;
-
-import java.time.LocalDate;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-/*
- * Created with IntelliJ IDEA.
- * @Author: lz
- * @Date: 2024/04/21/17:59
- * @Description:
- */
+package com.lz.controller.task.admin;
 
 import com.lz.Exception.MyException;
 import com.lz.pojo.Enum.TaskPhase;
@@ -28,6 +6,7 @@ import com.lz.pojo.Enum.TaskStatus;
 import com.lz.pojo.Enum.TaskUpdateType;
 import com.lz.pojo.Page.DraftConfig;
 import com.lz.pojo.constants.MessageConstants;
+import com.lz.pojo.dto.TaskPageDTO;
 import com.lz.pojo.entity.Task;
 import com.lz.pojo.entity.TaskUpdates;
 import com.lz.pojo.entity.Users;
@@ -43,12 +22,16 @@ import com.lz.service.ITaskUpdatesService;
 import com.lz.service.IUsersInfoService;
 import com.lz.service.IUsersService;
 import com.lz.utils.excelutil.EasyExcelUtil;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,10 +39,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * @author lz
+ * 委托管理接口（管理员）
  */
 @RestController
-@RequestMapping("/admin/task")
+@RequestMapping("/admin/tasks")
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
         RequestMethod.DELETE })
 @Api(tags = "管理员管理委托相关接口")
@@ -76,15 +59,6 @@ public class TaskAdminController {
 
     /**
      * 获取当前登录管理员的信息。
-     *
-     * @param taskService                   任务服务
-     * @param delegateAuditRecordsService   委派审计记录服务
-     * @param usersService                  用户服务
-     * @param usersInfoService              用户详情服务
-     * @param taskUpdatesService            任务更新服务
-     * @param notificationReadStatusService 通知读取状态服务
-     * @param notificationsService          通知服务
-     *
      */
     @Autowired
     public TaskAdminController(ITaskService taskService,
@@ -105,10 +79,7 @@ public class TaskAdminController {
 
     /**
      * 获取当前用户信息
-     *
-     * @return {@code Users}
      */
-
     public Users getCurrentAdmin() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminName = authentication.getName();
@@ -118,12 +89,9 @@ public class TaskAdminController {
     }
 
     /**
-     * 搜索页面
-     * 分页查询
-     *
-     * @return {@code Result<PageResult<Task>>}
+     * 管理端委托列表（分页）
      */
-    @GetMapping("/list")
+    @GetMapping
     @ApiOperation("分页查询")
     public Result<?> searchPage(@RequestParam(value = "pageNum", defaultValue = "1") int pageNum,
             @RequestParam(value = "pageSize", defaultValue = "5") int pageSize,
@@ -149,7 +117,18 @@ public class TaskAdminController {
         return Result.success(taskPageResult);
     }
 
-    @GetMapping("/exportExcel")
+    /**
+     * 审核/通用分页（原 /task/searchPage）
+     */
+    @PostMapping("/search")
+    @ApiOperation("审核/通用分页查询")
+    public Result<PageResult<Task>> auditSearchPage(TaskPageDTO taskPageDTO) {
+        log.info("委托信息查询taskPageDTO:{}", taskPageDTO);
+        PageResult<Task> taskPageResult = taskService.searchPage(taskPageDTO);
+        return Result.success(taskPageResult);
+    }
+
+    @GetMapping("/export")
     @ApiOperation("导出委托列表 Excel")
     @com.lz.Annotation.NoReturnHandle
     public void exportExcel(HttpServletResponse response) throws MyException {
@@ -184,17 +163,17 @@ public class TaskAdminController {
         EasyExcelUtil.exportExcel(response, "委托列表", "委托列表", rows, TaskExportVO.class);
     }
 
-    @GetMapping("/{TaskID}")
+    @GetMapping("/{id}")
     @ApiOperation("根据id查询")
-    public Result<?> searchTask(@PathVariable("TaskID") Long taskID) throws MyException {
+    public Result<?> searchTask(@PathVariable("id") Long taskID) throws MyException {
         log.info("根据id查询{}", taskID);
 
         return Result.success(taskService.searchTask(taskID));
     }
 
-    @DeleteMapping("/{TaskID}")
+    @DeleteMapping("/{id}")
     @ApiOperation("管理员删除委托")
-    public Result<?> deleteTask(@PathVariable("TaskID") Long taskID) {
+    public Result<?> deleteTask(@PathVariable("id") Long taskID) {
         Task task = taskService.getById(taskID);
         if (task == null || task.getStatus() == TaskStatus.ONGOING) {
             return Result.error(MessageConstants.TASK_NOT_EXIST);
@@ -221,16 +200,10 @@ public class TaskAdminController {
 
     /**
      * 回退草稿
-     *
-     * @param taskId 任务 ID
-     *
-     * @return 后端统一返回结果
-     *
-     * @throws MyException 我的异常
      */
-    @PutMapping("/getFallbackDraft/{TaskID}")
+    @PutMapping("/{id}/fallback-draft")
     @ApiOperation("管理员回退草稿")
-    public Result<?> fallbackDraft(@PathVariable("TaskID") Long taskId) throws MyException {
+    public Result<?> fallbackDraft(@PathVariable("id") Long taskId) throws MyException {
         log.info("管理员获取回退草稿{}", taskId);
         Task task = taskService.getById(taskId);
         if (task == null || task.getStatus() == TaskStatus.ONGOING) {
@@ -248,16 +221,10 @@ public class TaskAdminController {
 
     /**
      * 允许发布
-     *
-     * @param taskId 任务 ID
-     *
-     * @return 后端统一返回结果
-     *
-     * @throws MyException 我的异常
      */
-    @PutMapping("/allowPublish/{TaskID}")
+    @PutMapping("/{id}/allow-publish")
     @ApiOperation("管理员允许发布")
-    public Result<?> allowPublish(@PathVariable("TaskID") Long taskId) throws MyException {
+    public Result<?> allowPublish(@PathVariable("id") Long taskId) throws MyException {
         log.info("管理员允许发布{}", taskId);
         Task task = taskService.getById(taskId);
         if (task == null || task.getStatus() == TaskStatus.ONGOING) {
@@ -271,21 +238,14 @@ public class TaskAdminController {
         }
 
         return Result.success(MessageConstants.TASK_UPDATE_SUCCESS);
-
     }
 
     /**
-     * 不允许
-     *
-     * @param taskId 任务 ID
-     *
-     * @return 后端统一返回结果
-     *
-     * @throws MyException 我的异常
+     * 拒绝发布
      */
-    @PutMapping("/notAllowed/{TaskID}")
+    @PutMapping("/{id}/reject-publish")
     @ApiOperation("管理员不允许发布")
-    public Result<?> notAllowed(@PathVariable("TaskID") Long taskId) throws MyException {
+    public Result<?> notAllowed(@PathVariable("id") Long taskId) throws MyException {
         log.info("管理员不允许发布{}", taskId);
         Task task = taskService.getById(taskId);
         if (task == null || task.getStatus() == TaskStatus.ONGOING) {
@@ -301,7 +261,7 @@ public class TaskAdminController {
         return Result.success(MessageConstants.TASK_UPDATE_SUCCESS);
     }
 
-    @PutMapping("/handleEnableAdmin/{id}")
+    @PutMapping("/{id}/enable")
     @ApiOperation("管理员启用")
     public Result<?> handleEnableAdmin(@PathVariable("id") Long id) throws MyException {
         log.info("管理员启用{}", id);
@@ -309,7 +269,7 @@ public class TaskAdminController {
         return Result.success(MessageConstants.USER_ABLE_SUCCESS);
     }
 
-    @PutMapping("/handleDisableAdmin/{id}")
+    @PutMapping("/{id}/disable")
     @ApiOperation("管理员禁用")
     public Result<?> handleDisableAdmin(@PathVariable("id") Long id) throws MyException {
         log.info("管理员禁用{}", id);
@@ -317,12 +277,11 @@ public class TaskAdminController {
         return Result.success(MessageConstants.USER_DISABLE_SUCCESS);
     }
 
-    @PutMapping("/withdrawReleaseByTaskID/{id}")
+    @PutMapping("/{id}/withdraw-release")
     @ApiOperation("管理员撤回发布")
     public Result<?> withdrawReleaseByTaskID(@PathVariable("id") Long id) throws MyException {
         log.info("管理员撤回发布{}", id);
         taskService.withdrawReleaseByTaskID(id);
         return Result.success(MessageConstants.TASK_WITHDRAW_SUCCESS);
     }
-
 }
