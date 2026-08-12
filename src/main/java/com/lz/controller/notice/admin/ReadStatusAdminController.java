@@ -1,4 +1,4 @@
-package com.lz.controller;
+package com.lz.controller.notice.admin;
 
 import java.util.Date;
 
@@ -24,25 +24,20 @@ import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * <p>
- * 通知表记录用户是否已读通知 前端控制器
- * </p>
- *
- * @author lz
- * @since 2024-04-10
+ * 通知已读记录管理接口（管理员）
  */
 @RestController
-@RequestMapping("/notificationReadStatus")
+@RequestMapping("/admin/notification-read-status")
 @Slf4j
-@Api(tags = "通知记录控制器")
+@Api(tags = "通知已读记录接口")
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
         RequestMethod.DELETE })
-public class NotificationReadStatusController {
+public class ReadStatusAdminController {
 
     @Autowired
     private INotificationReadStatusService notificationReadStatusService;
 
-    @GetMapping("/list")
+    @GetMapping
     public Result<?> list(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
             @RequestParam(value = "pageSize", defaultValue = "5") Integer pageSize,
             @RequestParam(value = "createdAt", required = false) @DateTimeFormat(fallbackPatterns = "yyyy-MM-dd") Date createAt,
@@ -55,7 +50,6 @@ public class NotificationReadStatusController {
                 description);
         log.info("分页查询结果：{}", notificationsPage);
         return Result.success(new PageResult<>(notificationsPage.getTotal(), notificationsPage.getRecords()));
-
     }
 
     @DeleteMapping("/{id}")
@@ -63,5 +57,4 @@ public class NotificationReadStatusController {
         notificationReadStatusService.delNotification(id);
         return Result.success(MessageConstants.DATA_DELETE_SUCCESS);
     }
-
 }
