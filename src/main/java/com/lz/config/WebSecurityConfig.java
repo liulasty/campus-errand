@@ -45,11 +45,11 @@ import javax.servlet.http.HttpServletResponse;
 public class WebSecurityConfig {
     private static final String PATH_SEPARATOR = "/campus_entrustment";
     private static final String[] AUTH_WHITELIST = {
-            PATH_SEPARATOR + "/user/login",
-            "/user/login",
-            "/user/register",
-            PATH_SEPARATOR + "/user/check",
-            "/user/check",
+            PATH_SEPARATOR + "/auth/login",
+            "/auth/login",
+            "/auth/register",
+            PATH_SEPARATOR + "/auth/check",
+            "/auth/check",
             "/swagger-ui.html",
             "/swagger-resources/**",
             "/webjars/**",
@@ -57,9 +57,9 @@ public class WebSecurityConfig {
             "/v2/api-docs",
             "/druid/**",
             "/doc.html",
-            "/img/upload",
-            "/img/uploadAvatar",
-            "/user/logout",
+            "/files/images",
+            "/files/images/avatar",
+            "/auth/logout",
             "/common/**",
             "/favicon.ico"
     };
