@@ -30,8 +30,8 @@ public class PathMatcher {
 
     static {
         WHITELIST_PATTERNS = Arrays.asList(
-                Pattern.compile(PATH_SEPARATOR + "/user/login"),
-                Pattern.compile(PATH_SEPARATOR + "/user/register"),
+                Pattern.compile(PATH_SEPARATOR + "/auth/login"),
+                Pattern.compile(PATH_SEPARATOR + "/auth/register"),
                 Pattern.compile(PATH_SEPARATOR + "/user/active/.*"),
                 // Convert "**" to ".*" for regex matching
                 Pattern.compile(PATH_SEPARATOR + "/swagger-ui.html"),
@@ -46,8 +46,8 @@ public class PathMatcher {
                 Pattern.compile(PATH_SEPARATOR + "/druid/.*"), 
                 Pattern.compile(PATH_SEPARATOR + "/doc.html"),
                 Pattern.compile(PATH_SEPARATOR + "/favicon.ico"),
-                Pattern.compile(PATH_SEPARATOR + "/user/logout"),
-                Pattern.compile(PATH_SEPARATOR + "/img/upload"),
+                Pattern.compile(PATH_SEPARATOR + "/auth/logout"),
+                Pattern.compile(PATH_SEPARATOR + "/files/images"),
                 Pattern.compile(PATH_SEPARATOR + "/common/.*")
         );
     }
