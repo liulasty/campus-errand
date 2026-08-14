@@ -31,7 +31,6 @@
     import { getTaskDraftById, getUserInfo } from '@/api/index';
     import { getTaskCategoriesUser } from '@/api/user';
 
-    import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
     import { AUTH_STATUS } from '@/constants/enums'
 
     export default {

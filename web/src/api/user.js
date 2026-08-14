@@ -20,6 +20,14 @@ export const getTaskAndPublishUserInfoByTaskId = (id) => {
     return http.get('/tasks/hall/' + id)
 }
 
+export const getAcceptedTaskBrief = (taskId) => {
+    return http.get('/tasks/accepts/' + taskId + '/task')
+}
+
+export const getPublisherTaskBrief = (taskId) => {
+    return http.get('/tasks/publisher/' + taskId + '/task')
+}
+
 export const acceptCommission = (data) => {
     console.log("接收委托留言");
     return http.post('/tasks/accepts', data)
@@ -66,4 +74,12 @@ export const cancelPublishUser = (id) => {
 
 export const updateDelegationCompleted = (data) => {
     return http.put('/tasks/publisher/tasks/' + data.taskId + '/completed', data)
+}
+
+export const deleteTaskByPublisher = (id) => {
+    return http.delete('/tasks/publisher/tasks/' + id)
+}
+
+export const publisherFallbackDraft = (id) => {
+    return http.put('/tasks/publisher/tasks/' + id + '/fallback-draft')
 }

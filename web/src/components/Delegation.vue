@@ -420,7 +420,7 @@
                 this.DelegationFrom.ownerId = this.$store.state.userInfo.userId;
                 // console.log("提交委托草稿", this.DelegationFrom)
 
-                await executeConfirmedRequest(
+                const ok = await executeConfirmedRequest(
                     addTaskDraft,
                     this.DelegationFrom,
                     "确认添加该委托信息？",
@@ -429,9 +429,10 @@
                     "添加成功",
                     "添加失败",
                     "取消添加草稿"
-                )
-                this.refresh()
-
+                );
+                if (ok) {
+                    this.refresh();
+                }
             },
             handlePreview() {
                 this.dialogPreviewVisible = true;

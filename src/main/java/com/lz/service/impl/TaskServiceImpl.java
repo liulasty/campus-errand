@@ -505,6 +505,21 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         return false;
     }
 
+    @Override
+    public Boolean publisherFallbackDraft(Long taskId) throws MyException {
+        Task task = taskMapper.selectById(taskId);
+        if (task == null) {
+            throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
+        if (task.getStatus() != TaskStatus.EXPIRED && task.getStatus() != TaskStatus.CANCELLED) {
+            return false;
+        }
+        task.setStatus(TaskStatus.DRAFT);
+        taskMapper.updateById(task);
+        taskUpdateService.fallbackDraft(taskId);
+        return true;
+    }
+
     /**
      * 允许发布
      *
@@ -1069,23 +1084,31 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
     @Override
     public void deleteCancelTask(Long id) throws MyException {
         Task task = getById(id);
-        if (task == null || task.getStatus() != TaskStatus.CANCELLED) {
+        if (task == null) {
             throw new MyException(MessageConstants.TASK_NOT_EXIST);
         }
-        // D-17 越权校验：仅发布者本人可删除已取消委托
+        // 仅允许删除终态委托（已取消/已过期/未完成/已完成），执行中与草稿期不可删
+        TaskStatus status = task.getStatus();
+        if (status != TaskStatus.CANCELLED && status != TaskStatus.EXPIRED
+                && status != TaskStatus.UNFINISHED && status != TaskStatus.COMPLETED) {
+            throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
+        // D-17 越权校验：仅发布者本人可删除自己的委托
         Users current = getCurrentAdmin();
         if (current == null || !current.getUserId().equals(task.getOwnerId())) {
             throw new MyException(MessageConstants.USER_INFO_ERROR);
         }
+        // 已完成委托保留承接记录，其余终态把承接记录置为过期
+        if (status != TaskStatus.COMPLETED) {
+            List<TaskAcceptRecords> taskAcceptRecords = taskAcceptRecordsMapper.getTaskAcceptRecordsByTaskId(id);
 
-        List<TaskAcceptRecords> taskAcceptRecords = taskAcceptRecordsMapper.getTaskAcceptRecordsByTaskId(id);
-
-        if (taskAcceptRecords.size() > 0) {
-            taskAcceptRecords.forEach(taskAcceptRecord -> {
-                taskAcceptRecord.setStatus(AcceptStatus.EXPIRED);
-                taskAcceptRecord.setAdoptTime(new Date(System.currentTimeMillis()));
-                taskAcceptRecordsMapper.updateById(taskAcceptRecord);
-            });
+            if (taskAcceptRecords.size() > 0) {
+                taskAcceptRecords.forEach(taskAcceptRecord -> {
+                    taskAcceptRecord.setStatus(AcceptStatus.EXPIRED);
+                    taskAcceptRecord.setAdoptTime(new Date(System.currentTimeMillis()));
+                    taskAcceptRecordsMapper.updateById(taskAcceptRecord);
+                });
+            }
         }
 
         taskMapper.deleteById(id);

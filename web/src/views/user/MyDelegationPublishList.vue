@@ -250,11 +250,11 @@
     </div>
 </template>
 <script>
-    import { getTaskCategories, listDelegateUpdateRecords } from '@/api/'
+    import { getTaskCategories, listTaskUpdateRecords } from '@/api/'
     import { getNodeMeta } from '@/utils/taskNode.js'
     import {
         publishDelegationList, queryTheEntrustmentDetailsByEntrustmentNumber, confirmTheRecipient,
-        cancelPublishUser, updateDelegationCompleted
+        cancelPublishUser, updateDelegationCompleted, deleteTaskByPublisher, publisherFallbackDraft
     } from '@/api/user.js'
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction.js'
     import { TASK_STATUS, ACCEPT_STATUS } from '@/constants/enums'
@@ -506,7 +506,7 @@
             },
             getTaskUpdates(taskId) {
                 this.taskUpdates = [];
-                listDelegateUpdateRecords({
+                listTaskUpdateRecords({
                     taskId: taskId,
                     pageNum: 1,
                     pageSize: 100
@@ -563,30 +563,35 @@
                 if (userType === 'teacher') return 'warning'
                 return 'info'
             },
-            handleAccept(id) {
-                executeConfirmedRequest(confirmTheRecipient, id, "是否将此委托托付给该接收者", "确认接受委托者", "确认成功,等待接收者完成委托任务", "确认失败");
-                this.getList();
-                this.open = false;
+            async handleAccept(id) {
+                const ok = await executeConfirmedRequest(confirmTheRecipient, id, "是否将此委托托付给该接收者", "确认接受委托者", "确认成功,等待接收者完成委托任务", "确认失败");
+                if (ok) {
+                    this.getList();
+                    this.open = false;
+                }
             },
-            increaseGood() {
-                executeConfirmedRequest(increaseGood, this.form.task.taskId, "是否确认增加积分", "确认增加积分", "确认成功,积分已增加", "确认失败");
+            async fallbackDraftByPublisher() {
+                const ok = await executeConfirmedRequest(publisherFallbackDraft, this.form.task.taskId, "是否确认撤回", "确认撤回", "确认成功,撤回成功", "确认失败");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
+                }
             },
-            decreaseGood() {
-                executeConfirmedRequest(decreaseGood, this.form.task.taskId, "是否确认减少积分", "确认减少积分", "确认成功,积分已减少", "确认失败");
+            async deleteDelegation() {
+                const ok = await executeConfirmedRequest(deleteTaskByPublisher, this.form.task.taskId, "是否确认删除", "确认删除", "确认成功,删除成功", "确认失败");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
+                }
             },
-            cancelPublish() {
-                executeConfirmedRequest(cancelPublish, this.form.task.taskId, "是否确认取消发布", "确认取消发布", "确认成功,取消发布成功", "确认失败");
+            async cancelPublish() {
+                const ok = await executeConfirmedRequest(cancelPublishUser, this.form.task.taskId, "是否确认取消发布", "确认取消发布", "确认成功,取消发布成功", "确认失败");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
+                }
             },
-            fallbackDraftByPublisher() {
-                executeConfirmedRequest(fallbackDraftByPublisher, this.form.task.taskId, "是否确认撤回", "确认撤回", "确认成功,撤回成功", "确认失败");
-            },
-            deleteDelegation() {
-                executeConfirmedRequest(deleteDelegation, this.form.task.taskId, "是否确认删除", "确认删除", "确认成功,删除成功", "确认失败");
-            },
-            cancelPublish() {
-                executeConfirmedRequest(cancelPublishUser, this.form.task.taskId, "是否确认取消发布", "确认取消发布", "确认成功,取消发布成功", "确认失败");
-            },
-            confirmTheRecipientDelegation() {
+            async confirmTheRecipientDelegation() {
                 console.log("确认该委托已完成", this.form.task.taskId, this.completeTheEntrustedEvaluation, this.taskRateValue);
                 if (this.completeTheEntrustedEvaluation && this.taskRateValue) {
                     const data = {
@@ -594,7 +599,11 @@
                         taskAccomplishGrade: this.taskRateValue,
                         taskAccomplishReview: this.completeTheEntrustedEvaluation
                     }
-                    executeConfirmedRequest(updateDelegationCompleted, data, "是否确认该委托已完成", "确认该委托已完成", "确认完成，已提交完成信息", "确认失败");
+                    const ok = await executeConfirmedRequest(updateDelegationCompleted, data, "是否确认该委托已完成", "确认该委托已完成", "确认完成，已提交完成信息", "确认失败");
+                    if (ok) {
+                        this.open = false;
+                        this.getList();
+                    }
                 } else {
                     this.$message({
                         message: "请填写委托完成评价和评分",

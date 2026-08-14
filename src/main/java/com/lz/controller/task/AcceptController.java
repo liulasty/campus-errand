@@ -5,16 +5,21 @@ import com.lz.pojo.Enum.AcceptStatus;
 import com.lz.pojo.Enum.TaskStatus;
 import com.lz.pojo.constants.MessageConstants;
 import com.lz.pojo.dto.AcceptDTO;
+import com.lz.pojo.entity.Task;
 import com.lz.pojo.entity.TaskAcceptRecords;
+import com.lz.pojo.entity.Users;
 import com.lz.pojo.result.PageResult;
 import com.lz.pojo.result.Result;
 import com.lz.pojo.vo.TaskAcceptRecord;
 import com.lz.service.ITaskAcceptRecordsService;
 import com.lz.service.ITaskService;
+import com.lz.service.IUsersService;
 import com.lz.service.RealNameAuthenticationService;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,7 +40,33 @@ public class AcceptController {
     private ITaskService taskService;
 
     @Autowired
+    private IUsersService usersService;
+
+    @Autowired
     private RealNameAuthenticationService realNameAuthenticationService;
+
+    /**
+     * 承接人查看已接委托任务摘要
+     */
+    @GetMapping("/{taskId}/task")
+    @ApiOperation("承接人查看已接委托任务摘要")
+    public Result<Task> getAcceptedTaskBrief(@PathVariable("taskId") Long taskId) throws MyException {
+        Task task = taskService.getById(taskId);
+        if (task == null) {
+            throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
+        Users current = getCurrentUser();
+        if (current == null || task.getReceiverId() == null
+                || !current.getUserId().equals(task.getReceiverId())) {
+            throw new MyException(MessageConstants.PERMISSION_DENIED);
+        }
+        return Result.success(task);
+    }
+
+    private Users getCurrentUser() {
+        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usersService.getByUsername(name);
+    }
 
     /**
      * 获取委托任务接收信息

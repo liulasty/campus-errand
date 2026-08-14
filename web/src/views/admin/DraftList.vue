@@ -308,17 +308,21 @@
             async delete() {
                 const id = this.form.taskId;
                 console.log("删除委托", id);
-                await executeConfirmedRequest(delDelegate, id, "是否确认删除该委托草稿？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
-                this.open = false;
-                this.getList();
+                const ok = await executeConfirmedRequest(delDelegate, id, "是否确认删除该委托草稿？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
+                }
             },
             /**退为草稿 */
             async Fallback() {
                 const id = this.form.taskId;
                 console.log("退为草稿", id);
-                await executeConfirmedRequest(FallbackDraft, id, "是否确认退为草稿？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
-                this.open = false;
-                this.getList();
+                const ok = await executeConfirmedRequest(FallbackDraft, id, "是否确认退为草稿？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
+                }
                 // this.$confirm('是否确认退为草稿?', "警告", {
                 //     confirmButtonText: "确定",
                 //     cancelButtonText: "取消",
@@ -335,9 +339,11 @@
             async allowPublish() {
                 const id = this.form.taskId;
                 console.log("允许发布", id);
-                await executeConfirmedRequest(allowPublish, id, "是否确认允许发布？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
-                this.open = false;
-                this.getList();
+                const ok = await executeConfirmedRequest(allowPublish, id, "是否确认允许发布？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
+                }
                 // this.$confirm('是否确认允许发布?', "警告", {
                 //     confirmButtonText: "确定",
                 //     cancelButtonText: "取消",
@@ -356,9 +362,11 @@
             async notAllowed() {
                 const id = this.form.taskId;
                 console.log("不允许发布", id);
-                await executeConfirmedRequest(notAllowed, id, "是否确认不允许发布？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
-                this.open = false;
-                this.getList();
+                const ok = await executeConfirmedRequest(notAllowed, id, "是否确认不允许发布？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
+                }
                 // this.$confirm('是否确认不允许发布?', "警告", {
                 //     confirmButtonText: "确定",
                 //     cancelButtonText: "取消",

@@ -244,7 +244,7 @@
     </div>
 </template>
 <script>
-    import { getTaskCategories, addTaskNodeUpdate, uploadImg, listDelegateUpdateRecords } from '@/api/'
+    import { getTaskCategories, addTaskNodeUpdate, uploadImg, listTaskUpdateRecords } from '@/api/'
     import { TASK_NODE_TYPES, MOCK_LOCATION, getNodeMeta } from '@/utils/taskNode.js'
     import { acceptDelegationList, acceptCommission, cancelAcceptorByAcceptor, getTaskAndPublishUserInfoByTaskId } from '@/api/user.js'
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction.js'
@@ -544,13 +544,17 @@
                 // 具体实现取决于您的项目需求和上下文
             },
             /** 取消接收 */
-            cancelAcceptor() {
+            async cancelAcceptor() {
                 const acceptRecordId = this.form.id;
                 console.log("委托接收记录id", acceptRecordId)
-                executeConfirmedRequest(cancelAcceptorByAcceptor, acceptRecordId, "确认取消接受委托", "确认取消接受委托", "取消委托成功", "取消接受委托失败", "取消接受委托失败", "取消接受委托取消")
+                const ok = await executeConfirmedRequest(cancelAcceptorByAcceptor, acceptRecordId, "确认取消接受委托", "确认取消接受委托", "取消委托成功", "取消接受委托失败", "取消接受委托失败", "取消接受委托取消");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
+                }
             },
             /** 提交留言 */
-            acceptsTheEntrustment() {
+            async acceptsTheEntrustment() {
                 const data = {
                     task: this.form.task.taskId,
                     str: this.delegationStr,
@@ -566,13 +570,15 @@
                     )
                     return;
                 }
-                executeConfirmedRequest(acceptCommission, data, "确认接受委托", "确认接受委托", "接受委托成功,等待委托发布者处理", "接受委托失败", "接受委托失败", "接受委托取消");
-                this.getList();
-                this.open = false;
+                const ok = await executeConfirmedRequest(acceptCommission, data, "确认接受委托", "确认接受委托", "接受委托成功,等待委托发布者处理", "接受委托失败", "接受委托失败", "接受委托取消");
+                if (ok) {
+                    this.getList();
+                    this.open = false;
+                }
             },
             loadTaskUpdates(taskId) {
                 this.taskUpdates = [];
-                listDelegateUpdateRecords({
+                listTaskUpdateRecords({
                     taskId: taskId,
                     pageNum: 1,
                     pageSize: 100

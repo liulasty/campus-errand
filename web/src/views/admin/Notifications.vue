@@ -272,29 +272,34 @@
             },
             // 删除按钮操作
             async handleDelete(id) {
-                await executeConfirmedRequest(
+                const ok = await executeConfirmedRequest(
                     delNotification,
                     id,
                     "确认删除该通知？",
                     "删除成功",
                     "删除失败",
                     "删除取消"
-                )
-                this.getList();
+                );
+                if (ok) {
+                    this.getList();
+                }
             },
             addNotification(formName) {
                 console.log("add", this.addForm);
-                this.$refs[formName].validate((valid) => {
+                this.$refs[formName].validate(async (valid) => {
                     if (valid) {
-                        executeConfirmedRequest(
+                        const ok = await executeConfirmedRequest(
                             addNotification,
                             this.addForm,
                             "确认添加",
                             "添加成功",
                             "添加失败",
                             "添加取消"
-                        )
-                        this.addDialogForm = false
+                        );
+                        if (ok) {
+                            this.addDialogForm = false;
+                            this.getList();
+                        }
                     } else {
 
                         return false;
@@ -317,7 +322,7 @@
                     this.msgError("更新失败");
                     return;
                 }
-                await executeConfirmedRequest(
+                const ok = await executeConfirmedRequest(
                     updateNotificationAdmin,
                     this.updateForm,
                     "确认更新",
@@ -325,13 +330,15 @@
                     "更新失败",
                     "更新取消"
                 );
-                this.getList();
-                this.updateDialogForm = false
+                if (ok) {
+                    this.getList();
+                    this.updateDialogForm = false;
+                }
             },
-            handleSend() {
+            async handleSend() {
                 console.log("send", this.sendData);
 
-                executeConfirmedRequest(
+                const ok = await executeConfirmedRequest(
                     sendNotification,
                     this.sendData,
                     "确认发送",
@@ -339,8 +346,10 @@
                     "发送失败",
                     "发送取消"
                 );
-                this.sendDialogForm = false
-
+                if (ok) {
+                    this.sendDialogForm = false;
+                    this.getList();
+                }
             },
             handleUpdate(id) {
                 console.log("look", this.id)

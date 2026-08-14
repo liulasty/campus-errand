@@ -46,8 +46,8 @@
     </div>
 </template>
 <script>
-    import { listDelegateUpdateRecords } from '@/api/'
-import { getTaskAndPublishUserInfoByTaskId } from '@/api/user.js'
+    import { listTaskUpdateRecords } from '@/api/'
+import { getAcceptedTaskBrief, getPublisherTaskBrief } from '@/api/user.js'
     import { TASK_NODE_TYPES, getNodeMeta } from '@/utils/taskNode.js'
     import { SUCCESS_CODE } from '@/constants/http'
     import { formatDateTime } from '@/utils/dateFormat'
@@ -83,14 +83,8 @@ import { getTaskAndPublishUserInfoByTaskId } from '@/api/user.js'
         methods: {
             loadData() {
                 this.loading = true
-                getTaskAndPublishUserInfoByTaskId(this.taskId).then(res => {
-                    if (res.data.code === SUCCESS_CODE) {
-                        this.task = res.data.data.task || {}
-                    }
-                }).catch(err => {
-                    console.error('获取任务详情失败：', err)
-                })
-                listDelegateUpdateRecords({ taskId: this.taskId, pageNum: 1, pageSize: 100 }).then(res => {
+                this.loadTaskBrief()
+                listTaskUpdateRecords({ taskId: this.taskId, pageNum: 1, pageSize: 100 }).then(res => {
                     if (res.data.code === SUCCESS_CODE) {
                         const records = res.data.data.records || []
                         this.nodeRecords = records.filter(r => getNodeMeta(r.updateType))
@@ -102,6 +96,26 @@ import { getTaskAndPublishUserInfoByTaskId } from '@/api/user.js'
                     console.error('获取打卡记录失败：', err)
                     this.$message.error('请求异常，请稍后重试')
                     this.loading = false
+                })
+            },
+            loadTaskBrief() {
+                // 身份判断：优先按承接人(receiver)取摘要，被拒则回落按发布者(owner)取，都不是则提示无权访问
+                getAcceptedTaskBrief(this.taskId).then(res => {
+                    if (res.data.code === SUCCESS_CODE) {
+                        this.task = res.data.data || {}
+                        return
+                    }
+                    getPublisherTaskBrief(this.taskId).then(res2 => {
+                        if (res2.data.code === SUCCESS_CODE) {
+                            this.task = res2.data.data || {}
+                        } else {
+                            this.$message.error(res2.data.msg || '无权访问该任务')
+                        }
+                    }).catch(err => {
+                        console.error('获取任务详情失败：', err)
+                    })
+                }).catch(err => {
+                    console.error('获取任务详情失败：', err)
                 })
             },
             nodeMeta(updateType) {

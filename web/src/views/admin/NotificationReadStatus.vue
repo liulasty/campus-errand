@@ -280,10 +280,10 @@
                     });
                 this.getList();
             },
-            handleSend() {
+            async handleSend() {
                 console.log("send", this.sendData);
 
-                executeConfirmedRequest(
+                const ok = await executeConfirmedRequest(
                     sendNotification,
                     this.sendData,
                     "确认发送",
@@ -291,7 +291,10 @@
                     "发送失败",
                     "发送取消"
                 );
-
+                if (ok) {
+                    this.sendDialogForm = false;
+                    this.getList();
+                }
             },
             //已读标签
             filterTag(value, row) {

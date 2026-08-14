@@ -267,8 +267,10 @@ export default {
       })
     },
     async cancelAuthentication() {
-      await executeConfirmedRequest(deleteAuthenticationInformation, this.infoForm.userId, "是否确认取消用户认证？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
-      this.getInfo();
+      const ok = await executeConfirmedRequest(deleteAuthenticationInformation, this.infoForm.userId, "是否确认取消用户认证？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+      if (ok) {
+        this.getInfo();
+      }
     },
 
     async myInfoExportExcel() {

@@ -332,8 +332,8 @@
                     });
                     return;
                 } else {
-                    executeConfirmedRequest(deleteAccounts, this.multipleSelection.map(item => item.userId), "确认删除选中的用户吗？", "删除成功", "删除失败", "删除失败，请稍后重试", "删除成功", "删除失败，请稍后重试", "删除失败，请稍后重试").then(() => {
-                        this.getUserPage()
+                    executeConfirmedRequest(deleteAccounts, this.multipleSelection.map(item => item.userId), "确认删除选中的用户吗？", "删除成功", "删除失败", "删除失败，请稍后重试", "删除成功", "删除失败，请稍后重试", "删除失败，请稍后重试").then(ok => {
+                        if (ok) this.getUserPage()
                     })
                 }
             },
@@ -435,39 +435,49 @@
             //确认通过审核
             async approvedCard() {
 
-                await executeConfirmedRequest(confirmToPassTheReview, this.form.userId);
-                this.handleClose();
-                this.getUserPage()
+                const ok = await executeConfirmedRequest(confirmToPassTheReview, this.form.userId);
+                if (ok) {
+                    this.handleClose();
+                    this.getUserPage()
+                }
             },
             //删除认证审核记录
             async deleteRecords(id) {
 
-                await executeConfirmedRequest(deleteCertificationRecords, this.form.userId, "是否确认删除该认证记录？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
-                this.handleClose();
-                this.getUserPage()
+                const ok = await executeConfirmedRequest(deleteCertificationRecords, this.form.userId, "是否确认删除该认证记录？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                if (ok) {
+                    this.handleClose();
+                    this.getUserPage()
+                }
             },
             //取消该用户认证
             async cancelUserAuthentication() {
-                await executeConfirmedRequest(cancelUserInfoAuthentication, this.form.userId, "是否确认取消该用户认证？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
-                this.handleClose();
-                this.getUserPage()
+                const ok = await executeConfirmedRequest(cancelUserInfoAuthentication, this.form.userId, "是否确认取消该用户认证？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                if (ok) {
+                    this.handleClose();
+                    this.getUserPage()
+                }
             },
             // 辅助激活
             async auxiliaryActivation(id) {
-                await executeConfirmedRequest(adminActivation, id, "是否确认激活该用户账号用于登录网站使用？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
-                this.handleClose();
-                this.getUserPage()
+                const ok = await executeConfirmedRequest(adminActivation, id, "是否确认激活该用户账号用于登录网站使用？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                if (ok) {
+                    this.handleClose();
+                    this.getUserPage()
+                }
             },
             // handleEnable
             async handleEnable(data) {
                 console.log(data);
+                let ok = false;
                 if (data.isEnabled === '禁用') {
-                    await executeConfirmedRequest(handleDisableAdmin, data.userId, "是否确认启用该用户账号？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                    ok = await executeConfirmedRequest(handleDisableAdmin, data.userId, "是否确认禁用该用户账号？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
                 } else {
-                    await executeConfirmedRequest(handleEnableAdmin, data.userId, "是否确认禁用该用户账号？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                    ok = await executeConfirmedRequest(handleEnableAdmin, data.userId, "是否确认启用该用户账号？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
                 }
-
-                this.getUserPage()
+                if (ok) {
+                    this.getUserPage()
+                }
             }
         },
         mounted() {

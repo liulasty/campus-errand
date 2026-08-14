@@ -295,8 +295,11 @@
             async deleteRecordAdmin() {
                 const id = this.form.taskId;
                 console.log("删除委托", id);
-                await executeConfirmedRequest(delDelegate, this.form.userId, "是否确认删除该委托？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
-
+                const ok = await executeConfirmedRequest(delDelegate, id, "是否确认删除该委托？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
+                }
             },
             /**退为草稿 */
             FallbackDraft() {

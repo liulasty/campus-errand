@@ -203,6 +203,43 @@ public class PublisherController {
         return Result.success(taskAndUserInfo);
     }
 
+    /**
+     * 发布者查看自己发布的任务摘要
+     */
+    @GetMapping("/{taskId}/task")
+    @ApiOperation("发布者查看自己发布的任务摘要")
+    public Result<Task> getPublisherTaskBrief(@PathVariable("taskId") Long taskId) throws MyException {
+        Task task = taskService.getById(taskId);
+        if (task == null) {
+            throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
+        Users current = getCurrentUser();
+        if (current == null || !current.getUserId().equals(task.getOwnerId())) {
+            throw new MyException(MessageConstants.PERMISSION_DENIED);
+        }
+        return Result.success(task);
+    }
+
+    /**
+     * 发布者回退草稿（已过期/已取消委托 → 草稿）
+     */
+    @PutMapping("/tasks/{id}/fallback-draft")
+    @ApiOperation("发布者回退草稿")
+    public Result<?> fallbackDraftByPublisher(@PathVariable("id") Long taskId) throws MyException {
+        Task task = taskService.getById(taskId);
+        if (task == null) {
+            throw new MyException(MessageConstants.TASK_NOT_EXIST);
+        }
+        Users current = getCurrentUser();
+        if (current == null || !current.getUserId().equals(task.getOwnerId())) {
+            throw new MyException(MessageConstants.PERMISSION_DENIED);
+        }
+        if (!taskService.publisherFallbackDraft(taskId)) {
+            throw new MyException(MessageConstants.DATABASE_ERROR);
+        }
+        return Result.success(MessageConstants.TASK_UPDATE_SUCCESS);
+    }
+
     @PutMapping("/tasks/{id}/completed")
     public Result<?> completed(@PathVariable Long id,
             @RequestBody UpdateTaskToCompletedDTO DTO) throws MyException {

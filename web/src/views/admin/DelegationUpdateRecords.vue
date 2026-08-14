@@ -249,10 +249,10 @@
             async handleDelete(row) {
                 const RecordIDs = row.updateId;
 
-                await executeConfirmedRequest(delDelegateUpdateRecords, RecordIDs, '是否确认删除存储委托信息记录编号为"' + RecordIDs + '"的数据项？', '删除委托更新记录');
-                this.getList();
-
-
+                const ok = await executeConfirmedRequest(delDelegateUpdateRecords, RecordIDs, '是否确认删除存储委托信息记录编号为"' + RecordIDs + '"的数据项？', '删除委托更新记录');
+                if (ok) {
+                    this.getList();
+                }
             },
 
             handleSizeChange(val) {

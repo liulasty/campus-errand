@@ -485,7 +485,7 @@
                 // 具体实现取决于您的项目需求和上下文
             },
             /** 提交留言 */
-            acceptsTheEntrustment() {
+            async acceptsTheEntrustment() {
                 const data = {
                     task: this.form.task.taskId,
                     str: this.delegationStr,
@@ -501,9 +501,11 @@
                     )
                     return;
                 }
-                executeConfirmedRequest(acceptCommission, data, "我确认接受委托", "是否确认接受委托", "接受委托成功,等待委托发布者处理", "接受委托失败", "接受委托失败", "接受委托取消");
-                this.getList();
-                this.open = false;
+                const ok = await executeConfirmedRequest(acceptCommission, data, "我确认接受委托", "是否确认接受委托", "接受委托成功,等待委托发布者处理", "接受委托失败", "接受委托失败", "接受委托取消");
+                if (ok) {
+                    this.getList();
+                    this.open = false;
+                }
             },
             cancel() {
                 this.open = false;

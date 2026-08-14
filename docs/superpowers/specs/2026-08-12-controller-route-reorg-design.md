@@ -103,14 +103,14 @@ com.lz.controller
 | GET | /user/exportExcel | /admin/users/export | ✓ |
 | PUT | /user/updateUserInfoByAdmin | /admin/users | ✗ 核实 |
 | DELETE | /user/deleteUserInfoById/{id} | /admin/users/{id} | ✗ 核实 |
-| DELETE | /user/deleteUserInfoByAdmin | DELETE /admin/users (body) | ✗ 核实 |
+| ~~DELETE /user/deleteUserInfoByAdmin~~ | — | 已删除：无前端调用且被 deleteUser 覆盖 | — |
 | PUT | /user/adminActivation/{id} | /admin/users/{id}/activate | ✓ |
 | PUT | /user/handleDisableByAdmin/{id} | /admin/users/{id}/disable | ✓ |
 | PUT | /user/handleEnableByAdmin/{id} | /admin/users/{id}/enable | ✓ |
-| POST | /user/resetPassword | /admin/users/{id}/reset-password | ✗ 核实 |
+| POST | /user/resetPassword | /admin/users/reset-password | ✗ 核实（body Users 携带 userId，路径不带 id） |
 | POST | /user/deleteUser | DELETE /admin/users (body) | ✓ |
 
-> ⚠️ `deleteUserInfoByAdmin`（`removeByIds`）与 `deleteUser`（`deleteUsers`）均落到 `DELETE /admin/users`，疑似重复。规划期核实 `deleteUsers` 语义后**合并或区分路径**。
+> ✅ 决策（2026-08-12 实施）：`deleteUserInfoByAdmin`（纯 `removeByIds`）无前端调用且被 `deleteUser`（带 USER 角色+实名记录校验的 `deleteUsers`）覆盖 → **删除**，`DELETE /admin/users` 仅保留 `deleteUser` 一个批量删除。
 
 **user/admin/AuthenticationAdminController** → `/admin/authentications`
 | PUT | /userInfo/confirmToPassTheReview/{id} | /admin/authentications/{id}/approve | ✓ |
@@ -159,7 +159,7 @@ com.lz.controller
 **TaskUpdateController**（用户侧）→ `/tasks/updates`
 | POST | /taskUpdate/add | /tasks/updates | ✓ |
 | POST | /taskUpdate/node | /tasks/updates/node | ✓ |
-| GET | /taskUpdate/getTask/{id} | /tasks/updates?taskId={id} | ✓ |
+| GET | /taskUpdate/getTask/{id} | /tasks/updates/{id} | ✓（实为按 read_status 记录 id 查单条，非 taskId） |
 
 **task/admin/TaskUpdateAdminController** → `/admin/tasks/updates`
 | GET | /taskUpdate/list | /admin/tasks/updates | ✓ |

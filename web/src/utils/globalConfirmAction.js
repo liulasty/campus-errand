@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import { MessageBox, Message } from 'element-ui'; // 请替换为实际使用的Vue库导入方式
+import { showLoading, hideLoading } from './loading';
 
 Vue.prototype.$confirm = MessageBox.confirm;
 Vue.prototype.$message = Message;
@@ -7,10 +8,11 @@ Vue.prototype.$message = Message;
 const $confirm = Vue.prototype.$confirm;
 const $message = Vue.prototype.$message;
 
-const count = true;
-
 /**
  * 执行确认操作并发起请求
+ *
+ * 返回值：成功（code === 1）返回 true；取消/关闭/失败返回 false。
+ * 调用方可据此在成功后关闭弹窗并刷新列表。
  *
  * @param {Function} requestFn - 请求函数，接受参数并返回Promise
  * @param {Object} requestParams - 请求所需参数
@@ -19,6 +21,7 @@ const count = true;
  * @param {string} warningMessage - 警告消息提示
  * @param {string} errorMessage - 错误消息提示
  * @param {string} cancelMessage - 取消消息提示
+ * @returns {Promise<boolean>}
  */
 export async function executeConfirmedRequest(
     requestFn,
@@ -31,27 +34,21 @@ export async function executeConfirmedRequest(
     cancelMessage = '操作已取消'
 ) {
     try {
-        let operationResult = true;
-        const confirmResult = await $confirm(message, title, {
+        await $confirm(message, title, {
             distinguishCancelAndClose: true,
             confirmButtonText: '确认',
             cancelButtonText: '取消'
-        }).then(() => {
-            return;
-        }).catch(() => {
-            $message({
-                type: 'info',
-                message: cancelMessage
-            });
-            operationResult = false;
-            return;
         });
+    } catch (e) {
+        $message({
+            type: 'info',
+            message: cancelMessage
+        });
+        return false;
+    }
 
-        if (!operationResult) {
-            console.log('取消删除', confirmResult);
-            return;
-        }
-
+    showLoading();
+    try {
         const response = await requestFn(requestParams);
 
         if (!response || !response.data) {
@@ -59,18 +56,17 @@ export async function executeConfirmedRequest(
         }
 
         if (response.data.code === 1) {
-            // 这里可以考虑使用日志服务或统一的日志处理函数记录日志
-            // console.log('响应结果', response.data.data);
-
             $message({
                 message: response.data.msg,
                 type: 'success'
             });
+            return true;
         } else {
             $message({
                 message: response.data.msg,
                 type: 'warning'
             });
+            return false;
         }
     } catch (error) {
         console.error('处理请求时发生错误', error);
@@ -79,5 +75,8 @@ export async function executeConfirmedRequest(
             message: errorMessage,
             type: 'info'
         });
+        return false;
+    } finally {
+        hideLoading();
     }
 }

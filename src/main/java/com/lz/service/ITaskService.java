@@ -131,6 +131,15 @@ public interface ITaskService extends IService<Task> {
     Boolean fallbackDraft(Long taskId) throws MyException;
 
     /**
+     * 发布者回退草稿（仅已过期/已取消委托）
+     *
+     * @param taskId 任务 ID
+     *
+     * @return 布尔
+     */
+    Boolean publisherFallbackDraft(Long taskId) throws MyException;
+
+    /**
      * 允许发布
      *
      * @param taskId 任务 ID

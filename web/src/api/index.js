@@ -137,6 +137,13 @@ export function listDelegateUpdateRecords(query) {
     })
 }
 
+export function listTaskUpdateRecords(query) {
+    console.log("查询任务履约动态列表（用户侧）:");
+    return http.get('/tasks/updates', {
+        params: query
+    })
+}
+
 export const getDelegateUpdateType = () => {
     console.log("获取委托记录更新记录类型");
     return http.get('/admin/tasks/updates/types')

@@ -243,7 +243,7 @@
                 });
             },
             async handleDelete(id) {
-                await executeConfirmedRequest(
+                const ok = await executeConfirmedRequest(
                     deleteSystemBulletin,
                     { announcementId: id },
                     "确认删除该公告？",
@@ -251,8 +251,10 @@
                     "删除成功",
                     "删除失败",
                     "删除取消"
-                )
-                this.getList();
+                );
+                if (ok) {
+                    this.getList();
+                }
             },
             handleSizeChange(val) {
                 this.queryParams.pageSize = val;

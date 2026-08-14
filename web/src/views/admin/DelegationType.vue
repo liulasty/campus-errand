@@ -218,7 +218,7 @@
             },
             async handleDelete(id) {
 
-                await executeConfirmedRequest(
+                const ok = await executeConfirmedRequest(
                     deleteDelegationType,
                     id,
                     '确认删除该委托类型？',
@@ -227,13 +227,16 @@
                     '操作警告',
                     '操作失败，请稍后重试',
                     '操作已取消'
-                )
-                this.getList();
+                );
+                if (ok) {
+                    this.getList();
+                }
             },
             async handleEnable(id, status) {
                 console.log("id, status", id, status);
+                let ok = false;
                 if (status == 1) {
-                    await executeConfirmedRequest(
+                    ok = await executeConfirmedRequest(
                         enableDelegationType,
                         id,
                         '确认禁用该委托类型？',
@@ -242,9 +245,9 @@
                         '操作警告',
                         '操作失败，请稍后重试',
                         '操作已取消'
-                    )
+                    );
                 } else {
-                    await executeConfirmedRequest(
+                    ok = await executeConfirmedRequest(
                         enableDelegationType,
                         id,
                         '确认启用该委托类型？',
@@ -253,14 +256,14 @@
                         '操作警告',
                         '操作失败，请稍后重试',
                         '操作已取消'
-                    )
-
+                    );
                 }
-                this.getList();
-
+                if (ok) {
+                    this.getList();
+                }
             },
             async addDelegationType() {
-                await executeConfirmedRequest(
+                const ok = await executeConfirmedRequest(
                     addDelegationTypeAdmin,
                     this.addForm,
                     '确认添加该委托类型？',
@@ -269,10 +272,11 @@
                     '操作警告',
                     '操作失败，请稍后重试',
                     '操作已取消'
-                )
-                this.addDialogForm = false;
-                this.getList();
-
+                );
+                if (ok) {
+                    this.addDialogForm = false;
+                    this.getList();
+                }
             }
         },
 
