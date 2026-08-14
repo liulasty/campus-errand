@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -160,7 +161,10 @@ public class NotificationsServiceImpl extends ServiceImpl<NotificationsMapper, N
     @Transactional
     public void delNotification(Long id) {
         removeById(id);
-        notificationReadStatusService.delNotification(id);
+        // 级联删除该通知对应的所有阅读记录（按 NotificationID 匹配，而非阅读记录主键 id）
+        notificationReadStatusService.remove(
+                new LambdaQueryWrapper<NotificationReadStatus>()
+                        .eq(NotificationReadStatus::getNotificationId, id));
     }
 
     @Override

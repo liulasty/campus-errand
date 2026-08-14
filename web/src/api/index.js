@@ -300,6 +300,12 @@ export const listNotificationReadRecords = (data) => {
     })
 }
 
+export const delNotificationReadRecord = (id) => {
+    console.log("删除消息阅读记录", id);
+
+    return http.delete("/admin/notification-read-status/" + id)
+}
+
 export const getDelegationTypeList = (query) => {
     console.log("获取委托类型列表");
     return http.get('/admin/categories', {

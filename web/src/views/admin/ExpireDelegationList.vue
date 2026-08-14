@@ -1,354 +1,370 @@
 <template>
-    <div class="app-container">
-        <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
-            label-width="98px">
-            <el-form-item label="委托任务内容" prop="Description" class="input-reader-name">
-                <el-input v-model="queryParams.Description" placeholder="请输入委托内容关键词" clearable
+    <list-shell title="委托归档" eyebrow="ARCHIVE" subtitle="已过期与已取消委托的归档视图"
+        :count="total" count-label="条记录" :loading="loading" :total="total"
+        :page.sync="queryParams.pageNum" :page-size.sync="queryParams.pageSize"
+        :page-sizes="[5, 7, 10, 15]" @current-change="handleCurrentChange"
+        @size-change="handleSizeChange">
+        <template #toolbar>
+            <div class="ex-toolbar">
+                <el-input v-model="queryParams.Description" placeholder="委托内容关键词" clearable class="ex-input"
                     @keyup.enter.native="handleQuery" />
-            </el-form-item>
-            <el-form-item label="委托类型" prop="taskType" class="input-reader-name">
-                <el-select v-model="queryParams.taskType" placeholder="请选择委托类型" clearable>
+                <el-select v-model="queryParams.taskType" placeholder="委托类型" clearable class="ex-select">
                     <el-option v-for="dict in taskTypeOption" :key="dict.value" :label="dict.label"
                         :value="dict.value" />
                 </el-select>
-            </el-form-item>
-            <el-form-item label="委托任务地点" prop="Location" class="input-reader-name">
-                <el-select v-model="queryParams.Location" placeholder="请选择委托任务地点" clearable>
-                    <el-option v-for="dict in locationType" :key="dict.value" :label="dict.label" :value="dict.value" />
+                <el-select v-model="queryParams.Location" placeholder="委托地点" clearable class="ex-select">
+                    <el-option v-for="dict in locationType" :key="dict.value" :label="dict.label"
+                        :value="dict.value" />
                 </el-select>
-            </el-form-item>
-            <el-form-item label="委托创建时间" prop="CreatedAt" class="input-reader-name">
-                <el-date-picker clearable v-model="queryParams.CreatedAt" type="date" value-format="yyyy-MM-dd"
-                    placeholder="请选择审核完成时间">
-                </el-date-picker>
-            </el-form-item>
-            <el-form-item>
-                <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-                <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-            </el-form-item>
-        </el-form>
+                <el-date-picker v-model="queryParams.CreatedAt" type="date" value-format="yyyy-MM-dd"
+                    placeholder="委托创建时间" clearable class="ex-date" />
+                <el-button type="primary" icon="el-icon-search" class="ex-btn ex-btn--primary"
+                    @click="handleQuery">检索</el-button>
+                <el-button icon="el-icon-refresh" class="ex-btn ex-btn--ghost" @click="resetQuery">重置</el-button>
+            </div>
+        </template>
 
+        <data-list :data="delegateRecordsList" :loading="loading" mode="card" :config="listConfig" row-key="taskId"
+            @action="onAction" />
 
-
-        <el-table v-loading="loading" :data="delegateRecordsList" @selection-change="handleSelectionChange"
-            :row-style="{ height: '50px' }">
-            <el-table-column label="委托任务ID" align="center" prop="taskId" />
-            <el-table-column label="发布者" align="center" width="120">
-                <template slot-scope="scope">{{ scope.row.ownerName || scope.row.ownerId }}</template>
-            </el-table-column>
-            <el-table-column label="信用分" align="center" width="90">
-                <template slot-scope="scope">
-                    <el-tag :type="(scope.row.ownerCredit != null ? scope.row.ownerCredit : 60) >= 80 ? 'success' : (scope.row.ownerCredit != null ? scope.row.ownerCredit : 60) >= 60 ? 'primary' : 'info'"
-                        size="small">{{ scope.row.ownerCredit != null ? scope.row.ownerCredit : 60 }}</el-tag>
-                </template>
-            </el-table-column>
-            <el-table-column label="委托创建时间" align="center" width="150">
-                <template slot-scope="scope">{{ scope.row.createdAt | dateTime }}</template>
-            </el-table-column>
-            <el-table-column label="委托类型" align="center" prop="type" />
-            <el-table-column label="委托状态" align="center" prop="status" width="180">
-            </el-table-column>
-            <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-                <template slot-scope="scope">
-                    <el-button size="mini" type="text" icon="el-icon-view"
-                        @click="handleView(scope.row.taskId)">查看</el-button>
-                </template>
-            </el-table-column>
-        </el-table>
-
-        <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
-            :current-page=queryParams.pageNum :page-sizes="[5, 7, 10, 15]" :page-size=queryParams.pageSize
-            layout="total, sizes, prev, pager, next, jumper" :total="total">
-        </el-pagination>
-
-        <!-- 添加或修改存储委托信息审核记录对话框 -->
-        <el-dialog :title="title" :visible.sync="open" width="550px" append-to-body>
-            <el-form ref="form" :model="form" label-width="110px">
-                <el-form-item label="委托任务ID" prop="DelegateID">
-                    <el-input v-model="form.taskId" placeholder="请输入委托任务ID" disabled />
+        <!-- 委托详情弹窗 -->
+        <el-dialog :title="title" :visible.sync="open" width="560px" custom-class="ex-dialog"
+            append-to-body :close-on-click-modal="false">
+            <el-form ref="form" :model="form" label-width="100px">
+                <el-form-item label="委托任务ID">
+                    {{ form.taskId }}
                 </el-form-item>
-                <el-form-item label="委托内容" prop="ReviewComment">
-                    <el-input v-model="form.description" type="textarea" placeholder="请输入内容" disabled />
+                <el-form-item label="委托内容">
+                    {{ form.description }}
                 </el-form-item>
-                <el-form-item label="委托发布地点" prop="ReviewTime">
-                    <el-input v-model="form.location" placeholder="请输入内容" disabled />
-
+                <el-form-item label="委托地点">
+                    {{ form.location }}
                 </el-form-item>
             </el-form>
-            <div slot="footer" class="dialog-footer">
-                <div v-if="Array.isArray(operation.title)">
-                    <!-- 多个按钮的情况 -->
-                    <el-button v-for="(item, index) in operation.title" :type="operation.type[index]" :key="index"
-                        @click="handleButtonClick(operation.click[index])">
-                        {{ item }}
-                    </el-button>
-                </div>
-                <div v-else>
-                    <!-- 单个按钮的情况 -->
-                    <el-button :type="operation.type" @click="handleButtonClick(operation.click)">{{ operation.title
-                        }}</el-button>
-                </div>
+            <div slot="footer" class="ex-dialog__footer">
+                <el-button @click="open = false">关 闭</el-button>
+                <el-button v-if="operation.title" type="primary"
+                    @click="handleButtonClick(operation.click)">{{ operation.title }}</el-button>
             </div>
         </el-dialog>
-    </div>
+    </list-shell>
 </template>
 
 <script>
+    import ListShell from '@/components/list/ListShell'
+    import DataList from '@/components/list/DataList'
     import {
-        listDelegateRecords, delDelegate, getDelegateByTaskID, getTaskCategories,
+        listDelegateRecords, delDelegate, getDelegateByTaskID, getTaskCategories
     } from "@/api/";
-
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
     import { TASK_STATUS } from '@/constants/enums'
 
     export default {
-        name: "Delegateauditrecords",
+        name: "ExpireDelegationList",
+        components: { ListShell, DataList },
         data() {
             return {
                 TASK_STATUS,
-                // 遮罩层
                 loading: true,
-                // 选中数组
-                ids: [],
-                // 非单个禁用
-                single: true,
-                // 非多个禁用
-                multiple: true,
-                // 显示搜索条件
-                showSearch: true,
-                // 总条数
                 total: 0,
-                // 存储委托信息审核记录表格数据
                 delegateRecordsList: [],
-                // 弹出层标题
                 title: "",
-                // 是否显示弹出层
                 open: false,
-                // 查询参数
                 queryParams: {
                     pageNum: 1,
-                    pageSize: 10,
+                    pageSize: 10
                 },
-                // 地点类型数组
                 locationType: [
-                    {
-                        value: '教学楼',
-                        label: '教学楼'
-                    },
-                    {
-                        value: '图书馆',
-                        label: '图书馆'
-                    },
-                    {
-                        value: '食堂',
-                        label: '食堂'
-                    },
-                    {
-                        value: '运动场',
-                        label: '运动场'
-                    },
-                    {
-                        value: '实验室',
-                        label: '实验室'
-                    },
-                    {
-                        value: '其他',
-                        label: '其他'
-                    },
+                    { value: '教学楼', label: '教学楼' },
+                    { value: '图书馆', label: '图书馆' },
+                    { value: '食堂', label: '食堂' },
+                    { value: '运动场', label: '运动场' },
+                    { value: '实验室', label: '实验室' },
+                    { value: '其他', label: '其他' }
                 ],
-                //委托类型
                 taskTypeOption: [
                     { label: "委托", value: 1 },
                     { label: "取消委托", value: 2 }
                 ],
-                //委托类型
-                taskType: {
-                },
+                taskType: {},
                 operations: {
                     "已过期": {
-                        index: 0,
                         title: ["撤销发布", "退为草稿"],
-                        type: ["warning", "warn"],
+                        type: ["warning", "warning"],
                         click: ["withdrawReleaseAdmin", "fallbackDraftAdmin"]
                     },
                     [TASK_STATUS.CANCELLED]: {
-                        index: 1,
                         title: ["删除记录"],
                         type: ["warning"],
                         click: ["deleteRecordAdmin"]
                     }
                 },
                 operation: {},
-                // 表单参数
                 form: {},
+                listConfig: [
+                    {
+                        label: '状态', field: 'status', type: 'badge',
+                        badgeMap: {
+                            '已过期': { text: '已过期', tone: 'warning' },
+                            [TASK_STATUS.CANCELLED]: { text: '已取消', tone: 'info' }
+                        }
+                    },
+                    { label: '类型', field: 'type', type: 'badge', badgeMap: {} },
+                    { label: '委托内容', field: 'description', title: true },
+                    { label: '任务ID', field: 'taskId' },
+                    { label: '发布者', field: 'ownerName', emptyText: '—' },
+                    { label: '信用分', field: 'ownerCredit' },
+                    { label: '创建时间', field: 'createdAt', type: 'date' },
+                    {
+                        label: '操作', type: 'operate',
+                        actions: [{ key: 'view', label: '查看', tone: 'primary' }]
+                    }
+                ]
             };
         },
         created() {
             this.handleType();
             this.getList();
-
         },
         methods: {
-            /** 查询存储委托信息记录列表 */
             getList() {
                 this.loading = true;
                 this.queryParams.TypePhase = "LIFECYCLE_TERMINATION";
                 listDelegateRecords(this.queryParams).then((response) => {
-                    console.log("查询委托信息记录列表", response);
-                    this.delegateRecordsList = response.data.data.records.map((record) => {
-
-                        record.type = this.taskType[`${record.type}`]; // 确保类型安全
-
-                        return record;
-                    });
-                    console.log(this.delegateRecordsList);
-                    this.total = response.data.data.total;
+                    if (response.data.code === 1) {
+                        this.delegateRecordsList = response.data.data.records.map((record) => {
+                            record.type = this.taskType[`${record.type}`];
+                            return record;
+                        });
+                        this.total = response.data.data.total;
+                    } else {
+                        this.$message.error(response.data.msg || '查询归档委托失败');
+                    }
+                    this.loading = false;
+                }).catch(err => {
+                    console.error('查询归档委托失败：', err);
+                    this.$message.error('请求异常，请稍后重试');
                     this.loading = false;
                 });
             },
-            getTaskValue(value) {
-                return this.taskType[value];
-            },
-            /** 获取委托类型操作 */
             handleType() {
-                //获取类型
                 getTaskCategories().then((data) => {
-                    this.taskTypeOption = [];
-                    if (data.data.code === 1) {
-
-                        if (data.data.data.length > 0) {
-
-                            const taskCategories = data.data.data;
-
-                            for (let i = 0; i < taskCategories.length; i++) {
-                                //生成键值对
-                                this.taskType[`${taskCategories[i].id}`] = `${taskCategories[i].name}`
-                                this.taskTypeOption.push({ label: taskCategories[i].name, value: taskCategories[i].id })
-                            }
-                            // console.log("类型信息", this.tabPanes);
-                            console.log(this.taskType);
-                            // console.log("类型数组", this.taskTypeOption);
+                    if (data.data.code === 1 && data.data.data.length > 0) {
+                        this.taskTypeOption = [];
+                        const taskCategories = data.data.data;
+                        for (let i = 0; i < taskCategories.length; i++) {
+                            this.taskType[`${taskCategories[i].id}`] = `${taskCategories[i].name}`;
+                            this.taskTypeOption.push({ label: taskCategories[i].name, value: taskCategories[i].id });
                         }
                     }
-                })
-            },
-            // 取消按钮
-            cancel() {
-                this.open = false;
-                this.reset();
-            },
-            // 表单重置
-            reset() {
-                this.form = {
-                    RecordID: null,
-                    DelegateID: null,
-                    UserID: null,
-                    ReviewStatus: null,
-                    ReviewComment: null,
-                    ReviewTime: null
-                };
-                this.resetForm("form");
-            },
-            /** 搜索按钮操作 */
-            handleQuery() {
-                this.queryParams.pageNum = 1;
-
-                console.log("搜索参数：", this.queryParams);
-                this.getList();
-            },
-            /** 重置按钮操作 */
-            resetQuery() {
-                this.resetForm("queryForm");
-                this.handleQuery();
-            },
-            // 多选框选中数据
-            handleSelectionChange(selection) {
-                this.ids = selection.map(item => item.RecordID)
-                this.single = selection.length !== 1
-                this.multiple = !selection.length
-            },
-
-            /** 查看按钮操作 */
-            handleView(id) {
-                console.log("查看委托", id);
-
-                getDelegateByTaskID(id).then(response => {
-                    console.log("查看委托信息", response.data.data);
-                    this.form = response.data.data;
-                    this.operation = this.operations[response.data.data.status];
-                    console.log("查看委托选项", this.operation);
-                    this.open = true;
-                    this.title = "查看委托信息";
-                    this.open = true;
                 });
-
             },
-            /** 引导按钮操作 */
+            onAction({ key, row }) {
+                if (key === 'view') {
+                    this.handleView(row.taskId);
+                }
+            },
+            handleView(id) {
+                getDelegateByTaskID(id).then(response => {
+                    if (response.data.code === 1) {
+                        this.form = response.data.data;
+                        this.operation = this.operations[response.data.data.status] || {};
+                        this.title = "查看委托信息";
+                        this.open = true;
+                    } else {
+                        this.$message.error(response.data.msg || '获取委托详情失败');
+                    }
+                }).catch(err => {
+                    console.error('查看委托详情失败：', err);
+                    this.$message.error('请求异常，请稍后重试');
+                });
+            },
             handleButtonClick(actionName) {
-                console.log("点击按钮", actionName);
-                // 在这里实现点击按钮时调用的逻辑，例如：
-                this[actionName]()
-                // this[actionName]() 或者 this.$emit(actionName)
-                // 具体实现取决于您的项目需求和上下文
+                if (typeof this[actionName] === 'function') {
+                    this[actionName]();
+                }
             },
-            /**删除 */
             async deleteRecordAdmin() {
                 const id = this.form.taskId;
-                console.log("删除委托", id);
                 const ok = await executeConfirmedRequest(delDelegate, id, "是否确认删除该委托？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
                 if (ok) {
                     this.open = false;
                     this.getList();
                 }
             },
-            /**退为草稿 */
-            FallbackDraft() {
-                const id = this.form.taskId;
-                console.log("退为草稿", id);
-                // this.$confirm('是否确认退为草稿?', "警告", {
-                //     confirmButtonText: "确定",
-                //     cancelButtonText: "取消",
-                //     type: "warning"
-                // }).then(function () {
-                //     return FallbackDraft(id);
-                // }.then(() => {
-                //     this.getList();
-                //     this.$modal.msgSuccess("退为草稿成功");
-                //     this.$refs["form"].reset();
-                // }).catch(function () { }))
+            handleQuery() {
+                this.queryParams.pageNum = 1;
+                this.getList();
             },
-
+            resetQuery() {
+                this.queryParams = {
+                    Description: undefined,
+                    taskType: undefined,
+                    Location: undefined,
+                    CreatedAt: undefined,
+                    pageNum: 1,
+                    pageSize: this.queryParams.pageSize
+                };
+                this.handleQuery();
+            },
             handleSizeChange(val) {
-                console.log(`每页 ${val} 条`);
-                this.queryParams.pageSize = val
+                this.queryParams.pageSize = val;
                 this.getList();
             },
             handleCurrentChange(val) {
-                console.log(`当前页: ${val}`);
-                this.queryParams.pageNum = val
+                this.queryParams.pageNum = val;
                 this.getList();
-            },
-            resetForm(formRef) {
-                if (this.$refs[formRef]) {
-                    this.$refs[formRef].reset();
-                    console.log("表单已重置！");
-                } else {
-                    console.error("未找到指定的表单引用！");
-                }
             }
         }
-    };
+    }
 </script>
 
-<style lang="css" scoped>
-    .input-reader-name /deep/ .el-input__inner {
-        width: 150px;
-        /* 或其他所需的宽度 */
+<style lang="less" scoped>
+    .ex-toolbar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
-    /* 根据需要设置行高 */
-    .row-height {
-        height: 70px;
-        /* 设置行高为50像素 */
+    .ex-input {
+        width: 210px;
+    }
+
+    .ex-select {
+        width: 130px;
+    }
+
+    .ex-date {
+        width: 150px;
+    }
+
+    .ex-input :deep(.el-input__inner),
+    .ex-select :deep(.el-input__inner),
+    .ex-date :deep(.el-input__inner) {
+        height: 34px;
+        background: rgba(255, 252, 245, .72);
+        border: 1px solid #e6ddc9;
+        border-radius: 8px;
+        color: #2a3a30;
+        font-family: inherit;
+        font-size: 13px;
+        transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+
+    .ex-input :deep(.el-input__inner:focus),
+    .ex-select :deep(.el-input__inner:focus),
+    .ex-date :deep(.el-input__inner:focus) {
+        border-color: #b9892c;
+        box-shadow: 0 0 0 3px rgba(185, 137, 44, .13);
+        background: #fffcf5;
+    }
+
+    .ex-btn {
+        height: 34px;
+        padding: 0 18px;
+        border-radius: 8px;
+        font-family: inherit;
+        letter-spacing: .06em;
+        font-size: 13px;
+        transition: transform .18s, box-shadow .18s, background .18s, border-color .18s;
+    }
+
+    .ex-btn--primary {
+        background: #2a3a30;
+        border-color: #2a3a30;
+        color: #f7f3ea;
+    }
+
+    .ex-btn--primary:hover,
+    .ex-btn--primary:focus {
+        background: #33493c;
+        border-color: #33493c;
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px -4px rgba(42, 58, 48, .5);
+    }
+
+    .ex-btn--ghost {
+        background: transparent;
+        border: 1px solid #e6ddc9;
+        color: #5f6b62;
+    }
+
+    .ex-btn--ghost:hover,
+    .ex-btn--ghost:focus {
+        border-color: #b9892c;
+        color: #96701f;
+        background: rgba(255, 252, 245, .6);
+    }
+</style>
+
+<style lang="less">
+    /* 弹窗经 append-to-body 渲染在 body 下，须用非 scoped 样式 */
+    .ex-dialog {
+        background: #fffcf5;
+        border-radius: 16px;
+        box-shadow: 0 24px 60px -20px rgba(42, 58, 48, .4);
+        overflow: hidden;
+    }
+
+    .ex-dialog .el-dialog__header {
+        padding: 20px 28px 16px;
+        border-bottom: 1px solid #e6ddc9;
+        background: rgba(255, 252, 245, .6);
+    }
+
+    .ex-dialog .el-dialog__title {
+        font-family: Georgia, "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+        font-size: 19px;
+        font-weight: 700;
+        color: #2a3a30;
+    }
+
+    .ex-dialog .el-dialog__body {
+        padding: 22px 28px 6px;
+        color: #5f6b62;
+    }
+
+    .ex-dialog__footer {
+        text-align: right;
+        padding: 16px 28px 22px;
+        border-top: 1px solid #e6ddc9;
+        background: rgba(255, 252, 245, .6);
+    }
+
+    .ex-dialog__footer .el-button {
+        height: 34px;
+        padding: 0 18px;
+        border-radius: 8px;
+        font-family: inherit;
+        letter-spacing: .06em;
+    }
+
+    .ex-dialog__footer .el-button + .el-button {
+        margin-left: 10px;
+    }
+
+    .ex-dialog__footer .el-button--primary {
+        background: #2a3a30;
+        border-color: #2a3a30;
+        color: #f7f3ea;
+    }
+
+    .ex-dialog__footer .el-button--primary:hover {
+        background: #33493c;
+        border-color: #33493c;
+        color: #fff;
+    }
+
+    .ex-dialog__footer .el-button:not(.el-button--primary) {
+        background: transparent;
+        border-color: #e6ddc9;
+        color: #5f6b62;
+    }
+
+    .ex-dialog__footer .el-button:not(.el-button--primary):hover {
+        border-color: #b9892c;
+        color: #96701f;
     }
 </style>
