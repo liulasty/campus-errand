@@ -1,30 +1,35 @@
 <template>
     <div class="notice-center">
-        <el-tabs @tab-click="handleClick">
-            <el-tab-pane v-for="notice in noticeType" :key="notice.value" :label="notice.label">
-                <el-card class="notice-table-card" shadow="never">
-                    <el-table :data="tableData" style="width: 100%" :empty-text="'暂无通知'">
-                        <el-table-column prop="date" label="日期" width="170">
-                        </el-table-column>
-                        <el-table-column prop="title" label="主题" show-overflow-tooltip>
-                        </el-table-column>
-                        <el-table-column prop="isRead" label="状态" width="90" align="center">
-                            <template slot-scope="scope">
-                                <el-tag v-if="scope.row.isRead == 0" type="success" size="small">未读</el-tag>
-                                <el-tag v-else type="info" size="small">已读</el-tag>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="操作" width="90" align="center">
-                            <template slot-scope="scope">
-                                <el-button type="primary" size="small" plain @click="handleView(scope.row.id)">查看</el-button>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                </el-card>
+        <el-tabs v-model="activeType" @tab-click="handleClick">
+            <el-tab-pane v-for="notice in noticeType" :key="notice.value" :label="notice.label"
+                :name="notice.value">
+                <div v-loading="loading" class="notice-list">
+                    <div v-for="item in tableData" :key="item.id" class="notice-card"
+                        :class="{ 'is-unread': item.isRead === false }" @click="handleView(item.id)">
+                        <div class="notice-card-bar"></div>
+                        <div class="notice-card-body">
+                            <div class="notice-card-top">
+                                <span class="notice-card-title">
+                                    <i v-if="item.isRead === false" class="notice-unread-dot"></i>
+                                    {{ item.title }}
+                                </span>
+                                <span class="notice-card-time">{{ item.date | dateTime }}</span>
+                            </div>
+                            <div class="notice-card-desc">{{ item.description }}</div>
+                        </div>
+                    </div>
+                    <el-empty v-if="!tableData.length && !loading" description="暂无通知"></el-empty>
+                </div>
+                <el-pagination v-if="total > pageSize" class="notice-pagination"
+                    @size-change="handleSizeChange" @current-change="handleCurrentChange"
+                    :current-page="pageNum" :page-size="pageSize" :page-sizes="[5, 10, 20]"
+                    layout="total, sizes, prev, pager, next" :total="total">
+                </el-pagination>
             </el-tab-pane>
         </el-tabs>
 
-        <el-dialog width="480px" title="通知详情" :visible.sync="innerVisible" append-to-body>
+        <el-dialog width="480px" title="通知详情" :visible.sync="innerVisible" append-to-body
+            @close="onDetailClose">
             <div class="notice-detail">
                 <h2 class="notice-title">{{ notice.title }}</h2>
                 <div class="notice-meta">发送时间：{{ notice.date | dateTime }}</div>
@@ -32,14 +37,12 @@
             </div>
         </el-dialog>
     </div>
-
 </template>
 <script>
 
     import {
         getPersonalNoticeList, getNoticeById,
     } from "@/api/user.js"
-    import { NOTIFICATION_TYPE } from '@/constants/enums'
 
 
     export default {
@@ -48,164 +51,67 @@
                 type: Number,
                 default: 0
             },
-
         },
         data() {
             return {
-                NOTIFICATION_TYPE,
-                dialogVisibleEdit: false,
-                dialogVisibleReason: false,
-                dialogVisiblePublish: false,
                 noticeType: [
-                    {
-                        value: NOTIFICATION_TYPE.OWN,
-                        label: NOTIFICATION_TYPE.OWN,
-                    },
-                    {
-                        value: NOTIFICATION_TYPE.TASK,
-                        label: NOTIFICATION_TYPE.TASK,
-                    },
-                    {
-                        value: NOTIFICATION_TYPE.MARKETING,
-                        label: NOTIFICATION_TYPE.MARKETING,
-                    },
-                    {
-                        value: NOTIFICATION_TYPE.SYSTEM,
-                        label: NOTIFICATION_TYPE.SYSTEM,
-                    },
+                    { value: 'OWN', label: '个人信息通知' },
+                    { value: 'USER', label: '委托信息通知' },
+                    { value: 'MARKETING', label: '营销信息通知' },
+                    { value: 'SYSTEM', label: '系统信息通知' }
                 ],
-                DelegationFrom: {
-                    content: '',
-                    location: ''
-                },
-                publishFrom: {
-
-                },
-                DraftFrom: {
-                    taskId: 0,
-                    location: "教学楼",
-                    description: "教学事故研究会",
-                    type: 1,
-                    createdAt: "2024-04-13 09:41:25"
-                },
-                taskType: [],
-
-                showTypeColumn: false,
+                activeType: 'OWN',
                 tableData: [],
-                options: [
-                    {
-                        value: '教学楼',
-                        label: '教学楼'
-                    },
-                    {
-                        value: '图书馆',
-                        label: '图书馆'
-                    },
-                    {
-                        value: '食堂',
-                        label: '食堂'
-                    },
-                    {
-                        value: '运动场',
-                        label: '运动场'
-                    },
-                    {
-                        value: '实验室',
-                        label: '实验室'
-                    },
-                    {
-                        value: '其他',
-                        label: '其他'
-                    },
-                ],
+                total: 0,
+                pageNum: 1,
+                pageSize: 5,
+                loading: false,
                 notice: {
                     id: 1,
-                    title: "个人信息通知",
-                    description: "个人信息通知",
-                    date: "2023-04-01",
-                    show: false
+                    title: '',
+                    description: '',
+                    date: ''
                 },
                 innerVisible: false
             }
         },
         methods: {
-            handleClick(tab, event) {
-                // console.log(tab, event);
-                this.tableData = [];
-                switch (tab.label) {
-                    case NOTIFICATION_TYPE.OWN:
-                        this.getPersonalInformationNotification();
-                        break;
-                    case NOTIFICATION_TYPE.TASK:
-                        this.getTaskInformationNotification();
-                        break;
-                    case NOTIFICATION_TYPE.MARKETING:
-                        this.getMarketInformationNotification();
-                        break;
-                    case NOTIFICATION_TYPE.SYSTEM:
-                        this.getSystemInformationNotification();
-                        break;
-                }
+            handleClick() {
+                this.pageNum = 1;
+                this.loadByType();
             },
-            getPersonalInformationNotification() {
-
-                getPersonalNoticeList("OWN").then((data) => {
-                    console.log(data);
+            loadByType() {
+                this.loading = true;
+                getPersonalNoticeList(this.activeType, {
+                    pageNum: this.pageNum,
+                    pageSize: this.pageSize
+                }).then((data) => {
                     if (data.data.code == 1) {
-                        this.tableData = data.data.data;
+                        const res = data.data.data;
+                        this.tableData = (res && res.records) || [];
+                        this.total = (res && res.total) || 0;
                     } else {
                         this.$message({
                             message: data.data.msg,
                             type: 'error'
                         });
                     }
-                })
+                    this.loading = false;
+                }).catch(() => {
+                    this.loading = false;
+                });
             },
-            getTaskInformationNotification() {
-
-                getPersonalNoticeList("USER").then((data) => {
-                    console.log(data);
-                    if (data.data.code == 1) {
-                        this.tableData = data.data.data;
-                    } else {
-                        this.$message({
-                            message: data.data.msg,
-                            type: 'error'
-                        });
-                    }
-                })
+            handleSizeChange(size) {
+                this.pageSize = size;
+                this.pageNum = 1;
+                this.loadByType();
             },
-            getMarketInformationNotification() {
-
-                getPersonalNoticeList("MARKETING").then((data) => {
-                    console.log(data);
-                    if (data.data.code == 1) {
-                        this.tableData = data.data.data;
-                    } else {
-                        this.$message({
-                            message: data.data.msg,
-                            type: 'error'
-                        });
-                    }
-                })
-            },
-            getSystemInformationNotification() {
-
-                getPersonalNoticeList("SYSTEM").then((data) => {
-                    console.log(data);
-                    if (data.data.code == 1) {
-                        this.tableData = data.data.data;
-                    } else {
-                        this.$message({
-                            message: data.data.msg,
-                            type: 'error'
-                        });
-                    }
-                })
+            handleCurrentChange(page) {
+                this.pageNum = page;
+                this.loadByType();
             },
             handleView(id) {
                 getNoticeById(id).then((data) => {
-                    console.log(data);
                     if (data.data.code == 1) {
                         this.notice = data.data.data;
                         this.innerVisible = true;
@@ -215,21 +121,15 @@
                             type: 'error'
                         });
                     }
-                })
+                });
             },
-
-
-
-
-            cancel(form) {
-                this.resetForm(form);
-            },
-
+            onDetailClose() {
+                // 查看详情后刷新当前列表，同步已读状态
+                this.loadByType();
+            }
         },
         mounted() {
-
-            this.getPersonalInformationNotification(this.userId);
-
+            this.loadByType();
         }
     }
 </script>
@@ -237,13 +137,98 @@
     .notice-center {
         padding: 4px;
 
-        .notice-table-card {
-            border-radius: 10px;
+        .notice-list {
+            min-height: 220px;
 
-            /deep/ .el-table__body-wrapper {
-                max-height: 380px;
-                overflow-y: auto;
+            .notice-card {
+                position: relative;
+                display: flex;
+                align-items: stretch;
+                margin-bottom: 10px;
+                padding: 12px 14px;
+                border: 1px solid #ebeef5;
+                border-radius: 8px;
+                background: #fafafa;
+                cursor: pointer;
+                transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
+
+                &:hover {
+                    box-shadow: 0 4px 14px rgba(0, 21, 41, 0.1);
+                    border-color: #c0c4cc;
+                    background: #fff;
+                }
+
+                &.is-unread {
+                    background: #fff;
+                    border-color: #c6e2ff;
+
+                    .notice-card-bar {
+                        background: #409eff;
+                    }
+                }
+
+                .notice-card-bar {
+                    width: 3px;
+                    border-radius: 2px;
+                    background: transparent;
+                    margin-right: 12px;
+                    flex-shrink: 0;
+                }
+
+                .notice-card-body {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .notice-card-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: baseline;
+                    gap: 8px;
+                }
+
+                .notice-card-title {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #303133;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+
+                    .notice-unread-dot {
+                        display: inline-block;
+                        width: 7px;
+                        height: 7px;
+                        margin-right: 6px;
+                        border-radius: 50%;
+                        background: #f56c6c;
+                        vertical-align: middle;
+                    }
+                }
+
+                .notice-card-time {
+                    flex-shrink: 0;
+                    font-size: 12px;
+                    color: #909399;
+                }
+
+                .notice-card-desc {
+                    margin-top: 4px;
+                    font-size: 12px;
+                    color: #909399;
+                    line-height: 1.5;
+                    display: -webkit-box;
+                    -webkit-box-orient: vertical;
+                    -webkit-line-clamp: 2;
+                    overflow: hidden;
+                }
             }
+        }
+
+        .notice-pagination {
+            margin-top: 8px;
+            display: flex;
+            justify-content: flex-end;
         }
 
         .notice-detail {

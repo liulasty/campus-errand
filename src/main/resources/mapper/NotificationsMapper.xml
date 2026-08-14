@@ -19,7 +19,7 @@
 	</select>
 	
 	<select id = "selectListByType" resultType = "com.lz.pojo.vo.NoticeItemVO">
-		SELECT n2.SendTime as date, n1.Title as title,n2.IsRead as isRead,n2.id as id 
+		SELECT n2.SendTime as date, n1.Title as title,n2.IsRead as isRead,n2.id as id
 		FROM notifications n1 , notificationreadstatus n2
 		<where>
 			n1.NotificationId = n2.NotificationId
@@ -30,6 +30,20 @@
 				AND n2.UserId = #{userId}
 			</if>
 		</where>
+	</select>
+	<select id = "selectListByTypePage" resultType = "com.lz.pojo.vo.NoticeItemVO">
+		SELECT n2.SendTime as date, n1.Title as title, n1.Message as description, n2.IsRead as isRead, n2.id as id
+		FROM notifications n1 , notificationreadstatus n2
+		<where>
+			n1.NotificationId = n2.NotificationId
+			<if test="type != null and type != ''">
+				AND NotificationType = #{type}
+			</if>
+			<if test="userId != null">
+				AND n2.UserId = #{userId}
+			</if>
+		</where>
+		ORDER BY n2.SendTime DESC
 	</select>
 	<select id="selectMyPage" resultType="com.lz.pojo.vo.NoticeItemVO">
 		SELECT n2.id as id, n1.Title as title, n1.Message as description,

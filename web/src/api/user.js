@@ -59,13 +59,17 @@ export const confirmTheRecipient = (id) => {
     return http.put('/tasks/publisher/accepts/' + id + '/confirm')
 }
 
-export const getPersonalNoticeList = (data) => {
-    return http.get('/notifications/by-type/' + data)
+export const getPersonalNoticeList = (type, params) => {
+    return http.get('/notifications/by-type/' + type, { params })
 }
 
 
 export const getNoticeById = (id) => {
     return http.get('/notifications/info/' + id)
+}
+
+export const getMyNotifications = (params) => {
+    return http.get('/notifications/my', { params })
 }
 
 export const cancelPublishUser = (id) => {

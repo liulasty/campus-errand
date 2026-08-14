@@ -40,24 +40,37 @@
 
 
 
-        <el-table v-loading="loading" :data="viewOnGoingList" :row-style="{ height: '50px' }">
-            <el-table-column label="委托类型" align="center" prop="type" />
-            <el-table-column label="委托描述" align="center" prop="description" show-overflow-tooltip />
-            <el-table-column label="委托发布时间" align="center" width="160">
-                <template slot-scope="scope">{{ scope.row.startTime | dateTime }}</template>
-            </el-table-column>
-            <el-table-column label="委托截止时间" align="center" width="160">
-                <template slot-scope="scope">{{ scope.row.endTime | dateTime }}</template>
-            </el-table-column>
-            <el-table-column label="委托任务地点" align="center" prop="location" />
-            <el-table-column label="委托状态" align="center" prop="status" width="180" />
-            <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-                <template slot-scope="scope">
-                    <el-button size="mini" type="text" icon="el-icon-view"
-                        @click="handleView(scope.row)">查看详情</el-button>
-                </template>
-            </el-table-column>
-        </el-table>
+        <!-- 委托卡片网格 -->
+        <div v-loading="loading" class="ce-card-grid">
+            <div v-for="item in viewOnGoingList" :key="item.taskId" class="ce-deleg-card">
+                <div class="ce-card-band" :style="{ background: statusColor(item.status) }"></div>
+                <div class="ce-card-head">
+                    <div class="ce-card-title">
+                        <span class="ce-card-type">{{ item.type }}</span>
+                        <span class="ce-card-money" :class="{ 'is-negotiable': item.money == null }">{{ moneyText(item.money) }}</span>
+                    </div>
+                    <span class="ce-card-no">#{{ item.taskId }}</span>
+                </div>
+                <div class="ce-card-desc">{{ item.description }}</div>
+                <div class="ce-card-meta">
+                    <span class="ce-card-meta-item"><i class="el-icon-location-outline"></i>{{ item.location }}</span>
+                    <span class="ce-card-meta-item"><i class="el-icon-time"></i>发布 {{ item.startTime | dateTime }}</span>
+                    <span class="ce-card-meta-item"><i class="el-icon-finished"></i>截止 {{ item.endTime | dateTime }}</span>
+                </div>
+                <div class="ce-card-foot">
+                    <div class="ce-card-sub">
+                        <span class="ce-card-sub-item"><i class="el-icon-date"></i>创建 {{ item.createdAt | dateTime }}</span>
+                        <span v-if="item.receiverId" class="ce-card-acceptor"><i class="el-icon-user"></i>由 #{{ item.receiverId }} 承接</span>
+                        <span v-else class="ce-card-acceptor is-pending">待接单</span>
+                    </div>
+                    <div class="ce-card-actions">
+                        <el-tag size="mini" :type="statusTagTypeBy(item.status)" effect="dark">{{ item.status }}</el-tag>
+                        <el-button size="mini" type="primary" icon="el-icon-view" @click="handleView(item)">查看详情</el-button>
+                    </div>
+                </div>
+            </div>
+            <el-empty v-if="!viewOnGoingList.length && !loading" description="暂无委托"></el-empty>
+        </div>
 
         <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
             :current-page=queryParams.pageNum :page-sizes="[3, 5, 7, 10]" :page-size=queryParams.pageSize
@@ -393,6 +406,25 @@
         },
         computed: {
             statusTagType() {
+                return this.statusTagTypeBy(this.form.task.status)
+            }
+        },
+        methods: {
+            /** 卡片状态色带（按状态取渐变背景） */
+            statusColor(status) {
+                const map = {
+                    [TASK_STATUS.ONGOING]: 'linear-gradient(135deg, #67c23a, #a0d911)',
+                    [TASK_STATUS.ACCEPTED]: 'linear-gradient(135deg, #e6a23c, #f5c97b)',
+                    [TASK_STATUS.COMPLETED]: 'linear-gradient(135deg, #67c23a, #a0d911)',
+                    [TASK_STATUS.EXPIRED]: 'linear-gradient(135deg, #909399, #b1b3b8)',
+                    [TASK_STATUS.CANCELLED]: 'linear-gradient(135deg, #f56c6c, #f78989)',
+                    [TASK_STATUS.UNFINISHED]: 'linear-gradient(135deg, #f56c6c, #f78989)',
+                    [TASK_STATUS.DRAFT]: 'linear-gradient(135deg, #909399, #b1b3b8)'
+                }
+                return map[status] || 'linear-gradient(135deg, #909399, #b1b3b8)'
+            },
+            /** 卡片状态标签类型 */
+            statusTagTypeBy(status) {
                 const map = {
                     [TASK_STATUS.ONGOING]: 'success',
                     [TASK_STATUS.ACCEPTED]: 'warning',
@@ -402,10 +434,8 @@
                     [TASK_STATUS.UNFINISHED]: 'danger',
                     [TASK_STATUS.DRAFT]: 'info'
                 }
-                return map[this.form.task.status] || 'info'
-            }
-        },
-        methods: {
+                return map[status] || 'info'
+            },
             /** 获取委托类型操作 */
             handleType() {
                 //获取类型
@@ -666,6 +696,149 @@
         height: 90px;
         border-radius: 6px;
         border: 1px solid #ebeef5;
+    }
+
+    /* ===== 委托卡片网格 ===== */
+    .ce-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+        padding: 4px 2px 16px;
+    }
+
+    .ce-card-grid .el-empty {
+        grid-column: 1 / -1;
+    }
+
+    .ce-deleg-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border: 1px solid #ebeef5;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0, 21, 41, 0.06);
+        transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+    }
+
+    .ce-deleg-card:hover {
+        box-shadow: 0 6px 20px rgba(0, 21, 41, 0.12);
+        transform: translateY(-2px);
+        border-color: #c0c4cc;
+    }
+
+    .ce-card-band {
+        height: 6px;
+    }
+
+    .ce-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px 0;
+    }
+
+    .ce-card-title {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .ce-card-type {
+        font-size: 15px;
+        font-weight: 600;
+        color: #303133;
+    }
+
+    .ce-card-money {
+        font-size: 14px;
+        font-weight: 600;
+        color: #e6a23c;
+    }
+
+    .ce-card-money.is-negotiable {
+        color: #909399;
+        font-weight: 400;
+    }
+
+    .ce-card-no {
+        flex-shrink: 0;
+        font-size: 12px;
+        color: #909399;
+    }
+
+    .ce-card-desc {
+        margin: 8px 16px 0;
+        font-size: 13px;
+        color: #606266;
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        min-height: 42px;
+    }
+
+    .ce-card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        padding: 10px 16px 0;
+    }
+
+    .ce-card-meta-item {
+        font-size: 12px;
+        color: #909399;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .ce-card-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        margin-top: auto;
+        border-top: 1px dashed #ebeef5;
+    }
+
+    .ce-card-sub {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .ce-card-sub-item {
+        font-size: 12px;
+        color: #909399;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .ce-card-acceptor {
+        font-size: 12px;
+        color: #67c23a;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .ce-card-acceptor.is-pending {
+        color: #909399;
+    }
+
+    .ce-card-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+        flex-shrink: 0;
     }
 
 </style>

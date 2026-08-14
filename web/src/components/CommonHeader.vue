@@ -28,7 +28,7 @@
         </el-tooltip>
       </div>
       <div class="action-item">
-          <el-badge :value="3" class="item">
+          <el-badge :value="unreadCount" :hidden="!unreadCount" class="item">
             <i class="el-icon-bell action-icon" @click="handleNotice"></i>
           </el-badge>
       </div>
@@ -70,7 +70,7 @@
         class="my-dialog" append-to-body>
         <avatarShowVue :initialSrc="avatarSrc" />
       </el-dialog>
-      <el-dialog title="通知中心" :visible.sync="dialogNoticeVisible" @close="handleDialogClose" width="800px"
+      <el-dialog title="通知中心" :visible.sync="dialogNoticeVisible" @close="handleDialogClose" width="680px"
         class="my-dialog" top="10vh" append-to-body>
         <noticeVue :userId="userId" />
       </el-dialog>
@@ -83,6 +83,7 @@
   import avatarShowVue from './avatarShow.vue';
   import { mapState } from 'vuex';
   import { logout, fetchUserBasicInfo, getUserInfo } from '@/api';
+  import { getMyNotifications } from '@/api/user.js';
   import { SUCCESS_CODE } from '@/constants/http';
   import noticeVue from './noticeList.vue';
 
@@ -100,6 +101,7 @@
         dialogWidth: '600px',
         dialogNoticeVisible: false,
         userId: '',
+        unreadCount: 0,
       }
 
     },
@@ -205,6 +207,16 @@
       },
       handleNotice() {
         this.dialogNoticeVisible = true
+      },
+      loadUnreadCount() {
+        getMyNotifications({ pageNum: 1, pageSize: 100 }).then(res => {
+          if (res.data && res.data.code === SUCCESS_CODE && res.data.data) {
+            const records = res.data.data.records || [];
+            this.unreadCount = records.filter(r => r.isRead === false).length;
+          }
+        }).catch(e => {
+          console.warn('加载未读通知数失败', e);
+        });
       }
     },
     // computed 是一个对象，用于定义计算属性
@@ -254,6 +266,7 @@
       if (this.userId) {
         this.loadUserProfile(this.userId);
       }
+      this.loadUnreadCount();
     }
 
   }

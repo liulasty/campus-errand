@@ -27,6 +27,8 @@ public interface NotificationsMapper extends BaseMapper<Notifications> {
 
     List<NoticeItemVO> selectListByType(Long userId, String type);
 
+    IPage<NoticeItemVO> selectListByTypePage(Page<NoticeItemVO> page, @Param("userId") Long userId, @Param("type") String type);
+
     IPage<NoticeItemVO> selectMyPage(Page<NoticeItemVO> page, @Param("userId") Long userId);
 
     NoticeVO getInfoById(Long id);

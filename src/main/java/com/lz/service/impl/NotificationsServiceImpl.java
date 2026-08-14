@@ -169,14 +169,13 @@ public class NotificationsServiceImpl extends ServiceImpl<NotificationsMapper, N
     }
 
     @Override
-    public List<NoticeItemVO> getNoticeType(String str) throws MyException {
-        List<NoticeItemVO> list = new ArrayList<>();
+    public IPage<NoticeItemVO> getNoticeType(String str, Integer pageNum, Integer pageSize) throws MyException {
         log.info("通知类型: {}", NotificationsType.fromDbValue(str).getWebValue());
 
         Users users = getCurrentAdmin();
-        list = notificationsMapper.selectListByType(users.getUserId(),
+        Page<NoticeItemVO> page = new Page<>(pageNum, pageSize);
+        return notificationsMapper.selectListByTypePage(page, users.getUserId(),
                 NotificationsType.fromDbValue(str).getDbValue());
-        return list;
     }
 
     @Override

@@ -96,11 +96,13 @@ public class NotificationController {
     }
 
     @GetMapping("/by-type/{str}")
-    public Result<?> getNotificationsByIdANDType(@PathVariable("str") String str) throws MyException {
+    public Result<?> getNotificationsByIdANDType(@PathVariable("str") String str,
+            @RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+            @RequestParam(value = "pageSize", defaultValue = "5") Integer pageSize) throws MyException {
         log.info("获取通知信息{}", str);
 
-        List<NoticeItemVO> list = notificationsService.getNoticeType(str);
-        return Result.success(list);
+        IPage<NoticeItemVO> page = notificationsService.getNoticeType(str, pageNum, pageSize);
+        return Result.success(new PageResult<>(page.getTotal(), page.getRecords()));
     }
 
     /**

@@ -58,7 +58,7 @@ public interface INotificationsService extends IService<Notifications> {
 
     void getNoticeByIdANDType(NoticeDTO noticeDTO);
 
-    List<NoticeItemVO> getNoticeType(String str) throws MyException;
+    IPage<NoticeItemVO> getNoticeType(String str, Integer pageNum, Integer pageSize) throws MyException;
 
     /**
      * 当前登录用户的全部通知（分页）
