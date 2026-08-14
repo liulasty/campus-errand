@@ -2,9 +2,9 @@ param([string]$Env = "dev")
 $ErrorActionPreference = "Stop"
 Set-Location -Path $PSScriptRoot\..
 
-$EnvFile = "config\.env.$Env"
-$ComposeFiles = "-f docker-compose.yml -f docker-compose.$Env.yml"
+$composeArgs = @("-f", "docker-compose.yml", "-f", "docker-compose.$Env.yml", "--env-file", "config\.env.$Env")
 
 Write-Host "🛑 Stopping campus_entrustment [$Env]..." -ForegroundColor Cyan
-Invoke-Expression "docker compose $ComposeFiles --env-file $EnvFile down"
+& docker compose @composeArgs down
+if ($LASTEXITCODE -ne 0) { throw "docker compose down failed" }
 Write-Host "✅ Stopped." -ForegroundColor Green
