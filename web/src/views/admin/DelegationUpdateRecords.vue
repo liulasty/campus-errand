@@ -171,6 +171,9 @@
                     if (request.data.code == 1) {
                         this.type = request.data.data
                     }
+                }).catch(err => {
+                    console.error('获取更新类型失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             nodeMeta(updateType) {
@@ -183,16 +186,19 @@
                 listDelegateUpdateRecords(this.queryParams).then(response => {
                     if (response.data.code != 1) {
                         this.$message({
-                            message: "获取数据失败",
+                            message: response.data.msg || "获取数据失败",
                             type: "error"
                         });
                     } else {
                         this.delegateUpdatesRecordsList = response.data.data.records;
                         console.log("响应结果", this.delegateUpdatesRecordsList);
                         this.total = response.data.data.total;
-                        this.loading = false;
                     }
-
+                    this.loading = false;
+                }).catch(err => {
+                    console.error('获取委托更新记录失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
+                    this.loading = false;
                 });
             },
             // 取消按钮
@@ -240,9 +246,16 @@
                 // this.reset();
                 const RecordID = row.updateId
                 getViewDelegateRecord(RecordID).then(response => {
-                    this.form = response.data.data;
-                    this.open = true;
-                    this.title = "查看委托信息审核记录";
+                    if (response.data.code === 1 && response.data.data) {
+                        this.form = response.data.data;
+                        this.open = true;
+                        this.title = "查看委托信息审核记录";
+                    } else {
+                        this.$message.error(response.data.msg || '获取记录详情失败');
+                    }
+                }).catch(err => {
+                    console.error('获取记录详情失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 });
             },
             /** 删除按钮操作 */

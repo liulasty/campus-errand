@@ -63,6 +63,10 @@
                         this.list = res.data.data
                     }
                     this.loading = false
+                }).catch(err => {
+                    console.error('获取敏感词列表失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
+                    this.loading = false
                 })
             },
             handleAdd() {

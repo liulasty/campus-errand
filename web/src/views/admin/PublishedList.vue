@@ -68,6 +68,9 @@
                         res.data.data.forEach(c => { map[c.id] = c.name })
                         this.typeMap = map
                     }
+                }).catch(err => {
+                    console.error('加载委托分类失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             typeName(id) {
@@ -80,6 +83,10 @@
                         this.list = res.data.data.records
                         this.total = res.data.data.total
                     }
+                    this.loading = false
+                }).catch(err => {
+                    console.error('获取委托列表失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                     this.loading = false
                 })
             },
@@ -100,6 +107,9 @@
                     a.download = '委托列表.xlsx'
                     a.click()
                     URL.revokeObjectURL(url)
+                }).catch(err => {
+                    console.error('导出委托列表失败：', err)
+                    this.$message.error('导出失败，请稍后重试')
                 })
             }
         }

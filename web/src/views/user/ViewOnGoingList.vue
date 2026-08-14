@@ -397,6 +397,9 @@
                             // console.log("类型数组", this.taskTypeOption);
                         }
                     }
+                }).catch(err => {
+                    console.error('获取委托分类失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             /** 搜索按钮操作 */

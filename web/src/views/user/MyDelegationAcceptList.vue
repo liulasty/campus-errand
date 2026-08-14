@@ -419,6 +419,9 @@
                             // console.log("类型数组", this.taskTypeOption);
                         }
                     }
+                }).catch(err => {
+                    console.error('获取委托分类失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             /** 搜索按钮操作 */
@@ -456,6 +459,10 @@
                         this.loading = false;
                     }
 
+                }).catch(err => {
+                    console.error('获取我的接单列表失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
+                    this.loading = false;
                 });
             },
             handleView(row) {
@@ -489,6 +496,9 @@
                             }
                         )
                     }
+                }).catch(err => {
+                    console.error('获取接单详情失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
 
 
@@ -594,6 +604,9 @@
                         });
                         this.submittedNodes = nodes;
                     }
+                }).catch(err => {
+                    console.error('获取任务动态失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 });
             },
             isNodeSubmitted(dbValue) {

@@ -116,6 +116,9 @@
                     } else {
                         console.log("用户信息", data.data.msg);
                     }
+                }).catch(err => {
+                    console.error('获取用户信息失败：', err);
+                    this.$message.error('请求异常，请稍后重试');
                 })
             },
         },

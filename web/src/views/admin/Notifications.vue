@@ -224,6 +224,9 @@
                 getNotificationsType().then(response => {
                     this.messageType = response.data.data;
                     console.log(this.messageType);
+                }).catch(err => {
+                    console.error('获取消息类型失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 });
             },
             // 获取消息列表
@@ -233,6 +236,10 @@
                     this.List = response.data.data.records;
                     console.log(this.List);
                     this.total = response.data.data.total;
+                    this.loading = false;
+                }).catch(err => {
+                    console.error('获取通知列表失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                     this.loading = false;
                 });
             },
@@ -362,11 +369,14 @@
 
                     } else {
                         this.$message({
-                            message: "获取数据失败",
+                            message: data.data.msg || "获取数据失败",
                             type: "error"
                         });
                     }
 
+                }).catch(err => {
+                    console.error('获取通知详情失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
 
             }

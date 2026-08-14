@@ -157,6 +157,9 @@
             getMessageType() {
                 getNotificationsType().then(response => {
                     this.messageType = response.data.data;
+                }).catch(err => {
+                    console.error('获取消息类型失败：', err);
+                    this.$message.error('请求异常，请稍后重试');
                 });
             },
             // 切换 Tab：重置过滤与页码后重新拉取

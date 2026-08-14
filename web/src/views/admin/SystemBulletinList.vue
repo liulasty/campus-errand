@@ -240,6 +240,9 @@
                             type: 'error'
                         });
                     }
+                }).catch(err => {
+                    console.error('获取公告详情失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 });
             },
             confirmDelete(item) {

@@ -133,8 +133,10 @@
                     this.statCounts.AUTHENTICATING = a
                     this.statCounts.AUTHENTICATED = b
                     this.statCounts.AUTHENTICATION_FAILED = c
+                }).catch(err => {
+                    console.error('获取实名统计失败：', err)
                 })
-                this.countByStatus(undefined).then(n => { this.statCounts.ALL = n })
+                this.countByStatus(undefined).then(n => { this.statCounts.ALL = n }).catch(() => {})
             },
             countByStatus(authStatus) {
                 return getUserList({ pageNum: 1, pageSize: 1, authStatus }).then(res =>

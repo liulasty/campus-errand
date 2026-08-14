@@ -220,6 +220,10 @@
                     console.log(this.delegateRecordsList);
                     this.total = response.data.data.total;
                     this.loading = false;
+                }).catch(err => {
+                    console.error('查询委托草稿失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
+                    this.loading = false;
                 });
             },
             getTaskValue(value) {
@@ -246,6 +250,9 @@
                             // console.log("类型数组", this.taskTypeOption);
                         }
                     }
+                }).catch(err => {
+                    console.error('获取委托类型失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             // 取消按钮
@@ -288,12 +295,19 @@
             handleView(id) {
 
                 getDelegateByTaskID(id).then(response => {
-                    console.log("查看委托信息", response.data.data);
-                    this.form = response.data.data;
-                    this.operation = this.operations[response.data.data.status];
-                    console.log("查看委托选项", this.operation);
-                    this.open = true;
-                    this.title = "查看委托信息";
+                    if (response.data.code === 1 && response.data.data) {
+                        console.log("查看委托信息", response.data.data);
+                        this.form = response.data.data;
+                        this.operation = this.operations[response.data.data.status];
+                        console.log("查看委托选项", this.operation);
+                        this.open = true;
+                        this.title = "查看委托信息";
+                    } else {
+                        this.$message.error(response.data.msg || '获取委托详情失败');
+                    }
+                }).catch(err => {
+                    console.error('查看委托详情失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 });
             },
             /** 引导按钮操作 */

@@ -178,6 +178,9 @@
                             this.taskTypeOption.push({ label: taskCategories[i].name, value: taskCategories[i].id });
                         }
                     }
+                }).catch(err => {
+                    console.error('获取委托类型失败：', err);
+                    this.$message.error('请求异常，请稍后重试');
                 });
             },
             onAction({ key, row }) {

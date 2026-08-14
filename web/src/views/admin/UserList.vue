@@ -221,6 +221,9 @@
                     a.download = '用户列表.xlsx'
                     a.click()
                     URL.revokeObjectURL(url)
+                }).catch(err => {
+                    console.error('导出用户列表失败：', err)
+                    this.$message.error('导出失败，请稍后重试')
                 })
             },
             getUserPage() {
@@ -302,6 +305,9 @@
                         this.dialog = false;
                         this.$message.warning('获取认证信息失败');
                     }
+                }).catch(err => {
+                    console.error('获取认证信息失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             handleClose() {
@@ -323,6 +329,9 @@
                         this.dialog = false;
                         this.$message.warning('获取认证信息失败');
                     }
+                }).catch(err => {
+                    console.error('获取认证信息失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
                 })
             },
             maskIdentity(no) {

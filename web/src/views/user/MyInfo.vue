@@ -286,6 +286,9 @@ export default {
           this.$message.error("文件创建或保存失败，请稍后重试");
           console.error("文件创建或保存失败:", error);
         }
+      }).catch(err => {
+        console.error('导出失败：', err)
+        this.$message.error('导出失败，请稍后重试')
       })
     },
 

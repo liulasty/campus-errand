@@ -88,6 +88,10 @@
                         this.$message.error(res.data.msg || '获取信用档案失败')
                     }
                     this.loading = false
+                }).catch(err => {
+                    console.error('获取信用档案失败：', err)
+                    this.$message.error('请求异常，请稍后重试')
+                    this.loading = false
                 })
             }
         }

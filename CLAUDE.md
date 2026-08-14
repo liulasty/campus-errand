@@ -57,7 +57,7 @@ npm run build                        # 构建验证
 
 ## 技术债（改动前先读）
 
-权威清单在 `docs/MVP_1.0_closure.md`（P0/P1/P2 分级）。**P0 待修复项**：`/user/accept` 空 body NPE；大厅状态列（后端返回中文 webValue `"委托发布中"`，前端比较 `'ONGOING'` 不匹配）；前端方案 A 的 catch/SUCCESS_CODE 未覆盖全部写操作页。Redis/RabbitMQ 未装（消息通知不可用）属环境限制，非必做。其他：旁证展示、信用看板、L2 校园卡、教务对接等均为延后项。
+权威清单在 `docs/MVP_1.0_closure.md`（P0/P1/P2 分级）。**P0 三项已全部修复**（详见 closure 文档）：`/user/accept` 空 body NPE（`9e475c0`）、大厅状态列 webValue/英文比较（`cf298b9`）、方案 A 写操作页 catch 覆盖（2026-08-15 补全）。Redis/RabbitMQ 未装（消息通知不可用）属环境限制，非必做。其他：旁证展示、信用看板、L2 校园卡、教务对接等均为延后项。
 
 ## 文档索引
 
