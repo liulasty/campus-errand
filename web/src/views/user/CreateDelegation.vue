@@ -148,6 +148,8 @@
                 }
             },
             async saveDraft(payload) {
+                // 待发布委托保存后后端会置回草稿，需重新审核
+                const wasPending = this.selectedTask && this.selectedTask.status === TASK_STATUS.PENDING_RELEASE;
                 const typeName = this.typeNameMap[payload.type] || payload.type;
                 try {
                     let data;
@@ -169,7 +171,10 @@
                         });
                     }
                     if (data.data.code === 1) {
-                        this.$message.success(data.data.msg || '保存成功');
+                        if (wasPending && this.selectedTask) {
+                            this.selectedTask.status = TASK_STATUS.DRAFT;
+                        }
+                        this.$message.success(wasPending ? '已保存，委托已转为草稿（需重新提交审核）' : (data.data.msg || '保存成功'));
                         await this.loadDrafts();
                     } else {
                         this.$message.error(data.data.msg || '保存失败');

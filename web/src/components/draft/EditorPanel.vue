@@ -13,6 +13,11 @@
         </header>
 
         <div class="ep__scroll">
+            <div v-if="mode === 'publish'" class="ep__warn">
+                <i class="el-icon-warning-outline"></i>
+                <span>修改内容后点「保存草稿」，委托将转为<b>草稿</b>状态，需重新提交审核后才能再次发布；仅设置发布时间/截止时间不影响状态。</span>
+            </div>
+
             <div v-if="mode === 'auditing'" class="ep__notice">
                 <i class="el-icon-s-check"></i>
                 <p>该委托正在审核中，暂不可编辑。</p>
@@ -98,6 +103,8 @@
                     <p>发布委托信息流程：先创建草稿，再申请发布委托，只有通过审核后，再发布委托。</p></div>
                 <div class="ep-rules__item"><i class="el-icon-edit"></i>
                     <p>草稿创建后可以修改，发布后不可修改。</p></div>
+                <div class="ep-rules__item"><i class="el-icon-refresh-left"></i>
+                    <p>待发布（审核通过）的委托如需修改内容，保存后将自动转为草稿，需重新提交审核；仅设置发布时间/截止时间不改变其状态。</p></div>
                 <div class="ep-rules__item"><i class="el-icon-warning"></i>
                     <p>内容合法合规：所有发布的信息必须符合国家法律法规和学校相关规定，不得含有违法、淫秽、暴力、歧视等不良内容。</p></div>
                 <div class="ep-rules__item"><i class="el-icon-document-checked"></i>
@@ -192,13 +199,25 @@
             },
             onSaveDraft() {
                 if (!this.validateForm()) return;
-                this.$emit('save-draft', {
+                const payload = {
                     taskId: this.task ? this.task.taskId : null,
                     type: this.form.type,
                     location: this.form.location,
                     money: this.form.money,
                     description: this.form.description
-                });
+                };
+                // 待发布委托保存后后端会置回草稿，需重新审核；先明确告知
+                if (this.task && this.task.status === TASK_STATUS.PENDING_RELEASE) {
+                    this.$confirm('保存后将转为「草稿」状态，需重新提交审核后才能再次发布。是否继续？', '转为草稿', {
+                        confirmButtonText: '转为草稿并保存',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.$emit('save-draft', payload);
+                    }).catch(() => {});
+                    return;
+                }
+                this.$emit('save-draft', payload);
             },
             onSubmitAudit() {
                 if (!this.validateForm()) return;
@@ -364,6 +383,22 @@
         color: var(--muted);
     }
     .ep__notice i { font-size: 40px; display: block; margin-bottom: 12px; color: var(--brass); }
+
+    .ep__warn {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding: 12px 14px;
+        background: rgba(185, 137, 44, .1);
+        border: 1px solid rgba(185, 137, 44, .3);
+        border-radius: 9px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--brass-deep);
+    }
+    .ep__warn i { font-size: 16px; margin-top: 2px; flex-shrink: 0; }
+    .ep__warn b { color: var(--terra); }
 
     .ep__footer {
         flex-shrink: 0;
