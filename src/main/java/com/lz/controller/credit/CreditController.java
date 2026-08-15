@@ -9,7 +9,7 @@ import com.lz.pojo.entity.Users;
 import com.lz.pojo.result.Result;
 import com.lz.pojo.vo.CreditProfileVO;
 import com.lz.pojo.vo.CreditReviewVO;
-import com.lz.service.CreditScoreService;
+import com.lz.service.impl.CreditScoreService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;

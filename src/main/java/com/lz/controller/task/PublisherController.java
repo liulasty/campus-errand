@@ -20,7 +20,7 @@ import com.lz.service.ITaskService;
 import com.lz.service.ITaskUpdatesService;
 import com.lz.service.IUsersInfoService;
 import com.lz.service.IUsersService;
-import com.lz.service.RealNameAuthenticationService;
+import com.lz.service.impl.RealNameAuthenticationService;
 import com.lz.utils.IdentityMaskUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

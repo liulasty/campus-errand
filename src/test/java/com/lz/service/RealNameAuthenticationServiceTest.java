@@ -4,6 +4,7 @@ import com.lz.Exception.UnauthorizedRealNameException;
 import com.lz.mapper.UsersInfoMapper;
 import com.lz.mapper.UsersMapper;
 import com.lz.pojo.entity.UsersInfo;
+import com.lz.service.impl.RealNameAuthenticationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

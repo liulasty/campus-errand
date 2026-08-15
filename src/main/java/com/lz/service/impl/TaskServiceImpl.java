@@ -61,8 +61,6 @@ import com.lz.pojo.vo.TaskAndUserInfoVO;
 import com.lz.pojo.vo.TaskDetails;
 import com.lz.pojo.vo.TaskDraftVO;
 import com.lz.pojo.vo.UserDelegateDraft;
-import com.lz.service.CreditScoreService;
-import com.lz.service.RealNameAuthenticationService;
 import com.lz.service.IDelegateAuditRecordsService;
 import com.lz.service.IDelegationCategoriesService;
 import com.lz.service.INotificationReadStatusService;
@@ -70,7 +68,6 @@ import com.lz.service.INotificationsService;
 import com.lz.service.ISystemAnnouncementsService;
 import com.lz.service.ITaskService;
 import com.lz.service.ITaskUpdatesService;
-import com.lz.service.impl.SensitiveWordService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -449,7 +446,10 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements IT
         if (draftConfig.getLocation() != null && !"".equals(draftConfig.getLocation())) {
             wrapper.eq("Location", draftConfig.getLocation());
         }
-        if (draftConfig.getTypePhase() != null) {
+        // 精确状态过滤优先于阶段过滤（审核台按状态查询）
+        if (draftConfig.getStatusList() != null && !draftConfig.getStatusList().isEmpty()) {
+            wrapper.in("Status", draftConfig.getStatusList());
+        } else if (draftConfig.getTypePhase() != null) {
             wrapper.in("Status", TaskStatus.getStatusesForPhase(draftConfig.getTypePhase()));
         }
 

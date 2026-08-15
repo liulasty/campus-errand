@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.lz.context.BaseContext;
 import com.lz.pojo.entity.IpLogs;
 import com.lz.pojo.result.Result;
-import com.lz.service.IpLogsService;
+import com.lz.service.IIpLogsService;
 import com.lz.utils.IpUtil;
 
 import io.swagger.annotations.Api;
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CommonController {
 
     @Autowired
-    private IpLogsService ipLogsService;
+    private IIpLogsService ipLogsService;
 
     /**
      * 获取当前登录用户的IP地址

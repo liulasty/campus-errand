@@ -99,7 +99,8 @@ public class TaskAdminController {
             @RequestParam(value = "taskType", required = false) Integer taskType,
             @RequestParam(value = "Location", required = false) String location,
             @RequestParam(value = "CreatedAt", required = false) LocalDate createdAt,
-            @RequestParam(value = "TypePhase", required = false) String typePhase) throws MyException {
+            @RequestParam(value = "TypePhase", required = false) String typePhase,
+            @RequestParam(value = "Status", required = false) String status) throws MyException {
         log.info("搜索页面{}，{}，{},{},{}", taskType, createdAt, location, typePhase, description);
         // 非法 TypePhase 返回明确业务错误，而非 500（D-13；fromValue 对非法值抛 IllegalArgumentException）
         TaskPhase taskPhase = null;
@@ -110,11 +111,36 @@ public class TaskAdminController {
                 throw new MyException("非法的委托阶段参数: " + typePhase);
             }
         }
+        // Status 支持逗号分隔多值（如 DRAFT,AUDIT_FAILED），按 dbValue 或枚举名解析
+        List<TaskStatus> statusList = parseStatusParam(status);
         DraftConfig draftConfig = new DraftConfig(createdAt, description, location, pageNum, pageSize,
                 taskType,
-                taskPhase);
+                taskPhase, statusList);
         PageResult<Task> taskPageResult = taskService.searchPageByAdmin(draftConfig);
         return Result.success(taskPageResult);
+    }
+
+    private List<TaskStatus> parseStatusParam(String status) throws MyException {
+        if (status == null || status.trim().isEmpty()) {
+            return null;
+        }
+        List<TaskStatus> result = new java.util.ArrayList<>();
+        for (String item : status.split(",")) {
+            String value = item.trim();
+            if (value.isEmpty()) {
+                continue;
+            }
+            try {
+                result.add(TaskStatus.fromDbValue(value));
+            } catch (IllegalArgumentException e) {
+                try {
+                    result.add(TaskStatus.valueOf(value));
+                } catch (IllegalArgumentException e2) {
+                    throw new MyException("非法的任务状态参数: " + value);
+                }
+            }
+        }
+        return result.isEmpty() ? null : result;
     }
 
     /**
@@ -189,11 +215,14 @@ public class TaskAdminController {
                 .updateDescription(MessageConstants.TASK_DRAFT_DELETE_SUCCESS).build();
         taskUpdatesService.save(taskupdates);
         // D-19：删除通知归属发布者 owner，read_status 投递给 owner 并正确关联 taskId
-        Long id = notificationsService.addTaskDeleteNotification(task.getOwnerId(),
-                "您的委托已被删除");
-        notificationReadStatusService.addTaskNotification(id,
-                task.getTaskId(),
-                task.getOwnerId());
+        // 无发布者的任务（task.OwnerID 可空，如种子/测试数据）无通知对象，跳过投递，避免 UserID NOT NULL 插入失败
+        if (task.getOwnerId() != null) {
+            Long id = notificationsService.addTaskDeleteNotification(task.getOwnerId(),
+                    "您的委托已被删除");
+            notificationReadStatusService.addTaskNotification(id,
+                    task.getTaskId(),
+                    task.getOwnerId());
+        }
         log.info("管理员删除委托成功{}", taskID);
         return Result.success(MessageConstants.TASK_DELETE_SUCCESS);
     }

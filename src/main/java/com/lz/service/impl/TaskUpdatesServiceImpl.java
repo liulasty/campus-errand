@@ -16,7 +16,6 @@ import com.lz.pojo.entity.TaskUpdates;
 import com.lz.mapper.TaskUpdatesMapper;
 import com.lz.pojo.entity.Users;
 import com.lz.service.ITaskUpdatesService;
-import com.lz.service.RealNameAuthenticationService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,55 +70,6 @@ public class TaskUpdatesServiceImpl extends ServiceImpl<TaskUpdatesMapper, TaskU
     }
 
     /**
-     * 完成审核操作，并返回对应的状态结果。
-     *
-     * @return 审核完成状态（YourEnumClass.AUDITING）
-     */
-    @Override
-    public void completeAudit() {
-        
-    }
-
-    /**
-     * 发布委托，并返回对应的状态结果。
-     *
-     * @return 发布委托状态（YourEnumClass.PUBLISHED）
-     */
-    @Override
-    public void publishAssignment() {
-
-    }
-
-    /**
-     * 创建新任务，并返回对应的状态结果。
-     *
-     * @return 新任务创建状态（YourEnumClass.CREATED）
-     */
-    @Override
-    public void createNewTask() {
-
-    }
-
-    /**
-     * 获取委托结果，并返回对应的状态结果。
-     *
-     * @return 委托结果状态（YourEnumClass.RESULT）
-     */
-    @Override
-    public void getAssignmentResult() {
-        
-
-    }
-
-    /**
-     * 获取审核中状态，并返回对应的状态结果。
-     */
-    @Override
-    public void getAuditingStatus() {
-
-    }
-
-    /**
      * 将委托回退为草稿
      *
      * @param taskId
@@ -143,15 +93,13 @@ public class TaskUpdatesServiceImpl extends ServiceImpl<TaskUpdatesMapper, TaskU
         return false;
     }
 
+    // 管理员放行/驳回的审核留痕在 delegate_audit_records，不在 taskupdates（TC-041 计数契约），有意为空
     @Override
     public void allowPublish(Long taskId) {
-        
     }
 
     @Override
     public void notAllowed(Long taskId) {
-        
-
     }
 
     @Override
@@ -163,14 +111,13 @@ public class TaskUpdatesServiceImpl extends ServiceImpl<TaskUpdatesMapper, TaskU
             taskupdates.setTaskId(taskId);
             taskupdates.setUserId(currentAdmin.getUserId());
             taskupdates.setUpdateType(auditing);
-            taskupdates.setUpdateDescription("回退为草稿");
+            taskupdates.setUpdateDescription(dataAuditFail != null ? dataAuditFail : auditing.getWebValue());
             taskupdates.setUpdateTime(new java.util.Date());
             save(taskupdates);
             return true;
         }
         log.error("权限异常，信息不存在");
         return false;
-        
     }
 
     @Override

@@ -8,7 +8,7 @@ import com.lz.mapper.ReviewsMapper;
 import com.lz.mapper.TaskAcceptRecordsMapper;
 import com.lz.mapper.TaskMapper;
 import com.lz.mapper.UsersMapper;
-import com.lz.service.CreditScoreService;
+import com.lz.service.impl.CreditScoreService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

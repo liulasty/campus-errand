@@ -9,5 +9,5 @@ import com.lz.pojo.entity.IpLogs;
  * @Date: 2024/06/10/23:09
  * @Description:
  */
-public interface IpLogsService extends IService<IpLogs> {
+public interface IIpLogsService extends IService<IpLogs> {
 }

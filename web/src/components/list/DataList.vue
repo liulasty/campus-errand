@@ -52,7 +52,7 @@
                             <span v-for="col in badgeCols" :key="col.field" class="dl-badge"
                                 :class="badgeTone(rowValue(row, col), col)">{{ badgeText(rowValue(row, col), col) }}</span>
                         </span>
-                        <span v-if="titleCol" class="dl-card__no">NO.{{ rowValue(row, titleCol) }}</span>
+                        <span v-if="titleCol" class="dl-card__no">NO.{{ noText(row) }}</span>
                     </div>
                     <template v-if="titleCol">
                         <h3 class="dl-card__title">{{ titleText(row) }}</h3>
@@ -95,7 +95,7 @@
      *  field     绑定字段
      *  type      'text' | 'badge' | 'tag' | 'money' | 'date' | 'operate'（默认 text）
      *  width/minWidth/align   table 模式布局
-     *  title     card 模式：作为卡片大标题字段（默认取 NO.）
+     *  title     card 模式：作为卡片大标题字段（NO. 前缀缺省同 title，可用 noField 指定编号字段）
      *  lineClamp card/table 文本省略行数（card 标题下附带一行 lead 时用）
      *  badgeMap  { value: { text, tone } }，tone: default|success|warning|danger|info
      *  actions   [{ key, label, tone, icon }]，tone: primary|success|warning|danger|ghost
@@ -111,26 +111,26 @@
             rowKey: { type: String, default: null },
             emptyText: { type: String, default: '暂无数据' }
         },
-        computed: {
-            selectionCol() {
-                return this.config.find(c => c.type === 'selection') || null;
-            },
-            dataCols() {
-                return this.config.filter(c => c.type !== 'selection');
-            },
-            badgeCols() {
-                return this.config.filter(c => c.type === 'badge' || c.type === 'tag');
-            },
-            titleCol() {
-                return this.config.find(c => c.title) || null;
-            },
-            fieldCols() {
-                return this.config.filter(c => c.type !== 'operate' && c.type !== 'badge' && c.type !== 'tag' && c.type !== 'selection' && c !== this.titleCol);
-            },
-            actionCol() {
-                return this.config.find(c => c.type === 'operate') || null;
-            }
+      computed: {
+        selectionCol() {
+          return this.config.find(c => c.type === 'selection') || null;
         },
+        dataCols() {
+          return this.config.filter(c => c.type !== 'selection');
+        },
+        badgeCols() {
+          return this.config.filter(c => c.type === 'badge' || c.type === 'tag');
+        },
+        titleCol() {
+          return this.config.find(c => c.title) || null;
+        },
+        fieldCols() {
+          return this.config.filter(c => c.type !== 'operate' && c.type !== 'badge' && c.type !== 'tag' && c.type !== 'selection' && c !== this.titleCol);
+        },
+        actionCol() {
+          return this.config.find(c => c.type === 'operate') || null;
+        }
+      },
         methods: {
             rowValue(row, col) {
                 return col && col.field ? row[col.field] : null;
@@ -143,6 +143,13 @@
             titleText(row) {
                 const v = this.rowValue(row, this.titleCol);
                 return (v === null || v === undefined || v === '') ? '（无标题）' : v;
+            },
+            noText(row) {
+                const col = this.titleCol;
+                if (!col) return '';
+                const field = col.noField || col.field;
+                const v = field ? row[field] : null;
+                return (v === null || v === undefined || v === '') ? '—' : v;
             },
             formatMoney(v) {
                 if (v === null || v === undefined || v === '') return '—';

@@ -22,39 +22,6 @@ import java.util.Date;
  */
 public interface ITaskUpdatesService extends IService<TaskUpdates> {
     /**
-     * 完成审核操作，并返回对应的状态结果。
-     *
-
-     */
-    void completeAudit();
-
-    /**
-     * 发布委托，并返回对应的状态结果。
-     *
-
-     */
-    void publishAssignment();
-
-    /**
-     * 创建新任务，并返回对应的状态结果。
-     *
-
-     */
-    void createNewTask();
-
-    /**
-     * 获取委托结果，并返回对应的状态结果。
-     *
-
-     */
-    void getAssignmentResult();
-
-    /**
-     * 获取审核中状态，并返回对应的状态结果。
-     */
-    void getAuditingStatus();
-
-    /**
      * 记录：将委托回退为草稿
      * @return {@code Boolean}
      */

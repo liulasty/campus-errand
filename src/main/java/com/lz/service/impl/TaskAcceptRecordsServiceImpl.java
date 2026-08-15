@@ -35,7 +35,7 @@ import java.util.List;
  */
 @Service
 @Slf4j
-public class ITaskAcceptRecordsServiceImpl extends ServiceImpl<TaskAcceptRecordsMapper,
+public class TaskAcceptRecordsServiceImpl extends ServiceImpl<TaskAcceptRecordsMapper,
         TaskAcceptRecords> implements ITaskAcceptRecordsService {
     @Autowired
     private UsersMapper usersMapper;

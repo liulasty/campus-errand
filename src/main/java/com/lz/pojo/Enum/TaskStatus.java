@@ -116,12 +116,14 @@ public enum TaskStatus {
     public static List<TaskStatus> getStatusesForPhase(TaskPhase phase) {
         
         switch (phase) {
+            // 编辑和审核：草稿 → 提交审核(AUDITING) → 通过(等待发布)/驳回(未通过)，发布前的完整流水线
             case EDITING_AND_AUDITING:
                 return Arrays.asList(DRAFT, AUDITING, AUDIT_FAILED, PENDING_RELEASE);
             case PUBLISHING_AND_EXECUTION:
                 return Arrays.asList(ONGOING, ACCEPTED);
             case LIFECYCLE_TERMINATION:
-                return Arrays.asList(EXPIRED, CANCELLED);
+                // 终态归档：已过期/已取消/未完成(TaskOverDue 置)/已完成
+                return Arrays.asList(EXPIRED, CANCELLED, UNFINISHED, COMPLETED);
             default:
                 throw new IllegalArgumentException("Unknown content lifecycle phase: " + phase);
         }

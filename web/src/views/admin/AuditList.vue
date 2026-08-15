@@ -47,10 +47,20 @@
                 <el-form-item label="委托地点">
                     {{ form.location }}
                 </el-form-item>
+                <el-form-item label="委托状态">
+                    {{ form.status }}
+                </el-form-item>
+                <el-form-item label="委托类型">
+                    {{ form.type }}
+                </el-form-item>
             </el-form>
             <div slot="footer" class="au-dialog__footer">
                 <el-button @click="open = false">关 闭</el-button>
-                <el-button v-if="operation.title" type="primary"
+                <template v-if="Array.isArray(operation.title)">
+                    <el-button v-for="(item, index) in operation.title" :key="index" :type="operation.type[index]"
+                        @click="handleButtonClick(operation.click[index])">{{ item }}</el-button>
+                </template>
+                <el-button v-else-if="operation.title" :type="operation.type"
                     @click="handleButtonClick(operation.click)">{{ operation.title }}</el-button>
             </div>
         </el-dialog>
@@ -61,17 +71,18 @@
     import ListShell from '@/components/list/ListShell'
     import DataList from '@/components/list/DataList'
     import {
-        listDelegateRecords, delDelegate, getDelegateByTaskID, getTaskCategories, withdrawReleaseByTaskIDAdmin
+        listDelegateRecords, delDelegate, getDelegateByTaskID, getTaskCategories,
+        allowPublish, notAllowed, FallbackDraft
     } from "@/api/";
     import { executeConfirmedRequest } from '@/utils/globalConfirmAction'
-    import { TASK_PHASE } from '@/constants/enums'
+    import { TASK_STATUS } from '@/constants/enums'
 
     export default {
         name: "AuditList",
         components: { ListShell, DataList },
         data() {
             return {
-                TASK_PHASE,
+                TASK_STATUS,
                 loading: true,
                 total: 0,
                 delegateRecordsList: [],
@@ -96,15 +107,20 @@
                 ],
                 taskType: {},
                 operations: {
-                    "委托发布中": {
-                        title: ["撤销发布", "退为草稿"],
-                        type: ["warning", "warning"],
-                        click: ["withdrawReleaseAdmin", "fallbackDraftAdmin"]
-                    },
-                    "已接收": {
+                    [TASK_STATUS.DRAFT]: {
                         title: ["删除记录"],
-                        type: ["warning"],
+                        type: ["danger"],
                         click: ["deleteRecordAdmin"]
+                    },
+                    [TASK_STATUS.AUDITING]: {
+                        title: ["允许发布", "不允许发布"],
+                        type: ["primary", "danger"],
+                        click: ["allowPublishAdmin", "notAllowedAdmin"]
+                    },
+                    [TASK_STATUS.AUDIT_FAILED]: {
+                        title: ["退为草稿", "删除记录"],
+                        type: ["primary", "danger"],
+                        click: ["fallbackDraftAdmin", "deleteRecordAdmin"]
                     }
                 },
                 operation: {},
@@ -150,7 +166,9 @@
             },
             getList() {
                 this.loading = true;
-                this.queryParams.TypePhase = this.activeTab === 'DRAFT' ? TASK_PHASE.EDITING_AND_AUDITING : TASK_PHASE.PUBLISHING_AND_EXECUTION;
+                // 精确状态过滤：草稿待提交=草稿+审核未通过；用户提交待审核=仅审核中
+                this.queryParams.Status = this.activeTab === 'DRAFT' ? 'DRAFT,AUDIT_FAILED' : 'AUDITING';
+                delete this.queryParams.TypePhase;
                 listDelegateRecords(this.queryParams).then((response) => {
                     if (response.data.code === 1) {
                         this.delegateRecordsList = response.data.data.records.map((record) => {
@@ -216,11 +234,25 @@
                     this.getList();
                 }
             },
-            async withdrawReleaseAdmin() {
-                const ok = await executeConfirmedRequest(withdrawReleaseByTaskIDAdmin, this.form.taskId, "是否确认撤销发布?", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+            async allowPublishAdmin() {
+                const ok = await executeConfirmedRequest(allowPublish, this.form.taskId, "是否确认允许发布？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
                 if (ok) {
-                    this.getList();
                     this.open = false;
+                    this.getList();
+                }
+            },
+            async notAllowedAdmin() {
+                const ok = await executeConfirmedRequest(notAllowed, this.form.taskId, "是否确认不允许发布？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
+                }
+            },
+            async fallbackDraftAdmin() {
+                const ok = await executeConfirmedRequest(FallbackDraft, this.form.taskId, "是否确认退为草稿？", "提示", "警告", "操作警告", "操作失败，请稍后重试", "操作已取消");
+                if (ok) {
+                    this.open = false;
+                    this.getList();
                 }
             },
             handleQuery() {

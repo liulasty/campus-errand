@@ -9,11 +9,13 @@ package com.lz.pojo.Page;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.lz.pojo.Enum.TaskPhase;
+import com.lz.pojo.Enum.TaskStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author lz
@@ -40,7 +42,9 @@ public class DraftConfig {
     @JsonProperty("taskType")
     private Integer taskType;
 
-    
     @JsonProperty("TypePhase")
     private TaskPhase typePhase;
+
+    /** 精确状态过滤（审核台按状态查询），优先级高于 typePhase */
+    private List<TaskStatus> statusList;
 }

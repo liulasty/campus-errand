@@ -1,5 +1,5 @@
 <template>
-    <list-shell title="委托归档" eyebrow="ARCHIVE" subtitle="已过期与已取消委托的归档视图"
+    <list-shell title="委托归档" eyebrow="ARCHIVE" subtitle="已过期、已取消、未完成与已完成委托的归档视图"
         :count="total" count-label="条记录" :loading="loading" :total="total"
         :page.sync="queryParams.pageNum" :page-size.sync="queryParams.pageSize"
         :page-sizes="[5, 7, 10, 15]" @current-change="handleCurrentChange"
@@ -40,10 +40,17 @@
                 <el-form-item label="委托地点">
                     {{ form.location }}
                 </el-form-item>
+                <el-form-item label="委托状态">
+                    {{ form.status }}
+                </el-form-item>
             </el-form>
             <div slot="footer" class="ex-dialog__footer">
                 <el-button @click="open = false">关 闭</el-button>
-                <el-button v-if="operation.title" type="primary"
+                <template v-if="Array.isArray(operation.title)">
+                    <el-button v-for="(item, index) in operation.title" :key="index" :type="operation.type[index]"
+                        @click="handleButtonClick(operation.click[index])">{{ item }}</el-button>
+                </template>
+                <el-button v-else-if="operation.title" :type="operation.type"
                     @click="handleButtonClick(operation.click)">{{ operation.title }}</el-button>
             </div>
         </el-dialog>
@@ -88,14 +95,24 @@
                 ],
                 taskType: {},
                 operations: {
-                    "已过期": {
-                        title: ["撤销发布", "退为草稿"],
-                        type: ["warning", "warning"],
-                        click: ["withdrawReleaseAdmin", "fallbackDraftAdmin"]
+                    [TASK_STATUS.EXPIRED]: {
+                        title: ["删除记录"],
+                        type: ["danger"],
+                        click: ["deleteRecordAdmin"]
                     },
                     [TASK_STATUS.CANCELLED]: {
                         title: ["删除记录"],
-                        type: ["warning"],
+                        type: ["danger"],
+                        click: ["deleteRecordAdmin"]
+                    },
+                    [TASK_STATUS.UNFINISHED]: {
+                        title: ["删除记录"],
+                        type: ["danger"],
+                        click: ["deleteRecordAdmin"]
+                    },
+                    [TASK_STATUS.COMPLETED]: {
+                        title: ["删除记录"],
+                        type: ["danger"],
                         click: ["deleteRecordAdmin"]
                     }
                 },
@@ -105,13 +122,14 @@
                     {
                         label: '状态', field: 'status', type: 'badge',
                         badgeMap: {
-                            '已过期': { text: '已过期', tone: 'warning' },
-                            [TASK_STATUS.CANCELLED]: { text: '已取消', tone: 'info' }
+                            [TASK_STATUS.EXPIRED]: { text: '已过期', tone: 'warning' },
+                            [TASK_STATUS.CANCELLED]: { text: '已取消', tone: 'info' },
+                            [TASK_STATUS.UNFINISHED]: { text: '未完成', tone: 'danger' },
+                            [TASK_STATUS.COMPLETED]: { text: '已完成', tone: 'success' }
                         }
                     },
                     { label: '类型', field: 'type', type: 'badge', badgeMap: {} },
-                    { label: '委托内容', field: 'description', title: true },
-                    { label: '任务ID', field: 'taskId' },
+                    { label: '委托内容', field: 'description', title: true, noField: 'taskId' },
                     { label: '发布者', field: 'ownerName', emptyText: '—' },
                     { label: '信用分', field: 'ownerCredit' },
                     { label: '创建时间', field: 'createdAt', type: 'date' },
@@ -133,7 +151,7 @@
                 listDelegateRecords(this.queryParams).then((response) => {
                     if (response.data.code === 1) {
                         this.delegateRecordsList = response.data.data.records.map((record) => {
-                            record.type = this.taskType[`${record.type}`];
+                            record.type = this.taskType[`${record.taskType}`];
                             return record;
                         });
                         this.total = response.data.data.total;
