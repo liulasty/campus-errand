@@ -60,12 +60,12 @@
                     <div class="ep__field">
                         <label class="ep__label">发布时间</label>
                         <el-date-picker v-model="publishForm.startTime" type="datetime"
-                            value-format="yyyy年MM月dd日HH:mm:ss" placeholder="请选择委托发布时间" style="width: 100%;" />
+                            value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择委托发布时间" style="width: 100%;" />
                     </div>
                     <div class="ep__field">
                         <label class="ep__label">截止时间</label>
                         <el-date-picker v-model="publishForm.endTime" type="datetime"
-                            value-format="yyyy年MM月dd日HH:mm:ss" placeholder="请选择委托截止时间" style="width: 100%;" />
+                            value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择委托截止时间" style="width: 100%;" />
                     </div>
                 </div>
             </div>
