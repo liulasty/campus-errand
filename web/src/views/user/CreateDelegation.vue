@@ -1,139 +1,251 @@
 <template>
-    <div class="dl-wrap">
-        <header class="dl-wrap__header">
-            <div class="dl-wrap__heading">
-                <span class="dl-wrap__eyebrow">DELEGATION STUDIO</span>
-                <h1 class="dl-wrap__title">发布委托</h1>
-                <p class="dl-wrap__sub">填写委托信息，创建草稿，审核通过后即可发布</p>
+    <div class="wb">
+        <header class="wb__header">
+            <div class="wb__heading">
+                <span class="wb__eyebrow">学院事务所</span>
+                <h1 class="wb__title">发布委托</h1>
+                <p class="wb__sub">草稿创建 → 审核 → 发布，全流程在此完成</p>
             </div>
-            <div class="dl-wrap__stamp">
-                <strong class="dl-wrap__stamp-num">{{ draftCount }}</strong>
-                <span class="dl-wrap__stamp-label">我的草稿</span>
+            <div class="wb__stats">
+                <div class="wb__stat"><strong>{{ allTasks.length }}</strong><em>全部</em></div>
+                <div class="wb__stat"><strong>{{ statusCounts.draft }}</strong><em>草稿</em></div>
+                <div class="wb__stat"><strong>{{ statusCounts.pending }}</strong><em>待发布</em></div>
+                <button type="button" class="wb__refresh" title="刷新" @click="loadDrafts">
+                    <i class="el-icon-refresh"></i>
+                </button>
             </div>
         </header>
 
-        <nav v-if="tabPanes.length" class="dl-wrap__tabs">
-            <button v-for="(pane, index) in tabPanes" :key="index" type="button"
-                class="dl-wrap__tab" :class="{ 'is-active': activeTab === index }"
-                @click="activeTab = index">{{ pane.label }}</button>
-        </nav>
-
-        <main class="dl-wrap__body">
-            <div v-if="tabPanes.length && activePane.id != null" class="dl-wrap__inner">
-                <div class="dl-wrap__intro">
-                    <span class="dl-wrap__intro-mark"></span>
-                    {{ activePane.DelegationType || '请填写以下信息发布新的委托任务' }}
-                </div>
-                <Delegation :DelegationType="activePane.label" :id="activePane.id"
-                    :description="activePane.DelegationType" :tasks="tasks" :taskTypeOption="taskTypeOption"
-                    @childEvent="getTaskDraft" />
-            </div>
-            <div v-else class="dl-wrap__loading" v-loading="true" element-loading-text="加载委托类型…" />
-        </main>
+        <div class="wb__body">
+            <draft-panel
+                :tasks="pagedTasks" :total="filteredTasks.length" :page-num="pageNum" :page-size="pageSize"
+                :filter-status="filterStatus" :status-counts="statusCounts"
+                :selected-task-id="selectedTask ? selectedTask.taskId : null"
+                :type-name-map="typeNameMap" :loading="loading"
+                @select="selectTask" @delete="deleteTask" @refresh="loadDrafts"
+                @filter-change="onFilter" @search="onSearch" @page-change="onPage" />
+            <editor-panel :task="selectedTask" :task-type-option="taskTypeOption"
+                @save-draft="saveDraft" @submit-audit="submitAudit" @publish="publish" />
+        </div>
     </div>
 </template>
+
 <script>
-    import Delegation from '@/components/Delegation.vue';
-
-    import { getTaskDraftById, getUserInfo } from '@/api/index';
-    import { getTaskCategoriesUser } from '@/api/user';
-
-    import { AUTH_STATUS, TASK_STATUS } from '@/constants/enums'
+    import DraftPanel from '@/components/draft/DraftPanel'
+    import EditorPanel from '@/components/draft/EditorPanel'
+    import {
+        getTaskDraftById, addTaskDraft, updateTaskDraft, submitTaskDraft,
+        deleteTaskDraft, publishingDelegation
+    } from '@/api/index'
+    import { getTaskCategoriesUser } from '@/api/user'
+    import { TASK_STATUS } from '@/constants/enums'
+    import { SUCCESS_CODE } from '@/constants/http'
 
     export default {
-        components: {
-            Delegation
-        },
+        name: 'CreateDelegation',
+        components: { DraftPanel, EditorPanel },
         data() {
             return {
-                AUTH_STATUS,
                 TASK_STATUS,
-                activeTab: 0,
-                tabPanes: [],
-                tasks: [],
-                taskType: {},
+                loading: false,
+                allTasks: [],
+                filterStatus: '',
+                searchKeyword: '',
+                pageNum: 1,
+                pageSize: 5,
+                selectedTask: null,
                 taskTypeOption: []
             }
         },
         computed: {
-            activePane() {
-                return this.tabPanes[this.activeTab] || this.tabPanes[0] || {};
+            typeNameMap() {
+                const m = {};
+                this.taskTypeOption.forEach(o => { m[o.value] = o.label; });
+                return m;
             },
-            draftCount() {
-                return (this.tasks || []).filter(t => t.status === TASK_STATUS.DRAFT).length;
+            statusCounts() {
+                const c = { all: this.allTasks.length, draft: 0, auditing: 0, pending: 0, failed: 0 };
+                this.allTasks.forEach(t => {
+                    if (t.status === TASK_STATUS.DRAFT) c.draft++;
+                    else if (t.status === TASK_STATUS.AUDITING) c.auditing++;
+                    else if (t.status === TASK_STATUS.PENDING_RELEASE) c.pending++;
+                    else if (t.status === TASK_STATUS.AUDIT_FAILED) c.failed++;
+                });
+                return c;
+            },
+            filteredTasks() {
+                let list = this.allTasks;
+                if (this.filterStatus) list = list.filter(t => t.status === this.filterStatus);
+                const kw = this.searchKeyword && this.searchKeyword.trim();
+                if (kw) list = list.filter(t => (t.description || '').toLowerCase().includes(kw.toLowerCase()));
+                return list;
+            },
+            pagedTasks() {
+                const start = (this.pageNum - 1) * this.pageSize;
+                return this.filteredTasks.slice(start, start + this.pageSize);
             }
         },
         methods: {
-            setContext() {
-                //获取类型
-                getTaskCategoriesUser().then((data) => {
-                    if (data.data.code === 1 && data.data.data.length > 0) {
-                        this.tabPanes = data.data.data.map(category => ({
-                            label: category.name,
-                            id: category.id,
-                            DelegationType: category.description,
-                        }));
-                        this.taskType = {};
-                        this.taskTypeOption = data.data.data.map(category => {
-                            this.taskType[`${category.id}`] = category.name;
-                            return { label: category.name, value: category.id };
-                        });
-                        console.log("类型数组", this.taskTypeOption);
+            async loadDrafts() {
+                this.loading = true;
+                try {
+                    const data = await getTaskDraftById(this.$store.state.userInfo.userId);
+                    if (data.data.code === SUCCESS_CODE) {
+                        this.allTasks = data.data.data || [];
+                    } else {
+                        this.$message.error(data.data.msg || '加载草稿失败');
                     }
-                }).catch(err => {
+                } catch (err) {
+                    console.error('加载草稿失败：', err);
+                    this.$message.error('请求异常，请稍后重试');
+                } finally {
+                    this.loading = false;
+                }
+            },
+            async loadCategories() {
+                try {
+                    const data = await getTaskCategoriesUser();
+                    if (data.data.code === SUCCESS_CODE && data.data.data.length > 0) {
+                        this.taskTypeOption = data.data.data.map(category => ({
+                            label: category.name,
+                            value: category.id
+                        }));
+                    }
+                } catch (err) {
                     console.error('获取委托类型失败：', err);
                     this.$message.error('请求异常，请稍后重试');
-                });
+                }
             },
-            //获取草稿
-            getTaskDraft() {
-                this.setContext();
-                console.log("获取草稿");
-                getTaskDraftById(this.$store.state.userInfo.userId).then((data) => {
-                    const records = data.data.data || [];
-                    records.forEach(element => {
-                        element.type = this.taskType[`${element.type}`];
-                    });
-                    this.tasks = records;
-                }).catch(err => {
-                    console.error('获取草稿失败：', err);
-                    this.$message.error('请求异常，请稍后重试');
-                });
+            selectTask(row) {
+                this.selectedTask = row;
             },
-            //查询用户认证信息
-            getUserInfoBefore() {
-                console.log("获取用户信息");
-                getUserInfo(this.$store.state.userInfo.userId).then((data) => {
+            onFilter(status) {
+                this.filterStatus = status;
+                this.pageNum = 1;
+            },
+            onSearch(keyword) {
+                this.searchKeyword = keyword;
+                this.pageNum = 1;
+            },
+            onPage(page) {
+                this.pageNum = page;
+            },
+            async deleteTask(taskId) {
+                try {
+                    const data = await deleteTaskDraft(taskId);
                     if (data.data.code === 1) {
-                        this.userInfo = data.data.data;
-                        if (this.userInfo.authStatus != AUTH_STATUS.AUTHENTICATED) {
-                            this.$message({
-                                message: "请先完成认证",
-                                type: 'error'
-                            });
-                            this.$router.push("/userInfo");
+                        this.$message.success(data.data.msg || '删除成功');
+                        if (this.selectedTask && this.selectedTask.taskId === taskId) {
+                            this.selectedTask = null;
                         }
+                        this.loadDrafts();
                     } else {
-                        console.log("用户信息", data.data.msg);
+                        this.$message.error(data.data.msg || '删除失败');
                     }
-                }).catch(err => {
-                    console.error('获取用户信息失败：', err);
+                } catch (err) {
+                    console.error('删除草稿失败：', err);
                     this.$message.error('请求异常，请稍后重试');
-                })
+                }
             },
+            async saveDraft(payload) {
+                const typeName = this.typeNameMap[payload.type] || payload.type;
+                try {
+                    let data;
+                    if (payload.taskId) {
+                        data = await updateTaskDraft({
+                            taskId: payload.taskId,
+                            type: typeName,
+                            location: payload.location,
+                            description: payload.description,
+                            money: payload.money
+                        });
+                    } else {
+                        data = await addTaskDraft({
+                            ownerId: this.$store.state.userInfo.userId,
+                            location: payload.location,
+                            content: payload.description,
+                            type: typeName,
+                            money: payload.money
+                        });
+                    }
+                    if (data.data.code === 1) {
+                        this.$message.success(data.data.msg || '保存成功');
+                        await this.loadDrafts();
+                    } else {
+                        this.$message.error(data.data.msg || '保存失败');
+                    }
+                } catch (err) {
+                    console.error('保存草稿失败：', err);
+                    this.$message.error('请求异常，请稍后重试');
+                }
+            },
+            async submitAudit(payload) {
+                try {
+                    let taskId = payload.taskId;
+                    if (!taskId) {
+                        const typeName = this.typeNameMap[payload.form.type] || payload.form.type;
+                        const created = await addTaskDraft({
+                            ownerId: this.$store.state.userInfo.userId,
+                            location: payload.form.location,
+                            content: payload.form.description,
+                            type: typeName,
+                            money: payload.form.money
+                        });
+                        if (created.data.code !== 1) {
+                            this.$message.error(created.data.msg || '创建草稿失败');
+                            return;
+                        }
+                        taskId = created.data.data;
+                    }
+                    const data = await submitTaskDraft(taskId);
+                    if (data.data.code === 1) {
+                        this.$message.success(data.data.msg || '已提交审核');
+                        this.selectedTask = null;
+                        await this.loadDrafts();
+                    } else {
+                        if (data.data.msg && data.data.msg.indexOf('L1实名认证') !== -1) {
+                            this.$confirm('发布委托需完成 L1 实名认证，是否前往认证？', '提示', {
+                                confirmButtonText: '去认证', cancelButtonText: '取消', type: 'warning'
+                            }).then(() => this.$router.push('/myInfo')).catch(() => {});
+                        } else {
+                            this.$message.error(data.data.msg || '提交失败');
+                        }
+                    }
+                } catch (err) {
+                    console.error('提交审核失败：', err);
+                    this.$message.error('请求异常，请稍后重试');
+                }
+            },
+            async publish(payload) {
+                try {
+                    const data = await publishingDelegation({
+                        id: payload.taskId,
+                        start: payload.startTime,
+                        end: payload.endTime
+                    });
+                    if (data.data.code === 1) {
+                        this.$message.success(data.data.msg || '发布成功');
+                        this.selectedTask = null;
+                        await this.loadDrafts();
+                    } else {
+                        this.$message.error(data.data.msg || '发布失败');
+                    }
+                } catch (err) {
+                    console.error('发布失败：', err);
+                    this.$message.error('请求异常，请稍后重试');
+                }
+            }
         },
         mounted() {
-            this.getUserInfoBefore();
-            this.setContext();
-            this.getTaskDraft();
+            this.loadDrafts();
+            this.loadCategories();
         }
     }
 </script>
 
 <style lang="less" scoped>
-    .dl-wrap {
+    .wb {
         --paper: #f5f1e8;
-        --card: #fffcf5;
         --ink: #2a3a30;
         --ink-soft: #5f6b62;
         --muted: #9aa198;
@@ -145,40 +257,39 @@
         --terra: #b4543a;
 
         position: relative;
-        min-height: calc(100vh - 160px);
-        padding: 6px 4px 30px;
+        min-height: calc(100vh - 140px);
+        padding: 4px;
         border-radius: 14px;
         color: var(--ink);
         font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
         background:
-            radial-gradient(1100px 480px at 88% -8%, rgba(185, 137, 44, 0.14), transparent 60%),
-            radial-gradient(900px 420px at -6% 0%, rgba(95, 138, 111, 0.12), transparent 55%),
+            radial-gradient(1100px 420px at 90% -6%, rgba(185, 137, 44, 0.13), transparent 60%),
+            radial-gradient(900px 380px at -4% 0%, rgba(95, 138, 111, 0.11), transparent 55%),
             var(--paper);
 
-        /* 颗粒层置于内容之下：避免 fixed 弹层被 z-index 困住导致整页卡死 */
         &::before {
             content: "";
             position: absolute;
             inset: 0;
             z-index: 0;
             pointer-events: none;
-            opacity: .55;
+            opacity: .5;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
         }
     }
 
-    .dl-wrap__header {
+    .wb__header {
         position: relative;
         z-index: 1;
         display: flex;
         align-items: flex-end;
         justify-content: space-between;
-        padding: 34px 40px 22px;
+        padding: 26px 34px 20px;
     }
 
-    .dl-wrap__eyebrow {
+    .wb__eyebrow {
         display: block;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         font-family: Georgia, "Times New Roman", serif;
         font-size: 11px;
         letter-spacing: .34em;
@@ -186,125 +297,70 @@
         color: var(--brass);
     }
 
-    .dl-wrap__title {
+    .wb__title {
         margin: 0;
         font-family: Georgia, "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
-        font-size: 34px;
+        font-size: 32px;
         font-weight: 700;
         line-height: 1.12;
         letter-spacing: .02em;
     }
 
-    .dl-wrap__sub {
-        margin: 9px 0 0;
+    .wb__sub {
+        margin: 8px 0 0;
         font-size: 13px;
-        letter-spacing: .08em;
+        letter-spacing: .06em;
         color: var(--muted);
     }
 
-    .dl-wrap__stamp {
-        text-align: right;
+    .wb__stats {
+        display: flex;
+        align-items: center;
+        gap: 18px;
         padding-left: 18px;
         border-left: 2px solid var(--brass);
     }
 
-    .dl-wrap__stamp-num {
+    .wb__stat { text-align: right; }
+    .wb__stat strong {
         display: block;
         font-family: Georgia, "Times New Roman", serif;
-        font-size: 42px;
+        font-size: 26px;
         font-weight: 700;
         line-height: 1;
         color: var(--ink);
     }
-
-    .dl-wrap__stamp-label {
+    .wb__stat em {
         display: block;
-        margin-top: 7px;
+        margin-top: 5px;
+        font-style: normal;
         font-size: 12px;
-        letter-spacing: .22em;
+        letter-spacing: .16em;
         color: var(--muted);
     }
 
-    .dl-wrap__tabs {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        margin: 0 40px;
-        border-bottom: 1px solid var(--line);
-    }
-
-    .dl-wrap__tab {
+    .wb__refresh {
         appearance: none;
-        border: 0;
+        border: 1px solid var(--line-strong);
         background: transparent;
-        position: relative;
-        padding: 13px 20px 15px;
-        font-family: inherit;
-        font-size: 15px;
-        letter-spacing: .05em;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
         color: var(--ink-soft);
         cursor: pointer;
-        transition: color .25s;
+        font-size: 16px;
+        transition: border-color .2s, color .2s, background .2s;
     }
+    .wb__refresh:hover { border-color: var(--brass); color: var(--brass-deep); background: rgba(255, 252, 245, .6); }
 
-    .dl-wrap__tab::after {
-        content: "";
-        position: absolute;
-        left: 20px;
-        right: 20px;
-        bottom: -1px;
-        height: 2px;
-        background: var(--brass);
-        transform: scaleX(0);
-        transform-origin: left;
-        transition: transform .32s ease;
-    }
-
-    .dl-wrap__tab:hover {
-        color: var(--ink);
-    }
-
-    .dl-wrap__tab.is-active {
-        color: var(--ink);
-        font-weight: 600;
-    }
-
-    .dl-wrap__tab.is-active::after {
-        transform: scaleX(1);
-    }
-
-    .dl-wrap__body {
+    .wb__body {
         position: relative;
         z-index: 1;
-        padding: 20px 40px 10px;
-    }
-
-    .dl-wrap__intro {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 18px;
-        padding: 14px 18px;
-        background: rgba(255, 252, 245, .72);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        font-size: 13px;
-        letter-spacing: .04em;
-        color: var(--ink-soft);
-    }
-
-    .dl-wrap__intro-mark {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--brass);
-        box-shadow: 0 0 0 3px rgba(185, 137, 44, .18);
-        flex-shrink: 0;
-    }
-
-    .dl-wrap__loading {
-        min-height: 260px;
+        display: grid;
+        grid-template-columns: 38% 62%;
+        gap: 18px;
+        padding: 0 34px 26px;
+        height: calc(100vh - 210px);
+        min-height: 480px;
     }
 </style>
