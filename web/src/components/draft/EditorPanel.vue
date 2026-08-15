@@ -7,23 +7,56 @@
                     <i class="el-icon-warning-outline"></i>发布规则</button>
                 <button type="button" class="ep__text-btn" @click="previewVisible = true">
                     <i class="el-icon-view"></i>预览</button>
-                <button type="button" class="ep__text-btn" @click="resetForm">
+                <button v-if="mode !== 'publish' || editingContent" type="button" class="ep__text-btn" @click="resetForm">
                     <i class="el-icon-refresh-left"></i>重置</button>
             </div>
         </header>
 
         <div class="ep__scroll">
-            <div v-if="mode === 'publish'" class="ep__warn">
-                <i class="el-icon-warning-outline"></i>
-                <span>修改内容后点「保存草稿」，委托将转为<b>草稿</b>状态，需重新提交审核后才能再次发布；仅设置发布时间/截止时间不影响状态。</span>
-            </div>
-
             <div v-if="mode === 'auditing'" class="ep__notice">
                 <i class="el-icon-s-check"></i>
                 <p>该委托正在审核中，暂不可编辑。</p>
             </div>
 
+            <!-- 发布态：内容只读 + 独立发布设置，避免发布时误改内容 -->
+            <template v-else-if="mode === 'publish' && !editingContent">
+                <div class="ep__group">
+                    <h4 class="ep__group-title"><i class="el-icon-document"></i>委托信息（只读）</h4>
+                    <div class="ep__readonly">
+                        <div class="ep__readonly-row"><em>委托类型</em><span>{{ typeLabel(form.type) }}</span></div>
+                        <div class="ep__readonly-row"><em>委托地点</em><span>{{ form.location || '未选择' }}</span></div>
+                        <div class="ep__readonly-row"><em>委托金额</em><span>￥{{ fmtMoney(form.money) }}</span></div>
+                        <div class="ep__readonly-row ep__readonly-row--block"><em>委托内容</em>
+                            <p>{{ form.description || '未填写内容' }}</p></div>
+                    </div>
+                    <button type="button" class="ep__edit-link" @click="editingContent = true">
+                        <i class="el-icon-edit-outline"></i>编辑委托内容（保存后转为草稿）</button>
+                </div>
+
+                <div class="ep__publish">
+                    <h4 class="ep__publish-title"><i class="el-icon-time"></i>发布设置</h4>
+                    <div class="ep__row">
+                        <div class="ep__field">
+                            <label class="ep__label">发布时间</label>
+                            <el-date-picker v-model="publishForm.startTime" type="datetime"
+                                value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择委托发布时间" style="width: 100%;" />
+                        </div>
+                        <div class="ep__field">
+                            <label class="ep__label">截止时间</label>
+                            <el-date-picker v-model="publishForm.endTime" type="datetime"
+                                value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择委托截止时间" style="width: 100%;" />
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- 编辑态：新建 / 编辑草稿 / 待发布编辑内容 -->
             <template v-else>
+                <div v-if="mode === 'publish'" class="ep__editbar">
+                    <button type="button" class="ep__text-btn" @click="backToPublish">
+                        <i class="el-icon-back"></i>返回发布</button>
+                    <span class="ep__editbar-note">保存后委托将转为草稿，需重新提交审核</span>
+                </div>
                 <div class="ep__group">
                     <h4 class="ep__group-title"><i class="el-icon-document"></i>委托基本信息</h4>
                     <div class="ep__field">
@@ -58,33 +91,21 @@
                     </div>
                 </div>
             </template>
-
-            <div v-if="mode === 'publish'" class="ep__publish">
-                <h4 class="ep__publish-title"><i class="el-icon-time"></i>发布设置</h4>
-                <div class="ep__row">
-                    <div class="ep__field">
-                        <label class="ep__label">发布时间</label>
-                        <el-date-picker v-model="publishForm.startTime" type="datetime"
-                            value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择委托发布时间" style="width: 100%;" />
-                    </div>
-                    <div class="ep__field">
-                        <label class="ep__label">截止时间</label>
-                        <el-date-picker v-model="publishForm.endTime" type="datetime"
-                            value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择委托截止时间" style="width: 100%;" />
-                    </div>
-                </div>
-            </div>
         </div>
 
         <footer v-if="mode !== 'auditing'" class="ep__footer">
-            <button type="button" class="ep__btn ep__btn--ghost" @click="onSaveDraft">
-                <i class="el-icon-document-checked"></i>保存草稿</button>
-            <button v-if="mode === 'new' || mode === 'edit'" type="button"
-                class="ep__btn ep__btn--primary" @click="onSubmitAudit">
-                <i class="el-icon-s-promotion"></i>提交审核</button>
-            <button v-else-if="mode === 'publish'" type="button"
-                class="ep__btn ep__btn--primary" @click="onPublish">
-                <i class="el-icon-s-promotion"></i>确认发布</button>
+            <template v-if="mode === 'publish'">
+                <button v-if="editingContent" type="button" class="ep__btn ep__btn--ghost" @click="onSaveDraft">
+                    <i class="el-icon-document-checked"></i>保存草稿</button>
+                <button v-else type="button" class="ep__btn ep__btn--primary" @click="onPublish">
+                    <i class="el-icon-s-promotion"></i>确认发布</button>
+            </template>
+            <template v-else>
+                <button type="button" class="ep__btn ep__btn--ghost" @click="onSaveDraft">
+                    <i class="el-icon-document-checked"></i>保存草稿</button>
+                <button type="button" class="ep__btn ep__btn--primary" @click="onSubmitAudit">
+                    <i class="el-icon-s-promotion"></i>提交审核</button>
+            </template>
         </footer>
 
         <el-drawer title="委托预览" :visible.sync="previewVisible" size="46%" custom-class="ep-drawer" append-to-body>
@@ -130,6 +151,7 @@
         data() {
             return {
                 TASK_STATUS,
+                editingContent: false,
                 previewVisible: false,
                 rulesVisible: false,
                 locationOptions: [
@@ -162,6 +184,7 @@
             task: {
                 immediate: true,
                 handler(val) {
+                    this.editingContent = false;
                     if (val && val.taskType != null) {
                         this.form = {
                             type: val.taskType,
@@ -190,6 +213,18 @@
             resetForm() {
                 this.form = { type: null, location: '', money: 0, description: '' };
                 this.publishForm = { startTime: null, endTime: null };
+            },
+            // 待发布「编辑内容」返回发布：丢弃未保存改动，恢复为任务原始内容
+            backToPublish() {
+                this.editingContent = false;
+                if (this.task) {
+                    this.form = {
+                        type: this.task.taskType,
+                        location: this.task.location || '',
+                        money: this.task.money == null ? 0 : Number(this.task.money),
+                        description: this.task.description || ''
+                    };
+                }
             },
             validateForm() {
                 if (!this.form.type) { this.$message.error('请选择委托类型'); return false; }
@@ -384,21 +419,46 @@
     }
     .ep__notice i { font-size: 40px; display: block; margin-bottom: 12px; color: var(--brass); }
 
-    .ep__warn {
+    .ep__editbar {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 10px;
-        margin-bottom: 18px;
-        padding: 12px 14px;
-        background: rgba(185, 137, 44, .1);
-        border: 1px solid rgba(185, 137, 44, .3);
+        margin-bottom: 16px;
+        padding: 10px 12px;
+        background: rgba(185, 137, 44, .08);
+        border: 1px solid rgba(185, 137, 44, .22);
         border-radius: 9px;
-        font-size: 13px;
-        line-height: 1.6;
-        color: var(--brass-deep);
     }
-    .ep__warn i { font-size: 16px; margin-top: 2px; flex-shrink: 0; }
-    .ep__warn b { color: var(--terra); }
+    .ep__editbar-note { font-size: 12px; color: var(--brass-deep); }
+
+    .ep__edit-link {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        font-family: inherit;
+        font-size: 12px;
+        letter-spacing: .04em;
+        color: var(--brass-deep);
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 6px;
+        margin-top: 12px;
+        transition: background .2s;
+    }
+    .ep__edit-link i { margin-right: 4px; }
+    .ep__edit-link:hover { background: rgba(185, 137, 44, .1); }
+
+    .ep__readonly {
+        background: rgba(255, 252, 245, .7);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+    .ep__readonly-row { display: flex; margin-bottom: 12px; font-size: 13px; }
+    .ep__readonly-row:last-child { margin-bottom: 0; }
+    .ep__readonly-row em { font-style: normal; width: 72px; flex-shrink: 0; color: var(--muted); letter-spacing: .04em; }
+    .ep__readonly-row span, .ep__readonly-row p { color: var(--ink); margin: 0; line-height: 1.6; word-break: break-all; }
+    .ep__readonly-row--block { padding: 10px 12px; background: rgba(255, 252, 245, .8); border: 1px dashed var(--line); border-radius: 8px; }
 
     .ep__footer {
         flex-shrink: 0;
