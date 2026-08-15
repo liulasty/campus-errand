@@ -1,38 +1,30 @@
+
+
 # Campus Errand · 校园委托跑腿平台
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.3-brightgreen)](https://spring.io/projects/spring-boot)
 [![Vue](https://img.shields.io/badge/Vue-2.x-4fc08d)](https://vuejs.org)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
-> 一个完整的前后端分离校园委托服务平台。学生可以发布跑腿任务（代买午餐、代取快递等），也可以接单赚取报酬，支持任务审核、评价互评、消息通知等完整流程。
+> 一个前后端分离的校园委托服务平台。学生可以发布跑腿任务（代买午餐、代取快递等），也可以接单赚取报酬。平台支持任务审核、评价互评、消息通知等完整流程，全程不碰资金，靠「信用 + 履约」驱动服务闭环。
 
 ---
 
-## 产品目标（1.0 MVP）
+## 核心特性
 
-平台定位为校园**信息撮合器 + 信用账本 + 流程协调员**：发布委托 → 接单 → 履约打卡 → 评价 → 自动归档，全程不碰资金、不担交易风险，靠「信用 + 履约」驱动服务闭环。
-
-- 1.0 业务范围与能力边界见 [docs/MVP_1.0.md](docs/MVP_1.0.md)
-- 完整文档索引见 [docs/_SUMMARY.md](docs/_SUMMARY.md)
-
----
-
-## 功能概览
-
-| 模块 | 功能 |
-|------|------|
-| **用户系统** | 注册登录（JWT）、个人信息管理、学生实名认证 |
-| **委托任务** | 发布委托（支持草稿）、接受委托、任务状态流转（待接受 → 进行中 → 待确认 → 已完成） |
-| **审核机制** | 管理员后台审核发布的任务，保障平台安全 |
-| **评价系统** | 任务完成后双方互评，建立信用体系 |
-| **消息通知** | 系统公告 + 任务状态变更实时通知 |
-| **后台管理** | 用户管理、任务分类、系统设置、公告发布 |
+- **发布委托**：支持草稿保存、任务描述、地点、金额等信息管理
+- **接单系统**：用户可承接委托任务，完成后提交审核
+- **审核机制**：管理员审核发布的任务，保障平台安全
+- **信用体系**：基于任务完成率和评价计算用户信用分
+- **履约打卡**：三节点打卡机制 + 自动推进定时任务
+- **消息通知**：系统公告与任务状态实时推送
+- **后台管理**：用户管理、任务分类、系统设置、公告发布
 
 ---
 
 ## 技术栈
 
-### Backend
+### 后端
 
 | 技术 | 用途 |
 |------|------|
@@ -42,11 +34,11 @@
 | Redis | 缓存 |
 | RabbitMQ | 消息队列 |
 | Spring Security + JWT | 认证授权 |
-| 七牛云对象存储 | 对象存储（图片上传/头像） |
+| 七牛云对象存储 | 图片上传/头像 |
 | Knife4j | API 文档 |
 | EasyExcel / POI | Excel 处理 |
 
-### Frontend
+### 前端
 
 | 技术 | 用途 |
 |------|------|
@@ -62,27 +54,27 @@
 
 ### 环境要求
 
-- JDK 8~17（推荐 JDK 17；JDK 21 已通过 Lombok 1.18.30 支持编译）
+- JDK 8~17（推荐 JDK 17）
 - Maven 3.6+
 - Node.js + npm
-- MySQL 8.0+，Redis，RabbitMQ（Redis/RabbitMQ 未启动时后端可启动，但缓存、消息通知相关功能不可用）
+- MySQL 8.0+，Redis，RabbitMQ
+
+> 注：Redis 和 RabbitMQ 未启动时后端可正常启动，但缓存、消息通知相关功能不可用。
 
 ### 后端
 
 ```bash
-# 1. 创建数据库 campus_entrustment，执行 SQL
+# 1. 创建数据库并执行 SQL
 mysql -u root -p campus_entrustment < src/main/resources/sql/校园委托0.99.sql
 
 # 2. 配置数据库/Redis/RabbitMQ/OSS 连接信息
 # 编辑 src/main/resources/application-dev*.yml
 
-# 3. 启动（默认端口 80，上下文路径 /campus_entrustment）
+# 3. 启动（默认端口 80，路径 /campus_entrustment）
 mvn spring-boot:run
 
 # API 文档: http://localhost/campus_entrustment/doc.html
 ```
-
-> 说明：`server.port` 为 80，`context-path` 为 `/campus_entrustment`。若 80 端口被占用或权限不足，可在 `application-dev.yml` 中调整。
 
 ### 前端
 
@@ -93,8 +85,6 @@ npm run serve
 
 # 页面: http://localhost:8080/campus_entrustment/
 ```
-
-> 说明：dev server 端口 8080，`vue.config.js` 将 `/api` 代理到 `http://localhost:80`（去掉 `/api` 前缀后转发到后端 `/campus_entrustment` 上下文）。
 
 ### Docker 部署
 
@@ -108,38 +98,52 @@ docker-compose up -d
 
 ```
 campus-errand/
-├── web/                     # Vue 2 前端
+├── web/                      # Vue 2 前端
 │   ├── src/
-│   │   ├── api/             # 接口封装
-│   │   ├── components/      # 公共组件
-│   │   ├── router/          # 路由
-│   │   ├── store/           # 状态管理
-│   │   ├── utils/           # 工具函数
-│   │   └── views/           # 页面
+│   │   ├── api/              # 接口封装
+│   │   ├── components/       # 公共组件
+│   │   ├── router/           # 路由配置
+│   │   ├── store/            # 状态管理
+│   │   ├── utils/            # 工具函数
+│   │   └── views/            # 页面视图
 │   └── package.json
 │
-├── src/                     # Spring Boot 后端
-│   ├── main/java/com/lz/
-│   │   ├── controller/      # 控制器
-│   │   ├── service/         # 业务逻辑
-│   │   ├── mapper/          # 数据访问
-│   │   ├── pojo/            # 实体/DTO/VO
-│   │   ├── config/          # 配置
-│   │   ├── common/          # 通用模块
-│   │   └── utils/           # 工具类
-│   └── main/resources/
-│       ├── mapper/          # MyBatis XML
-│       └── application.yml
+├── src/main/java/com/lz/     # Spring Boot 后端
+│   ├── controller/           # 控制器层
+│   ├── service/              # 业务逻辑层
+│   ├── mapper/               # 数据访问层
+│   ├── pojo/                 # 实体/DTO/VO
+│   ├── config/               # 配置类
+│   ├── common/               # 通用模块
+│   ├── utils/                # 工具类
+│   └── credit/               # 信用计算模块
 │
-├── docker/                  # Dockerfile
-├── docker-compose.yml       # 编排部署
-├── scripts/                 # 构建脚本
-└── pom.xml
+├── src/main/resources/
+│   ├── mapper/               # MyBatis XML
+│   └── application.yml       # 配置文件
+│
+├── docker/                   # Docker 配置
+├── scripts/                  # 构建脚本
+└── docs/                     # 项目文档
 ```
+
+---
+
+## 文档索引
+
+- [产品目标文档](docs/MVP_1.0.md)
+- [实施路线图](docs/ROADMAP_1.0.md)
+- [完整文档索引](docs/_SUMMARY.md)
+
+---
+
+## 协议
+
+[MIT License](LICENSE)
 
 ---
 
 ## 相关链接
 
 - GitHub: [liulasty/campus-errand](https://github.com/liulasty/campus-errand)
-- 协议: [MIT License](LICENSE)
+- Gitee: [campus-errand](https://gitee.com/Maybe_I_wrong/campus-errand)
