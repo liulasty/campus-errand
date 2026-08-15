@@ -64,6 +64,7 @@ publish({taskId,start,end})     // publishingDelegation → refresh
 ## 四、左栏 DraftPanel
 
 - **状态标签栏**：全部/草稿/审核中/待发布/未通过，选中黄铜色填充，带数量角标，点击即时过滤
+  - 展示文案与过滤值映射：标签「待发布」↔ 过滤值 `等待发布`（PENDING_RELEASE webValue）；标签「未通过」↔ 过滤值 `审核未通过`（AUDIT_FAILED webValue）；其余标签与 webValue 同名
 - **关键词搜索框**：按委托内容模糊过滤；**刷新** = 极简图标按钮
 - **列表项**（紧凑行式）：
   - 首行：委托类型小字标签（黄铜）+ 状态标签（草稿-灰/审核中-黄/待发布-绿/未通过-红）
