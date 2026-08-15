@@ -23,7 +23,7 @@ import com.lz.service.IDelegationCategoriesService;
 import com.lz.service.ITaskService;
 import com.lz.service.IUsersInfoService;
 import com.lz.service.IUsersService;
-import com.lz.service.RealNameAuthenticationService;
+import com.lz.service.impl.RealNameAuthenticationService;
 import com.lz.utils.ValidateUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -118,7 +118,8 @@ public class TaskController {
                     .description(taskDTO.getDescription())
                     .location(taskDTO.getLocation())
                     .status(TaskStatus.DRAFT)
-                    .createdAt(taskDTO.getCreatedAt()).build();
+                    .createdAt(taskDTO.getCreatedAt())
+                    .money(taskDTO.getMoney()).build();
 
             taskService.updateById(task);
             return Result.success(MessageConstants.TASK_UPDATE_SUCCESS);

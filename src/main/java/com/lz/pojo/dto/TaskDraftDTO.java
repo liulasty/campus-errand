@@ -9,6 +9,7 @@ package com.lz.pojo.dto;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -25,4 +26,5 @@ public class TaskDraftDTO {
     String location;
     String description;
     private Date createdAt;
+    private BigDecimal money;
 }
