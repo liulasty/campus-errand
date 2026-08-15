@@ -82,7 +82,7 @@
                 <i class="el-icon-s-promotion"></i>确认发布</button>
         </footer>
 
-        <el-drawer title="委托预览" :visible.sync="previewVisible" size="46%" custom-class="ep-drawer">
+        <el-drawer title="委托预览" :visible.sync="previewVisible" size="46%" custom-class="ep-drawer" append-to-body>
             <div class="ep-preview">
                 <div class="ep-preview__row"><em>委托类型</em><span>{{ typeLabel(form.type) }}</span></div>
                 <div class="ep-preview__row"><em>委托地点</em><span>{{ form.location || '未选择' }}</span></div>
@@ -92,7 +92,7 @@
             </div>
         </el-drawer>
 
-        <el-drawer title="发布须知" :visible.sync="rulesVisible" size="46%" custom-class="ep-drawer">
+        <el-drawer title="发布须知" :visible.sync="rulesVisible" size="46%" custom-class="ep-drawer" append-to-body>
             <div class="ep-rules">
                 <div class="ep-rules__item"><i class="el-icon-s-promotion"></i>
                     <p>发布委托信息流程：先创建草稿，再申请发布委托，只有通过审核后，再发布委托。</p></div>
