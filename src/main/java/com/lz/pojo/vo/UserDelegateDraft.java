@@ -10,6 +10,7 @@ package com.lz.pojo.vo;
 import com.lz.pojo.Enum.TaskStatus;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -38,4 +39,8 @@ public class UserDelegateDraft {
      * 创建时间
      */
     private Date createTime;
+    /**
+     * 委托金额
+     */
+    private BigDecimal money;
 }
